@@ -14,7 +14,7 @@ namespace AonFreelancing.Models
 
         public override void DisplayProfile()
         {
-            Console.WriteLine($"Overrided Method in Freelancer Class")
+            Console.WriteLine($"Overrided Method in Freelancer Class");
         }
 
     }
