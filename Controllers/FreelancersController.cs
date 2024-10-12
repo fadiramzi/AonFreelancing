@@ -25,7 +25,7 @@ namespace AonFreelancing.Controllers
         [HttpGet("{id}")]
         public IActionResult GetFreelancer(int id)
         {
-            Freelancer fr = freelancerList.FirstOrDefault(f => f.Id == id);
+            Freelancer? fr = freelancerList.FirstOrDefault(f => f.Id == id);
 
             if (fr == null)
             {
@@ -38,8 +38,8 @@ namespace AonFreelancing.Controllers
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
-            Freelancer f = freelancerList.FirstOrDefault(f=>f.Id == id);
-            if(f!= null)
+            Freelancer? f = freelancerList.FirstOrDefault(f => f.Id == id);
+            if (f != null)
             {
                 freelancerList.Remove(f);
                 return Ok("Deleted");
@@ -48,8 +48,5 @@ namespace AonFreelancing.Controllers
 
             return NotFound();
         }
-
-
-
     }
 }
