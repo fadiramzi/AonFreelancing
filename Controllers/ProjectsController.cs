@@ -7,26 +7,26 @@ namespace AonFreelancing.Controllers
     [ApiController]
     public class ProjectsController : ControllerBase
     {
-        private static List<Project>? projectList = new List<Project>();
+        private static List<Project>? _projectList = [];
 
         [HttpGet]
         public IActionResult GetAllProject()
         {
-            if (projectList == null)
+            if (_projectList == null)
             {
                 return NotFound("No projects found!");
             }
-            return Ok(projectList);
+            return Ok(_projectList);
         }
 
         [HttpGet("GetProjectBy{id}")]
         public IActionResult GetProjectById(int id)
         {
-            if (projectList == null)
+            if (_projectList == null)
             {
                 return NotFound("No projects found!");
             }
-            Project? project = projectList.FirstOrDefault(p => p.Id == id);
+            var project = _projectList.FirstOrDefault(p => p.Id == id);
             if (project == null)
             {
                 return NotFound("No projects found!");
@@ -35,23 +35,27 @@ namespace AonFreelancing.Controllers
         }
 
         [HttpPost("CreateProject")]
-        public IActionResult CreateProject([FromBody] Project project)
+        public IActionResult CreateProject([FromBody] Project? project)
         {
-            projectList ??= new List<Project>();
+            _projectList ??= [];
 
-            projectList.Add(project);
-            return CreatedAtAction("CreateProject", new { Id = project.Id }, projectList);
+            if (project == null)
+            {
+                return NotFound("No projects found!");
+            }
+            _projectList.Add(project);
+            return CreatedAtAction("CreateProject", new { project.Id }, _projectList);
         }
 
         [HttpPut("UpdateProjectBy{id}")]
-        public IActionResult UpdatePoject(int id, [FromBody] Project project)
+        public IActionResult UpdateProject(int id, [FromBody] Project project)
         {
-            if (projectList == null)
+            if (_projectList == null)
             {
                 return NotFound("No projects found!");
             }
 
-            Project? proj = projectList.FirstOrDefault(p => p.Id == id);
+            var proj = _projectList.FirstOrDefault(p => p.Id == id);
             if (proj == null)
             {
                 return NotFound("No projects found!");
@@ -65,19 +69,19 @@ namespace AonFreelancing.Controllers
         [HttpDelete("DeleteProjectBy{id}")]
         public IActionResult DeleteProject (int id)
         {
-            if (projectList == null)
+            if (_projectList == null)
             {
                 return NotFound("No projects found!");
             }
 
-            Project? proj = projectList.FirstOrDefault(p => p.Id == id);
+            var proj = _projectList.FirstOrDefault(p => p.Id == id);
 
             if (proj == null)
             {
                 return NotFound("No projects found!");
             }
 
-            projectList.Remove(proj);
+            _projectList.Remove(proj);
             return NoContent();
         }
     }
