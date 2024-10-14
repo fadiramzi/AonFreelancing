@@ -43,6 +43,12 @@ namespace AonFreelancing.Controllers
             {
                 return NotFound("No projects found!");
             }
+
+            if (_projectList.Any(p => p.Id == project.Id))
+            {
+                return Conflict("Project already exists!");
+            }
+            
             _projectList.Add(project);
             return CreatedAtAction("CreateProject", new { project.Id }, _projectList);
         }
