@@ -20,7 +20,7 @@ namespace AonFreelancing.Controllers
         public IActionResult CreateProject(Project project)
         {
             _projectList.Add(project);
-            return CreatedAtAction(nameof(CreateProject), new { Id = project.Id }, project);
+            return CreatedAtAction(nameof(GetProject), new { Id = project.Id }, project);
         }
 
         [HttpGet("{id}")]
