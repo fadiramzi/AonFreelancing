@@ -8,41 +8,41 @@ namespace AonFreelancing.Controllers
     [ApiController]
     public class ProjectController : ControllerBase
     {
-        private static List<Project> ProjectList = new List<Project>();
+        private static readonly List<Project> _projectList = new List<Project>();
         
         [HttpGet]
-        public IActionResult GetAll()
+        public IActionResult GetAllProjects()
         {
-            return Ok(ProjectList);
+            return Ok(_projectList);
         }
 
         [HttpPost]
-        public IActionResult Create(Project project)
+        public IActionResult CreateProject(Project project)
         {
-            ProjectList.Add(project);
-            return CreatedAtAction(nameof(Create), new { Id = project.Id }, project);
+            _projectList.Add(project);
+            return CreatedAtAction(nameof(CreateProject), new { Id = project.Id }, project);
         }
 
         [HttpGet("{id}")]
         public IActionResult GetProject(int id)
         {
-            var Project = ProjectList.FirstOrDefault(p => p.Id == id);
+            var project = _projectList.FirstOrDefault(p => p.Id == id);
 
-            if (Project == null)
+            if (project == null)
             {
                 return NotFound("The resoucre is not found!");
             }
 
-            return Ok(Project);
+            return Ok(project);
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public IActionResult RemoveProject(int id)
         {
-            var Project = ProjectList.FirstOrDefault(p => p.Id == id);
-            if (Project != null)
+            var project = _projectList.FirstOrDefault(p => p.Id == id);
+            if (project != null)
             {
-                ProjectList.Remove(Project);
+                _projectList.Remove(project);
                 return NoContent();
             }
 
