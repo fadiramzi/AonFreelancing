@@ -3,23 +3,17 @@
     public class Project
     {
         private static int _projectCount = 0;
-        private int _id = _projectCount;
+        private readonly int _id;
         public string Title { get; set; }
-        public int Id
-        {
-            get
-            {
-                return _id;
-            }
-        }
+        public int Id => _id;
         public Project()
         {
-            _projectCount++;
+            _id = _projectCount++;
         }
-        public Project(string titel)
+        public Project(string title)
         {
-            _projectCount++;
-            Title = titel;
+            _id = _projectCount++;
+            Title = title;
         }
     }
 }
