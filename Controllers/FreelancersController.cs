@@ -17,36 +17,56 @@ namespace AonFreelancing.Controllers
         {
             _mainAppContext = mainAppContext;
         }
+        // Read all freelancers
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
             // entryPoint of DB comuniction
-            var data = _mainAppContext.Freelancers.ToList();
+            var data = await _mainAppContext.Freelancers.ToListAsync();
             return Ok(data);
         }
         //api/freelancers/
+        // Create freelancer 
         [HttpPost]
-        public IActionResult Create([FromBody] Freelancer freelancer) {
-            _mainAppContext.Freelancers.Add(freelancer);
-            _mainAppContext.SaveChanges(); 
+        public async Task<IActionResult> Create([FromBody] FreelancerInputDTO freelancerDTO) 
+        {
+            // I created FreelancerInputDTO instead of Freelance to get rid of the (password required) bug
+            // Api Response for validation
+            ApiResponse<object> apiResponse;
 
-            return CreatedAtAction("Create", new { Id = freelancer.Id }, freelancer);
+            Freelancer f = new Freelancer();
+            f.Name = freelancerDTO.Name; // Add new Name
+            f.Username = freelancerDTO.Username; // Add new Username
+            f.Password = freelancerDTO.Password; // Add new Password
+            f.Skills = freelancerDTO.Skills; // Add new Skills
+
+            await _mainAppContext.Freelancers.AddAsync(f); // Entity Async for add new item to the database 
+            await _mainAppContext.SaveChangesAsync(); // saving the changes to the database
+            apiResponse = new ApiResponse<object>
+            {
+                IsSuccess = true,
+                Results = f
+            };
+
+
+            return Ok(apiResponse);
         }
 
-        //api/freelancers/Register
+        // api/freelancers/Register
+        // Register freelancer
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] FreelancerDTO freelancerDTO)
         {
             ApiResponse<object> apiResponse;
            
             Freelancer f = new Freelancer();
-            f.Name = freelancerDTO.Name;
-            f.Username = freelancerDTO.Username;
-            f.Password = freelancerDTO.Password;
-            f.Skills = freelancerDTO.Skills;
-           
-            await _mainAppContext.Freelancers.AddAsync(f);
-            await _mainAppContext.SaveChangesAsync();
+            f.Name = freelancerDTO.Name; // Add new Name 
+            f.Username = freelancerDTO.Username; // Add new Username
+            f.Password = freelancerDTO.Password; // Add new Password
+            f.Skills = freelancerDTO.Skills; // Add new Skills
+
+            await _mainAppContext.Freelancers.AddAsync(f); // Entity Async for add new item to the database 
+            await _mainAppContext.SaveChangesAsync(); // saving the changes to the database
             apiResponse = new ApiResponse<object>
             {
                 IsSuccess = true,
@@ -57,6 +77,7 @@ namespace AonFreelancing.Controllers
             return Ok(apiResponse);
         }
 
+        // Read freelancer by id
         [HttpGet("{id}")]
         public async Task<IActionResult> GetFreelancer(int id)
         {
@@ -72,14 +93,15 @@ namespace AonFreelancing.Controllers
 
         }
 
+        // Delete Freelancer by id 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task <IActionResult> Delete(int id)
         {
-            Freelancer f = _mainAppContext.Freelancers.FirstOrDefault(f=>f.Id == id);
+            Freelancer? f = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f=>f.Id == id);
             if(f!= null)
             {
-                _mainAppContext.Remove(f);
-                _mainAppContext.SaveChanges();
+                _mainAppContext.Remove(f); // Entity for deletion.
+                await _mainAppContext.SaveChangesAsync(); // saving the changes to the database
                 return Ok("Deleted");
 
             }
@@ -87,23 +109,25 @@ namespace AonFreelancing.Controllers
             return NotFound();
         }
 
+        // update Freelancer by id (update name, username, password, skills)
         [HttpPut("{id}")]
-        public IActionResult Update(int id, [FromBody] Freelancer freelancer)
+        public async Task<IActionResult> Update(int id, [FromBody] FreelancerInputDTO freelancerDTO)
         {
-            Freelancer f = _mainAppContext.Freelancers.FirstOrDefault(f => f.Id == id);
+            Freelancer? f = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
             if (f != null)
             {
-                f.Name = freelancer.Name;
+                f.Name = freelancerDTO.Name; // update name
+                f.Username = freelancerDTO.Username; // update username
+                f.Password = freelancerDTO.Password; // update password
+                f.Skills = freelancerDTO.Skills; // update skills
 
-                _mainAppContext.SaveChanges();
+                await _mainAppContext.SaveChangesAsync(); // saving the changes to the database
                 return Ok(f);
 
             }
 
             return NotFound();
         }
-
-
 
     }
 }

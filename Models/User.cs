@@ -17,14 +17,14 @@ namespace AonFreelancing.Models
         [StringLength(256)]
         public string Username { get; set; }
 
-
         [JsonIgnore]
         public string Password { get; set; }
+
+        //[JsonIgnore]
         public int Id { get; set; }
 
         public abstract void DisplayProfile();
        
-        
 
         public void Login()
         {
@@ -36,8 +36,6 @@ namespace AonFreelancing.Models
         {
 
         }
-
-
 
     }
 }

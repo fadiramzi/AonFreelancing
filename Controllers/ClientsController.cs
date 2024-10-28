@@ -17,6 +17,8 @@ namespace AonFreelancing.Controllers
             _mainAppContext = mainAppContext;
         }
 
+        // CRUD 
+        // 1 - Read
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] string? Mode) {
             var ClientList = new List<ClientDTO>();
@@ -57,8 +59,9 @@ namespace AonFreelancing.Controllers
             return Ok(ClientList);
         }
 
+        // Create 
         [HttpPost]
-        public IActionResult Create([FromBody] ClientInputDTO clientDTO)
+        public async Task<IActionResult> Create([FromBody] Client client)
         {
             return Ok("created");
         }

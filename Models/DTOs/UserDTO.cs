@@ -14,15 +14,16 @@ namespace AonFreelancing.Models.DTOs
         [MinLength(4,ErrorMessage ="Too short password")]
         public string Password { get; set; }
 
-
     }
 
     public class UserOutDTO
     {
+        [JsonIgnore]
         public int Id { get; set; }
         public string Name { get; set; }
 
         public string Username { get; set; }
 
     }
+
 }
