@@ -15,6 +15,7 @@ namespace AonFreelancing.Models
 
 
         // Has many projects, 1-m
+        //H
         public IEnumerable<Project>? Projects { get; set; }
   
 
