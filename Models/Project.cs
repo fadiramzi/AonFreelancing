@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace AonFreelancing.Models
 {
@@ -8,7 +9,7 @@ namespace AonFreelancing.Models
     [Table("Projects")]
     public class Project
     {
-
+        //[JsonIgnore]  // ignore Id because Id created by default to the database 
         public int Id { get; set; }
         [Required]
         public string Title { get; set; }
@@ -20,6 +21,7 @@ namespace AonFreelancing.Models
 
         // Belongs to a client
         [ForeignKey("ClientId")]
+
         public Client Client { get; set; }
 
         DateTime CreatedAt { get; set; }

@@ -23,4 +23,6 @@ namespace AonFreelancing.Models
             Console.WriteLine($"Client display profile, Company: {CompanyName}");
         }
     }
+
+
 }

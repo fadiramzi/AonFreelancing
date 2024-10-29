@@ -1,4 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace AonFreelancing.Models.DTOs
 {
@@ -9,6 +11,8 @@ namespace AonFreelancing.Models.DTOs
         [AllowNull]
         public string Description { get; set; }
 
+        
+        //[ForeignKey("ClientId")]
         public int ClientId { get; set; }//FK
     }
 }

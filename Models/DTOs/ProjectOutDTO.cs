@@ -11,6 +11,7 @@ namespace AonFreelancing.Models.DTOs
         public string Description { get; set; }
 
         public int ClientId { get; set; }//FK
+        [ForeignKey("ClientId")]
 
         DateTime CreatedAt { get; set; }
     }

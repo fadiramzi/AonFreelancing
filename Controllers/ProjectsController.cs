@@ -12,21 +12,21 @@ namespace AonFreelancing.Controllers
     public class ProjectsController : ControllerBase
     {
         private readonly MainAppContext _mainAppContext;
-        public ProjectsController( MainAppContext mainAppContext)
+        public ProjectsController(MainAppContext mainAppContext)
         {
             _mainAppContext = mainAppContext;
         }
 
         [HttpPost]
-        public IActionResult CreateProject([FromBody] ProjectInputDTO project)
+        public async Task<IActionResult> CreateProject([FromBody] ProjectInputDTO project)
         {
             Project p = new Project();
             p.Title = project.Title;
             p.Description = project.Description;
             p.ClientId = project.ClientId;
 
-            _mainAppContext.Projects.Add(p);
-            _mainAppContext.SaveChanges();
+            await _mainAppContext.Projects.AddAsync(p);
+            await _mainAppContext.SaveChangesAsync();
             return Ok(p);
         }
 
@@ -35,11 +35,11 @@ namespace AonFreelancing.Controllers
         public IActionResult GetProject(int id)
         {
             var project = _mainAppContext.Projects
-                .Include(p=>p.Client)
+                .Include(p => p.Client)
                 .FirstOrDefault(p => p.Id == id);
 
             return Ok(project);
-            
+
         }
 
 
