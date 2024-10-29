@@ -104,17 +104,31 @@ namespace AonFreelancing.Controllers
             return NotFound($"No client with {Id} ID.");
         }
 
+        //Creating a new client
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ClientInputDTO clientDTO)
+        public async Task<IActionResult> CreateClient([FromBody] ClientInputDTO clientDTO)
         {
             Client client = new();
             client.Name = clientDTO.Name;
-            client.CompanyName = clientDTO.CompanyName;
             client.Username = clientDTO.Username;
+            client.CompanyName = clientDTO.CompanyName;
             client.Password = clientDTO.Password;
             await _mainAppContext.Clients.AddAsync(client);
-            //await _mainAppContext.SaveChangesAsync();
+            await _mainAppContext.SaveChangesAsync();
             return Ok(client);
+        }
+
+        //Removing a client
+        [HttpDelete]
+        public async Task<IActionResult> RemoveClientById([FromQuery] int Id)
+        {
+            Client? client = await _mainAppContext.Clients.FindAsync(Id);
+            if (client is null)
+                return NotFound($"Client {Id} is Not Found.");
+            _mainAppContext.Clients.Remove(client);
+            await _mainAppContext.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }
