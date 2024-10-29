@@ -70,19 +70,16 @@ namespace AonFreelancing.Controllers
             return Ok(freelancerDTO);
         }
 
+        // Remove Freelancer by id
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> RemoveFreelancerById(int id)
         {
-            Freelancer f = _mainAppContext.Freelancers.FirstOrDefault(f=>f.Id == id);
-            if(f!= null)
-            {
-                _mainAppContext.Remove(f);
-                _mainAppContext.SaveChanges();
-                return Ok("Deleted");
-
-            }
-
-            return NotFound();
+            Freelancer? freelancer = await _mainAppContext.Freelancers.FindAsync(id);
+            if(freelancer == null)
+                return NotFound($"Freelancer { id } is not found.");
+            _mainAppContext.Remove(freelancer);
+            await _mainAppContext.SaveChangesAsync();
+            return Ok("Deleted");
         }
 
         [HttpPut("{id}")]
