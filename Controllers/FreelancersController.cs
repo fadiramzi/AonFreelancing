@@ -17,12 +17,14 @@ namespace AonFreelancing.Controllers
         {
             _mainAppContext = mainAppContext;
         }
+
+        //Get all freelancers
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task <IActionResult> GetAllFreelancers()
         {
             // entryPoint of DB comuniction
-            var data = _mainAppContext.Freelancers.ToList();
-            return Ok(data);
+            List<Freelancer> freelancers = await _mainAppContext.Freelancers.ToListAsync();
+            return Ok(freelancers);
         }
         //api/freelancers/
         [HttpPost]
