@@ -11,7 +11,6 @@ namespace AonFreelancing.Models.DTOs
         public string? Description { get; set; }
         public int ClientId { get; set; }//FK
         public DateTime CreatedAt { get; set; }
-
         public ProjectOutputDTO() { }   
         public ProjectOutputDTO(Project project)
         {

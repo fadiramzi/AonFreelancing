@@ -28,7 +28,8 @@ namespace AonFreelancing.Models
         {
             Title = projectInputDTO.Title;
             Description = projectInputDTO.Description;
-            ClientId = projectInputDTO.ClientId;
+            ClientId = projectInputDTO.ClientId.Value;
+            CreatedAt = DateTime.Now;
         }
 
     }

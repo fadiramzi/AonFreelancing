@@ -12,6 +12,6 @@ namespace AonFreelancing.Models.DTOs
         public string? Description { get; set; }
         
         [Required]
-        public int ClientId { get; set; }//FK
+        public int? ClientId { get; set; }//FK
     }
 }
