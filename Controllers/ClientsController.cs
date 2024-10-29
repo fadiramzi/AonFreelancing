@@ -130,5 +130,20 @@ namespace AonFreelancing.Controllers
 
             return NoContent();
         }
+
+        [HttpPut]
+        public async Task<IActionResult> UpdateClient([FromQuery] int Id, [FromBody] ClientInputDTO clientDTO)
+        {
+            Client? client = await _mainAppContext.Clients.FindAsync(Id);
+            if (client is null)
+                return NotFound("Client { Id} is Not Found.");
+            client.Name = clientDTO.Name;
+            client.Username = clientDTO.Username;
+            client.CompanyName = clientDTO.CompanyName;
+            client.Password = clientDTO.Password;
+            await _mainAppContext.SaveChangesAsync();
+            return Ok(client);
+        }
+
     }
 }
