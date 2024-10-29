@@ -105,9 +105,16 @@ namespace AonFreelancing.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create([FromBody] ClientInputDTO clientDTO)
+        public async Task<IActionResult> Create([FromBody] ClientInputDTO clientDTO)
         {
-            return Ok("created");
+            Client client = new();
+            client.Name = clientDTO.Name;
+            client.CompanyName = clientDTO.CompanyName;
+            client.Username = clientDTO.Username;
+            client.Password = clientDTO.Password;
+            await _mainAppContext.Clients.AddAsync(client);
+            //await _mainAppContext.SaveChangesAsync();
+            return Ok(client);
         }
     }
 }
