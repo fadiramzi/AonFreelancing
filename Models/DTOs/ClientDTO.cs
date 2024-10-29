@@ -2,7 +2,7 @@
 
 namespace AonFreelancing.Models.DTOs
 {
-    public class ClientDTO:UserOutDTO
+    public class ClientDTO:UserOutputDTO
     {
         public string CompanyName { get; set; }
 
@@ -10,7 +10,7 @@ namespace AonFreelancing.Models.DTOs
         public IEnumerable<ProjectOutDTO> Projects { get; set; }
     }
 
-    public class ClientInputDTO: UserDTO
+    public class ClientInputDTO: UserInputDTO
     {
         [Required]
         [MinLength(4,ErrorMessage ="Invalid Company Name")]

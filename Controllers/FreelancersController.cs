@@ -4,6 +4,8 @@ using AonFreelancing.Models.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography.Xml;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AonFreelancing.Controllers
 {
@@ -17,42 +19,55 @@ namespace AonFreelancing.Controllers
         {
             _mainAppContext = mainAppContext;
         }
+
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
             // entryPoint of DB comuniction
-            var data = _mainAppContext.Freelancers.ToList();
-            return Ok(data);
+            List<FreelancerOutputDTO> FreelancerOutputDTOs = await _mainAppContext.Freelancers.Select(freelancer => new FreelancerOutputDTO(freelancer)).ToListAsync();
+            ApiResponse<object> apiResponse = new ApiResponse<object>() { IsSuccess = true, Results = FreelancerOutputDTOs };
+
+            return Ok(apiResponse);
         }
+
         //api/freelancers/
         [HttpPost]
-        public IActionResult Create([FromBody] Freelancer freelancer) {
-            _mainAppContext.Freelancers.Add(freelancer);
-            _mainAppContext.SaveChanges(); 
+        public async Task<IActionResult> Create([FromBody] FreelancerInputDTO freelancerInputDTO)
+        {
+            Freelancer freelancer = new Freelancer(freelancerInputDTO);
 
-            return CreatedAtAction("Create", new { Id = freelancer.Id }, freelancer);
+            await _mainAppContext.Freelancers.AddAsync(freelancer);
+            await _mainAppContext.SaveChangesAsync();
+
+            ApiResponse<object> apiResponse = new ApiResponse<object>()
+            {
+                IsSuccess = true,
+                Results = new FreelancerOutputDTO(freelancer)
+            };
+
+            return CreatedAtAction(nameof(GetFreelancer), new { Id = freelancer.Id }, apiResponse);
         }
 
         //api/freelancers/Register
         [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] FreelancerDTO freelancerDTO)
+        public async Task<IActionResult> Register([FromBody] FreelancerInputDTO freelancerDTO)
         {
             ApiResponse<object> apiResponse;
-           
+
             Freelancer f = new Freelancer();
             f.Name = freelancerDTO.Name;
             f.Username = freelancerDTO.Username;
             f.Password = freelancerDTO.Password;
             f.Skills = freelancerDTO.Skills;
-           
+
             await _mainAppContext.Freelancers.AddAsync(f);
             await _mainAppContext.SaveChangesAsync();
             apiResponse = new ApiResponse<object>
             {
                 IsSuccess = true,
-                Results = f
+                Results = new FreelancerOutputDTO(f)
             };
-           
+
 
             return Ok(apiResponse);
         }
@@ -60,50 +75,60 @@ namespace AonFreelancing.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetFreelancer(int id)
         {
-           
-            Freelancer? fr = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
-           
-            if (fr == null)
-            {
-                return NotFound("The resoucre is not found!");
-            }
 
-            return Ok(fr);
+            Freelancer? fr = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
+
+            if (fr == null)
+                return NotFound("The resource is not found!");
+
+            ApiResponse<object> apiResponse = new ApiResponse<object>
+            {
+                IsSuccess = true,
+                Results = new FreelancerOutputDTO(fr)
+            };
+            return Ok(apiResponse);
 
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            Freelancer f = _mainAppContext.Freelancers.FirstOrDefault(f=>f.Id == id);
-            if(f!= null)
+            Freelancer? f = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
+            if (f != null)
             {
                 _mainAppContext.Remove(f);
-                _mainAppContext.SaveChanges();
-                return Ok("Deleted");
-
+                await _mainAppContext.SaveChangesAsync();
+                ApiResponse<object> apiResponse = new ApiResponse<object>
+                {
+                    IsSuccess = true,
+                    Results = "Deleted"
+                };
+                return Ok(apiResponse);
             }
 
             return NotFound();
         }
 
         [HttpPut("{id}")]
-        public IActionResult Update(int id, [FromBody] Freelancer freelancer)
+        public async Task<IActionResult> Update(int id, [FromBody] FreelancerInputDTO freelancerInputDTO)
         {
-            Freelancer f = _mainAppContext.Freelancers.FirstOrDefault(f => f.Id == id);
-            if (f != null)
+            Freelancer? freelancer = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
+            if (freelancer != null)
             {
-                f.Name = freelancer.Name;
+                freelancer.Username = freelancerInputDTO?.Username ?? freelancer.Username;
+                freelancer.Name = freelancerInputDTO.Name ?? freelancer.Name;
+                freelancer.Skills = freelancerInputDTO.Skills ?? freelancer.Skills;
+                freelancer.Password = freelancerInputDTO.Password ?? freelancer.Password;
 
-                _mainAppContext.SaveChanges();
-                return Ok(f);
-
+                await _mainAppContext.SaveChangesAsync();
+                ApiResponse<object> apiResponse = new ApiResponse<object>
+                {
+                    IsSuccess = true,
+                    Results = new FreelancerOutputDTO(freelancer)
+                };
+                return Ok(apiResponse);
             }
-
             return NotFound();
         }
-
-
-
     }
 }

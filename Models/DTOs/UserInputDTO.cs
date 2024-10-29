@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace AonFreelancing.Models.DTOs
 {
-    public class UserDTO
+    public class UserInputDTO
     {
         [StringLength(64)]
         public string Name { get; set; }
@@ -17,7 +17,7 @@ namespace AonFreelancing.Models.DTOs
 
     }
 
-    public class UserOutDTO
+    public class UserOutputDTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
