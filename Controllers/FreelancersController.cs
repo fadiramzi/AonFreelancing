@@ -20,7 +20,7 @@ namespace AonFreelancing.Controllers
 
         //Get all freelancers
         [HttpGet]
-        public async Task <IActionResult> GetAllFreelancers()
+        public async Task<IActionResult> GetAllFreelancers()
         {
             // entryPoint of DB comuniction
             List<Freelancer> freelancers = await _mainAppContext.Freelancers.ToListAsync();
@@ -33,13 +33,13 @@ namespace AonFreelancing.Controllers
         public async Task<IActionResult> CreateFreelancer([FromBody] FreelancerInputDTO freelancerDTO)
         {
             ApiResponse<object> apiResponse;
-           
+
             Freelancer freelancer = new Freelancer();
             freelancer.Name = freelancerDTO.Name;
             freelancer.Username = freelancerDTO.Username;
             freelancer.Password = freelancerDTO.Password;
             freelancer.Skills = freelancerDTO.Skills;
-           
+
             await _mainAppContext.Freelancers.AddAsync(freelancer);
             await _mainAppContext.SaveChangesAsync();
             apiResponse = new ApiResponse<object>
@@ -47,23 +47,27 @@ namespace AonFreelancing.Controllers
                 IsSuccess = true,
                 Results = freelancer
             };
-           
+
             return Ok(apiResponse);
         }
 
+        // Get Freelancer by Id
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetFreelancer(int id)
+        public async Task<IActionResult> GetFreelancerById(int id)
         {
-           
-            Freelancer? fr = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
-           
-            if (fr == null)
+            Freelancer? freeelancer = await _mainAppContext.Freelancers.FindAsync(id);
+            if (freeelancer == null)
+                return NotFound($"Freelancer {id} is not found.");
+
+            FreelancerOutDTO freelancerDTO = new()
             {
-                return NotFound("The resoucre is not found!");
-            }
+                Id = freeelancer.Id,
+                Name = freeelancer.Name,
+                Username = freeelancer.Username,
+                Skills = freeelancer.Skills,
+            };
 
-            return Ok(fr);
-
+            return Ok(freelancerDTO);
         }
 
         [HttpDelete("{id}")]
@@ -96,7 +100,6 @@ namespace AonFreelancing.Controllers
 
             return NotFound();
         }
-
 
 
     }
