@@ -17,17 +17,20 @@ namespace AonFreelancing.Controllers
             _mainAppContext = mainAppContext;
         }
 
+        // Create Project
         [HttpPost]
-        public IActionResult CreateProject([FromBody] ProjectInputDTO project)
+        public async Task <IActionResult> CreateProject([FromBody] ProjectInputDTO projectDTO)
         {
-            Project p = new Project();
-            p.Title = project.Title;
-            p.Description = project.Description;
-            p.ClientId = project.ClientId;
+            Project project = new()
+            {
+                Title = projectDTO.Title,
+                Description = projectDTO.Description,
+                ClientId = projectDTO.ClientId,
+            };
 
-            _mainAppContext.Projects.Add(p);
-            _mainAppContext.SaveChanges();
-            return Ok(p);
+            await _mainAppContext.Projects.AddAsync(project);
+            await _mainAppContext.SaveChangesAsync();
+            return Ok(project);
         }
 
 

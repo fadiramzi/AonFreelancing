@@ -88,9 +88,7 @@ namespace AonFreelancing.Controllers
         {
             Freelancer? freelancer = await _mainAppContext.Freelancers.FindAsync(id);
             if (freelancer == null)
-            {
                 return NotFound($"Freelancer { id } is not found.");
-            }
             freelancer.Name = freelancerDTO.Name; 
             freelancer.Username = freelancerDTO.Username;
             freelancer.Password = freelancerDTO.Password;
