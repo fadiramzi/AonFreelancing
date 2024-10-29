@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AonFreelancing.Models.DTOs;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -16,7 +17,15 @@ namespace AonFreelancing.Models
 
         // Has many projects, 1-m
         public IEnumerable<Project>? Projects { get; set; }
-  
+
+        public Client() { }
+        public Client(ClientInputDTO clientInputDTO)
+        {
+            Name = clientInputDTO.Name;
+            Username = clientInputDTO.Username;
+            Password = clientInputDTO.Password;
+            CompanyName = clientInputDTO.CompanyName;
+        }
 
         public override void DisplayProfile()
         {
