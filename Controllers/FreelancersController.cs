@@ -79,23 +79,25 @@ namespace AonFreelancing.Controllers
                 return NotFound($"Freelancer { id } is not found.");
             _mainAppContext.Remove(freelancer);
             await _mainAppContext.SaveChangesAsync();
-            return Ok("Deleted");
+            return NoContent();
         }
 
+        // Updating Freelancer by Id
         [HttpPut("{id}")]
-        public IActionResult Update(int id, [FromBody] Freelancer freelancer)
+        public async Task<IActionResult> UpdateFreelancerById(int id, [FromBody] FreelancerInputDTO freelancerDTO)
         {
-            Freelancer f = _mainAppContext.Freelancers.FirstOrDefault(f => f.Id == id);
-            if (f != null)
+            Freelancer? freelancer = await _mainAppContext.Freelancers.FindAsync(id);
+            if (freelancer == null)
             {
-                f.Name = freelancer.Name;
-
-                _mainAppContext.SaveChanges();
-                return Ok(f);
-
+                return NotFound($"Freelancer { id } is not found.");
             }
+            freelancer.Name = freelancerDTO.Name; 
+            freelancer.Username = freelancerDTO.Username;
+            freelancer.Password = freelancerDTO.Password;
+            freelancer.Skills = freelancerDTO.Skills;
 
-            return NotFound();
+            await _mainAppContext.SaveChangesAsync();
+            return Ok();
         }
 
 
