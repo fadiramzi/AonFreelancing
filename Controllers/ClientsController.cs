@@ -57,7 +57,7 @@ namespace AonFreelancing.Controllers
                 .ToListAsync();
             }
             else
-                return BadRequest($"{loadProjects} is not a valid loadProjects.");
+                return BadRequest($"{loadProjects} is not a valid value.");
             return Ok(ClientList);
         }
         //Get client by Id
@@ -97,7 +97,7 @@ namespace AonFreelancing.Controllers
                  }).SingleOrDefaultAsync(); 
             }
             else
-                return BadRequest($"{loadProjects} is not a valid loadProjects.");
+                return BadRequest($"{loadProjects} is not a valid value.");
 
             if (client is not null)
                 return Ok(client);
