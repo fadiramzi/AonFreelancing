@@ -26,36 +26,28 @@ namespace AonFreelancing.Controllers
             List<Freelancer> freelancers = await _mainAppContext.Freelancers.ToListAsync();
             return Ok(freelancers);
         }
-        //api/freelancers/
-        [HttpPost]
-        public IActionResult Create([FromBody] Freelancer freelancer) {
-            _mainAppContext.Freelancers.Add(freelancer);
-            _mainAppContext.SaveChanges(); 
 
-            return CreatedAtAction("Create", new { Id = freelancer.Id }, freelancer);
-        }
-
-        //api/freelancers/Register
+        // Create a new Freelancer
+        // "api/freelancers/Register"
         [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] FreelancerDTO freelancerDTO)
+        public async Task<IActionResult> CreateFreelancer([FromBody] FreelancerInputDTO freelancerDTO)
         {
             ApiResponse<object> apiResponse;
            
-            Freelancer f = new Freelancer();
-            f.Name = freelancerDTO.Name;
-            f.Username = freelancerDTO.Username;
-            f.Password = freelancerDTO.Password;
-            f.Skills = freelancerDTO.Skills;
+            Freelancer freelancer = new Freelancer();
+            freelancer.Name = freelancerDTO.Name;
+            freelancer.Username = freelancerDTO.Username;
+            freelancer.Password = freelancerDTO.Password;
+            freelancer.Skills = freelancerDTO.Skills;
            
-            await _mainAppContext.Freelancers.AddAsync(f);
+            await _mainAppContext.Freelancers.AddAsync(freelancer);
             await _mainAppContext.SaveChangesAsync();
             apiResponse = new ApiResponse<object>
             {
                 IsSuccess = true,
-                Results = f
+                Results = freelancer
             };
            
-
             return Ok(apiResponse);
         }
 
