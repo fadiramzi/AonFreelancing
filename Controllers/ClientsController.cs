@@ -51,7 +51,9 @@ namespace AonFreelancing.Controllers
                          Id = p.Id,
                          Title = p.Title,
                          Description = p.Description,
-                         ClientId = p.ClientId
+                         ClientId = p.ClientId,
+                         FreelancerId = p.FreelancerId
+
                      })
                  })
                 .ToListAsync();
@@ -94,7 +96,8 @@ namespace AonFreelancing.Controllers
                         Id = p.Id,
                         Title = p.Title,
                         Description = p.Description,
-                        ClientId = p.ClientId
+                        ClientId = p.ClientId,
+                        FreelancerId = p.FreelancerId
                     })
                 }).FirstOrDefaultAsync(c => c.Id == id);
 

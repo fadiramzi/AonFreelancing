@@ -17,6 +17,16 @@ namespace AonFreelancing.Controllers
             _mainAppContext = mainAppContext;
         }
 
+        // Read all Projects
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            // entryPoint of DB comuniction
+            var data = await _mainAppContext.Projects.ToListAsync();
+            return Ok(data);
+        }
+
+        // Create new project
         [HttpPost]
         public async Task<IActionResult> CreateProject([FromBody] ProjectInputDTO project)
         {
@@ -24,24 +34,65 @@ namespace AonFreelancing.Controllers
             p.Title = project.Title;
             p.Description = project.Description;
             p.ClientId = project.ClientId;
+            p.FreelancerId = project.FreelancerId;
 
             await _mainAppContext.Projects.AddAsync(p);
             await _mainAppContext.SaveChangesAsync();
             return Ok(p);
         }
 
-
+        // Get project by id
         [HttpGet("{id}")]
-        public IActionResult GetProject(int id)
+        public async Task<IActionResult> GetProject(int id)
         {
-            var project = _mainAppContext.Projects
-                .Include(p => p.Client)
-                .FirstOrDefault(p => p.Id == id);
 
-            return Ok(project);
+            Project? p = await _mainAppContext.Projects.FirstOrDefaultAsync(p => p.Id == id);
+
+            if (p == null)
+            {
+                return NotFound("The resoucre is not found!");
+            }
+
+            return Ok(p);
 
         }
 
+
+        // Delete Projects by id 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            Project? p = await _mainAppContext.Projects.FirstOrDefaultAsync(p => p.Id == id);
+            if (p != null)
+            {
+                _mainAppContext.Remove(p); // Entity for deletion.
+                await _mainAppContext.SaveChangesAsync(); // saving the changes to the database
+                return Ok("Deleted");
+
+            }
+
+            return NotFound();
+        }
+
+        // update Project by id 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] ProjectInputDTO ProjectDTO)
+        {
+            Project? p = await _mainAppContext.Projects.FirstOrDefaultAsync(p => p.Id == id);
+            if (p != null)
+            {
+                p.Title = ProjectDTO.Title; // update title
+                p.Description = ProjectDTO.Description; // update description
+                p.ClientId = ProjectDTO.ClientId; // update ClientId
+                p.FreelancerId = ProjectDTO.FreelancerId; // update FreelancerId
+
+                await _mainAppContext.SaveChangesAsync(); // saving the changes to the database
+                return Ok(p);
+
+            }
+
+            return NotFound();
+        }
 
     }
 }

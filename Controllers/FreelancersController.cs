@@ -28,7 +28,7 @@ namespace AonFreelancing.Controllers
         //api/freelancers/
         // Create freelancer 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] FreelancerInputDTO freelancerDTO) 
+        public async Task<IActionResult> Create([FromBody] FreelancerInputDTO freelancerDTO)
         {
             // I created FreelancerInputDTO instead of Freelance to get rid of the (password required) bug
             // Api Response for validation
@@ -58,7 +58,7 @@ namespace AonFreelancing.Controllers
         public async Task<IActionResult> Register([FromBody] FreelancerDTO freelancerDTO)
         {
             ApiResponse<object> apiResponse;
-           
+
             Freelancer f = new Freelancer();
             f.Name = freelancerDTO.Name; // Add new Name 
             f.Username = freelancerDTO.Username; // Add new Username
@@ -72,7 +72,7 @@ namespace AonFreelancing.Controllers
                 IsSuccess = true,
                 Results = f
             };
-           
+
 
             return Ok(apiResponse);
         }
@@ -81,9 +81,9 @@ namespace AonFreelancing.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetFreelancer(int id)
         {
-           
+
             Freelancer? fr = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
-           
+
             if (fr == null)
             {
                 return NotFound("The resoucre is not found!");
@@ -95,10 +95,10 @@ namespace AonFreelancing.Controllers
 
         // Delete Freelancer by id 
         [HttpDelete("{id}")]
-        public async Task <IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            Freelancer? f = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f=>f.Id == id);
-            if(f!= null)
+            Freelancer? f = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
+            if (f != null)
             {
                 _mainAppContext.Remove(f); // Entity for deletion.
                 await _mainAppContext.SaveChangesAsync(); // saving the changes to the database

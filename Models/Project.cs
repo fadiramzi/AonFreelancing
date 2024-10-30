@@ -9,7 +9,7 @@ namespace AonFreelancing.Models
     [Table("Projects")]
     public class Project
     {
-        //[JsonIgnore]  // ignore Id because Id created by default to the database 
+        //[JsonIgnore]  // ignore Id because Id created by default to the database (just for testing)
         public int Id { get; set; }
         [Required]
         public string Title { get; set; }
@@ -23,6 +23,12 @@ namespace AonFreelancing.Models
         [ForeignKey("ClientId")]
 
         public Client Client { get; set; }
+
+        public int FreelancerId { get; set; }//FK
+
+        [ForeignKey("FreelancerId")]
+
+        public Freelancer Freelancer { get; set; }
 
         DateTime CreatedAt { get; set; }
 
