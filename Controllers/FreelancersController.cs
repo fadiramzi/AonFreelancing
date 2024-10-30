@@ -81,7 +81,7 @@ namespace AonFreelancing.Controllers
 
         // api/v1/freelancers/{id}?loadProjects=x
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetAll(int id, [FromQuery] int? loadProjects)
+        public async Task<IActionResult> LoadProjectForFreelancer(int id, [FromQuery] int? loadProjects)
         {
             FreelancerOutDTO? freelnacer = new FreelancerOutDTO();
             if (loadProjects == null || loadProjects == 0)
