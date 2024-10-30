@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AonFreelancing.Models.DTOs
 {
@@ -9,6 +10,12 @@ namespace AonFreelancing.Models.DTOs
         [AllowNull]
         public string Description { get; set; }
 
-        public int ClientId { get; set; }//FK
+
+       public int ClientId {  get; set; }//FK
+        
+        public DateTime CreatedAt { get; set; }
+
+
     }
+
 }

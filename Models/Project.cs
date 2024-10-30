@@ -8,7 +8,7 @@ namespace AonFreelancing.Models
     [Table("Projects")]
     public class Project
     {
-
+        [Key]
         public int Id { get; set; }
         [Required]
         public string Title { get; set; }
@@ -21,8 +21,11 @@ namespace AonFreelancing.Models
         // Belongs to a client
         [ForeignKey("ClientId")]
         public Client Client { get; set; }
-
-        DateTime CreatedAt { get; set; }
+        [AllowNull]
+        public int? FreelancerId {  get; set; }
+        [ForeignKey("FreelancerId")]
+        public Freelancer Freelancer { get; set; }
+       public DateTime CreatedAt { get; set; }
 
 
 

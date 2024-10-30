@@ -3,6 +3,7 @@ using System;
 using AonFreelancing.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    partial class MainAppContextModelSnapshot : ModelSnapshot
+    [Migration("20241029191101_FreelancerMigration")]
+    partial class FreelancerMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
@@ -44,33 +47,6 @@ namespace AonFreelancing.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Clients");
-                });
-
-            modelBuilder.Entity("AonFreelancing.Models.DTOs.ProjectOutDTO", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ClientId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("FreelancerId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FreelancerId");
-
-                    b.ToTable("ProjectOutDTO");
                 });
 
             modelBuilder.Entity("AonFreelancing.Models.Freelancer", b =>
@@ -118,7 +94,7 @@ namespace AonFreelancing.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("FreelancerId")
+                    b.Property<int>("FreelancerId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Title")
@@ -134,13 +110,6 @@ namespace AonFreelancing.Migrations
                     b.ToTable("Projects");
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.DTOs.ProjectOutDTO", b =>
-                {
-                    b.HasOne("AonFreelancing.Models.Freelancer", null)
-                        .WithMany("Projects")
-                        .HasForeignKey("FreelancerId");
-                });
-
             modelBuilder.Entity("AonFreelancing.Models.Project", b =>
                 {
                     b.HasOne("AonFreelancing.Models.Client", "Client")
@@ -150,8 +119,10 @@ namespace AonFreelancing.Migrations
                         .IsRequired();
 
                     b.HasOne("AonFreelancing.Models.Freelancer", "Freelancer")
-                        .WithMany()
-                        .HasForeignKey("FreelancerId");
+                        .WithMany("Projects")
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Client");
 

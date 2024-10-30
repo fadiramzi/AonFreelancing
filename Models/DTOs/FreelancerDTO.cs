@@ -4,5 +4,6 @@
     {
 
         public string Skills { get; set; }
+  
     }
 }
