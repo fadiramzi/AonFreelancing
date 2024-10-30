@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AonFreelancing.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/projects")]
     [ApiController]
     public class ProjectsController : ControllerBase
     {
@@ -17,31 +17,88 @@ namespace AonFreelancing.Controllers
             _mainAppContext = mainAppContext;
         }
 
-        [HttpPost]
-        public IActionResult CreateProject([FromBody] ProjectInputDTO project)
+        //api/Projects Get
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
-            Project p = new Project();
-            p.Title = project.Title;
-            p.Description = project.Description;
-            p.ClientId = project.ClientId;
-
-            _mainAppContext.Projects.Add(p);
-            _mainAppContext.SaveChanges();
-            return Ok(p);
+            // I/O with DataBase
+            var projects = await _mainAppContext.Projects
+                                .Include(p => p.Client)
+                                .Include(p => p.Freelancer)
+                                .ToListAsync();
+            return Ok(projects);
         }
 
-
-        [HttpGet("{id}")]
-        public IActionResult GetProject(int id)
+        //api/Projects Post
+        [HttpPost]
+        public async Task<IActionResult> CreateProject([FromBody] ProjectInputDTO projectDto)
         {
-            var project = _mainAppContext.Projects
-                .Include(p=>p.Client)
-                .FirstOrDefault(p => p.Id == id);
+            Project project = new Project();
+            project.Title = projectDto.Title;
+            project.Description = projectDto.Description;
+            project.ClientId = projectDto.ClientId;
+
+            // I/O with DataBase
+            await _mainAppContext.Projects.AddAsync(project);
+            await _mainAppContext.SaveChangesAsync();
+
+            return CreatedAtAction("Create", new { Id = project.Id }, project);
+        }
+
+        //api/Projects/{id}  Get
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProject(int id)
+        {
+            
+
+            // Searching in DataBase
+            Project? project = await _mainAppContext.Projects
+                                          .Include(p => p.Client)
+                                          .FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (project == null)
+            {
+                return NotFound("The Project is not found!");
+            }
 
             return Ok(project);
-            
         }
 
+        //api/Project/{id} Delete
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteProject(int id)
+        {
+            // Searching in DataBase
+            Project? project = await _mainAppContext.Projects.FirstOrDefaultAsync(pr => pr.Id == id);
 
+            if (project == null)
+            {
+                return NotFound("The Project is not found!");
+            }
+
+            // I/O with DataBase
+            _mainAppContext.Remove(project);
+            await _mainAppContext.SaveChangesAsync();
+            return Ok("The Project is deleted !");
+        }
+
+        //api/Project/{id} Update
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateProject(int id, [FromBody] Project updatedProject)
+        {
+            // Searching in DataBase
+            Project? currProject = await _mainAppContext.Projects.FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (currProject == null)
+            {
+                return NotFound("The Project is not found!");
+            }
+
+            // I/O with DataBase
+            currProject = updatedProject;
+            await _mainAppContext.SaveChangesAsync();
+            return Ok(currProject);
+
+        }
     }
 }
