@@ -81,5 +81,17 @@ namespace AonFreelancing.Controllers
             await _mainAppContext.SaveChangesAsync();
             return Ok();
         }
+
+        // Remove project by Id
+        [HttpDelete]
+        public async Task<IActionResult> RemoveProjectById(int id)
+        {
+            Project? project = await _mainAppContext.Projects.FindAsync(id);
+            if (project == null)
+                return NotFound($"Project {id} is not found.");
+            _mainAppContext.Remove(project);
+            await _mainAppContext.SaveChangesAsync();
+            return Ok();
+        }
     }
 }
