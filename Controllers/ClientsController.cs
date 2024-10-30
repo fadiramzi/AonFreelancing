@@ -74,7 +74,7 @@ namespace AonFreelancing.Controllers
                 client = await _mainAppContext.Clients.Include(c => c.Projects).FirstOrDefaultAsync(c => c.Id == id);
 
             if (client == null)
-                return NotFound("The Resource is not found");
+                return NotFound(new ApiResponse<object> { Error = new Error { Message = "Resource not found", Code = "404" } });
 
             ApiResponse<object> apiResponse = new ApiResponse<object>
             {
@@ -105,7 +105,7 @@ namespace AonFreelancing.Controllers
         {
             Client? client = await _mainAppContext.Clients.FirstOrDefaultAsync(c => c.Id == id);
             if (client == null)
-                return NotFound("The resource is not found");
+                return NotFound(new ApiResponse<object> { Error = new Error { Message = "Resource not found", Code = "404" } });
 
             client.Username = clientInputDTO.Username;
             client.Name = clientInputDTO.Name;
@@ -128,7 +128,7 @@ namespace AonFreelancing.Controllers
         {
             Client? client = await _mainAppContext.Clients.Include(c=>c.Projects).FirstOrDefaultAsync(c => c.Id == id);
             if (client == null)
-                return NotFound("The resource is not found");
+                return NotFound(new ApiResponse<object> { Error = new Error { Message = "Resource not found", Code = "404" } });
 
             client.Projects = [];//delete associated projects
             _mainAppContext.Clients.Remove(client);

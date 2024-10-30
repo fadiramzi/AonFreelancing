@@ -23,7 +23,7 @@ namespace AonFreelancing.Models.DTOs
     public class ClientInputDTO : UserInputDTO
     {
         [Required]
-        [MinLength(4, ErrorMessage = "Invalid Company Name")]
+        [MinLength(4, ErrorMessage = "Company Name is too short")]
         public string CompanyName { get; set; }
     }
 }

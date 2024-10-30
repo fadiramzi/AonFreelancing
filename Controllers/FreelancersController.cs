@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography.Xml;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AonFreelancing.Controllers
 {
@@ -85,7 +84,7 @@ namespace AonFreelancing.Controllers
                 freelancer = await _mainAppContext.Freelancers.Include(f => f.Projects).FirstOrDefaultAsync(f => f.Id == id);
 
             if (freelancer == null)
-                return NotFound("The resource is not found!");
+                return NotFound(new ApiResponse<object>() {Error = new Error { Message = "The resource is not found!", Code = "404" } });
 
             ApiResponse<object> apiResponse = new ApiResponse<object>
             {
@@ -113,7 +112,7 @@ namespace AonFreelancing.Controllers
                 return Ok(apiResponse);
             }
 
-            return NotFound();
+            return NotFound(new ApiResponse<object> { Error = new Error { Message = "Resource not found", Code = "404" } });
         }
 
         [HttpPut("{id}")]
@@ -135,7 +134,7 @@ namespace AonFreelancing.Controllers
                 };
                 return Ok(apiResponse);
             }
-            return NotFound();
+            return NotFound(new ApiResponse<object> { Error = new Error { Message = "Resource not found", Code = "404" } });
         }
     }
 }

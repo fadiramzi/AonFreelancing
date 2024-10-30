@@ -46,7 +46,7 @@ namespace AonFreelancing.Controllers
                 project = await _mainAppContext.Projects.Include(p => p.Freelancers).FirstOrDefaultAsync(p => p.Id == id);
 
             if (project == null)
-                return NotFound("The resource is not found");
+                return NotFound(new ApiResponse<object> { Error = new Error { Message = "Resource not found", Code = "404" } });
 
             ApiResponse<object> apiResponse = new ApiResponse<object>()
             {
@@ -67,7 +67,7 @@ namespace AonFreelancing.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new ApiResponse<object>() { IsSuccess = false, Error = new Error() { Message = ex.Message, Code = "500" } });
+                return StatusCode(500, new ApiResponse<object>() { Error = new Error() { Message = ex.Message, Code = "500" } });
             }
             ApiResponse<object> apiResponse = new ApiResponse<object>()
             {
@@ -103,11 +103,11 @@ namespace AonFreelancing.Controllers
         {
             Project? project = await _mainAppContext.Projects.Include(p => p.Freelancers).FirstOrDefaultAsync(p => p.Id == id);
             if (project == null)
-                return NotFound("The resource is not found");
+                return NotFound(new ApiResponse<object> { Error = new Error { Message = "Resource not found", Code = "404" } });
 
             Freelancer? freelancer = await _mainAppContext.Freelancers.Include(f => f.Projects).FirstOrDefaultAsync(f => f.Id == freelancerId);
             if (freelancer == null)
-                return UnprocessableEntity();
+                return UnprocessableEntity(new ApiResponse<object> { Error = new Error { Message = "The freelancerId is not valid, use an existing freelancerId", Code = "422" } });
 
             project.Freelancers.Add(freelancer);
             freelancer.Projects.Add(project);
@@ -127,7 +127,7 @@ namespace AonFreelancing.Controllers
             Project? project = await _mainAppContext.Projects.Include(p => p.Freelancers).FirstOrDefaultAsync(p => p.Id == id);
 
             if (project == null)
-                return NotFound("The resource is not found");
+                return NotFound(new ApiResponse<object> { Error = new Error { Message = "Resource not found", Code = "404" } });
 
             project.Freelancers = [];//break the relationship between the project and its freelancers
 
