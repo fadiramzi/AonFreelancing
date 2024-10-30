@@ -20,8 +20,8 @@ namespace AonFreelancing.Models
         // Belongs to a client
         [ForeignKey("ClientId")]
         public Client Client { get; set; }
-
         public DateTime CreatedAt { get; set; }
+        public List<Freelancer> Freelancers { get; set; } = [];
 
         public Project() { }
         public Project(ProjectInputDTO projectInputDTO)

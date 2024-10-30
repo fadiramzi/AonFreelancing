@@ -3,7 +3,9 @@ using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace AonFreelancing.Controllers
 {
@@ -19,13 +21,13 @@ namespace AonFreelancing.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] string? Mode)
+        public async Task<IActionResult> GetAllAsync([FromQuery] string? Mode)
         {
             var clientOutputDTOs = new List<ClientOutputDTO>();
             if (Mode == null || Mode == "basic")
             {
                 clientOutputDTOs = await _mainAppContext.Clients
-                 .Include(c => c.Projects)
+                  //.Include(c => c.Projects)
                   .Select(c => new ClientOutputDTO
                   {
                       Id = c.Id,
@@ -39,18 +41,16 @@ namespace AonFreelancing.Controllers
             {
                 clientOutputDTOs = await _mainAppContext.Clients
                 .Include(c => c.Projects)
+                 .ThenInclude(p => p.Freelancers)
                  .Select(c => new ClientOutputDTO
                  {
                      Id = c.Id,
                      CompanyName = c.CompanyName,
                      Name = c.Name,
                      Username = c.Username,
-                     Projects = c.Projects.Select(p => new ProjectOutputDTO
+                     Projects = c.Projects.Select(p => new ProjectOutputDTO(p)
                      {
-                         Id = p.Id,
-                         Title = p.Title,
-                         Description = p.Description,
-
+                         Freelancers = p.Freelancers.Select(f => new FreelancerOutputDTO(f))
                      })
                  })
                 .ToListAsync();
@@ -64,23 +64,28 @@ namespace AonFreelancing.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetClient([FromRoute] int id)
+        public async Task<IActionResult> GetClientAsync([FromRoute] int id,
+            [FromQuery][BindRequired][Range(0, 1, ErrorMessage = "loadProjects must be either 0 or 1")] int loadProjects)
         {
-            Client? client = await _mainAppContext.Clients.Include(c => c.Projects).FirstOrDefaultAsync(c => c.Id == id);
+            Client? client;
+            if (loadProjects == 0)
+                client = await _mainAppContext.Clients.FirstOrDefaultAsync(c => c.Id == id);
+            else
+                client = await _mainAppContext.Clients.Include(c => c.Projects).FirstOrDefaultAsync(c => c.Id == id);
+
             if (client == null)
                 return NotFound("The Resource is not found");
 
             ApiResponse<object> apiResponse = new ApiResponse<object>
             {
                 IsSuccess = true,
-                Results = new ClientOutputDTO(client)
+                Results = new ClientOutputDTO(client) { Projects = client.Projects.Select(p => new ProjectOutputDTO(p)) }
             };
-
             return Ok(apiResponse);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ClientInputDTO clientDTO)
+        public async Task<IActionResult> CreateAsync([FromBody] ClientInputDTO clientDTO)
         {
             Client client = new Client(clientDTO);
             await _mainAppContext.Clients.AddAsync(client);
@@ -92,20 +97,20 @@ namespace AonFreelancing.Controllers
                 Results = new ClientOutputDTO(client)
             };
 
-            return CreatedAtAction(nameof(GetClient), new { Id = client.Id }, apiResponse);
+            return CreatedAtAction(nameof(GetClientAsync), new { id = client.Id , loadProjects = 0}, apiResponse);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] ClientInputDTO clientInputDTO)
+        public async Task<IActionResult> UpdateAsync(int id, [FromBody] ClientInputDTO clientInputDTO)
         {
-            Client? client = await _mainAppContext.Clients.Include(c => c.Projects).FirstOrDefaultAsync(c => c.Id == id);
+            Client? client = await _mainAppContext.Clients.FirstOrDefaultAsync(c => c.Id == id);
             if (client == null)
                 return NotFound("The resource is not found");
 
-            client.Username = clientInputDTO.Username ?? client.Username;
-            client.Name = clientInputDTO.Name ?? client.Name;
-            client.Password = clientInputDTO.Password ?? client.Password;
-            client.CompanyName = clientInputDTO.CompanyName ?? client.CompanyName;
+            client.Username = clientInputDTO.Username;
+            client.Name = clientInputDTO.Name;
+            client.Password = clientInputDTO.Password;
+            client.CompanyName = clientInputDTO.CompanyName;
 
             await _mainAppContext.SaveChangesAsync();
 
@@ -119,12 +124,13 @@ namespace AonFreelancing.Controllers
 
         }
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteAsync(int id)
         {
-            Client? client = await _mainAppContext.Clients.FirstOrDefaultAsync(c => c.Id == id);
+            Client? client = await _mainAppContext.Clients.Include(c=>c.Projects).FirstOrDefaultAsync(c => c.Id == id);
             if (client == null)
                 return NotFound("The resource is not found");
 
+            client.Projects = [];//delete associated projects
             _mainAppContext.Clients.Remove(client);
             await _mainAppContext.SaveChangesAsync();
 

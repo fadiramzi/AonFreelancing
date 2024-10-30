@@ -11,6 +11,7 @@ namespace AonFreelancing.Models.DTOs
         public string? Description { get; set; }
         public int ClientId { get; set; }//FK
         public DateTime CreatedAt { get; set; }
+        public IEnumerable<FreelancerOutputDTO>? Freelancers{ get; set; }
         public ProjectOutputDTO() { }   
         public ProjectOutputDTO(Project project)
         {
@@ -19,6 +20,7 @@ namespace AonFreelancing.Models.DTOs
             Description = project.Description;
             ClientId = project.ClientId;
             CreatedAt = project.CreatedAt;
+            //Freelancers = project.Freelancers;
         }
     }
 }

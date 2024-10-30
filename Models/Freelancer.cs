@@ -13,6 +13,7 @@ namespace AonFreelancing.Models
     {
 
         public string Skills { get; set; }
+        public List<Project> Projects { get; set; } = [];
 
         public Freelancer() { }
         public Freelancer(FreelancerInputDTO freelancerInputDTO)
