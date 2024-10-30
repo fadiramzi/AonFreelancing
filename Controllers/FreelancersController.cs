@@ -18,17 +18,17 @@ namespace AonFreelancing.Controllers
             _mainAppContext = mainAppContext;
         }
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            // entryPoint of DB comuniction
-            var data = _mainAppContext.Freelancers.ToList();
+            var data = await _mainAppContext.Freelancers.ToListAsync();
             return Ok(data);
         }
         //api/freelancers/
         [HttpPost]
-        public IActionResult Create([FromBody] Freelancer freelancer) {
+        public async Task<IActionResult>  Create([FromBody] Freelancer freelancer) 
+        {
             _mainAppContext.Freelancers.Add(freelancer);
-            _mainAppContext.SaveChanges(); 
+            await  _mainAppContext.SaveChangesAsync(); 
 
             return CreatedAtAction("Create", new { Id = freelancer.Id }, freelancer);
         }
@@ -58,28 +58,37 @@ namespace AonFreelancing.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetFreelancer(int id)
+        public async Task<IActionResult> GetFreelancer(int id , [FromQuery] int? loadprojects )
         {
-           
-            Freelancer? fr = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
-           
-            if (fr == null)
+            if(loadprojects == null) 
             {
-                return NotFound("The resoucre is not found!");
+                return BadRequest("not found");
+
+            }
+            if (loadprojects == 0 || loadprojects == 1)
+            {
+                Freelancer? fr = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
+
+                if (fr == null)
+                {
+                    return NotFound("The resoucre is not found!");
+                }
+
+                return Ok(fr);
             }
 
-            return Ok(fr);
+            return BadRequest();
 
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> DelateID(int id)
         {
-            Freelancer f = _mainAppContext.Freelancers.FirstOrDefault(f=>f.Id == id);
+            Freelancer f = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f=>f.Id == id);
             if(f!= null)
             {
                 _mainAppContext.Remove(f);
-                _mainAppContext.SaveChanges();
+                await _mainAppContext.SaveChangesAsync();
                 return Ok("Deleted");
 
             }
@@ -88,14 +97,14 @@ namespace AonFreelancing.Controllers
         }
 
         [HttpPut("{id}")]
-        public IActionResult Update(int id, [FromBody] Freelancer freelancer)
+        public async Task<IActionResult>  Update(int id, [FromBody] Freelancer freelancer)
         {
-            Freelancer f = _mainAppContext.Freelancers.FirstOrDefault(f => f.Id == id);
+            Freelancer f = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
             if (f != null)
             {
                 f.Name = freelancer.Name;
 
-                _mainAppContext.SaveChanges();
+                await _mainAppContext.SaveChangesAsync();
                 return Ok(f);
 
             }
