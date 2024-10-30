@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using AonFreelancing.Models.DTOs.ProjectDTOs;
 
 namespace AonFreelancing.Models
 {
@@ -18,6 +19,7 @@ namespace AonFreelancing.Models
         public string? Skills { get; set; }
         public void DisplayProfile()
         { }
+        [JsonIgnore]
         public IEnumerable<Project>? Projects { get; set; }
         public int UserId { get; set; }
         [ForeignKey("UserId")]

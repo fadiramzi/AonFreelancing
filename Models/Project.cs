@@ -23,6 +23,7 @@ namespace AonFreelancing.Models
 
         public Client Client { get; set; }
         [AllowNull]
+        
         public Freelancer? Freelancer{ get; set; }
 
         DateTime CreatedAt { get; set; }

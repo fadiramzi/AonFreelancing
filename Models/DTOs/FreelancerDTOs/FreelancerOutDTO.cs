@@ -6,7 +6,7 @@ namespace AonFreelancing.Models.DTOs.FreelancerDTOs
     public class FreelancerOutDTO : UserOutDTO
     {
         public string? Skills { get; set; }
-        public IEnumerable<ProjectOutDTO> Projects { get; set; }
+        public IEnumerable<Project> Projects { get; set; }
 
     }
 }

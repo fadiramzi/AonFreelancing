@@ -1,4 +1,5 @@
-﻿using AonFreelancing.Contexts;
+﻿using System.ComponentModel.DataAnnotations;
+using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs.FreelancerDTOs;
 using AonFreelancing.Models.DTOs.ProjectDTOs;
@@ -71,29 +72,67 @@ namespace AonFreelancing.Controllers
 
         // Get Freelancer by Id
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetFreelancerById(int id)
+        public async Task<IActionResult> GetFreelancerById(int id, [FromQuery][Required] int loadProjects)
         {
+            FreelancerOutDTO freelancerDTO;
             ApiResponseDTO<object> apiResponse;
-            Freelancer? freeelancer = await _mainAppContext.Freelancers
-                .Include(f=>f.User)
-                .FirstOrDefaultAsync(f=>f.Id == id);
-            if (freeelancer == null)
+            if (loadProjects == 0)
+            {
+                Freelancer? freeelancer = await _mainAppContext.Freelancers
+                    .Include(f => f.User)
+                    .FirstOrDefaultAsync(f => f.Id == id);
+                if (freeelancer == null)
+                {
+                    apiResponse = new()
+                    {
+                        IsSuccess = false,
+                        Error = new Error() { Code = 404, Message = $"Freelancer {id} Not Found." },
+                    };
+                    return NotFound(apiResponse);
+                }
+
+                freelancerDTO = new()
+                {
+                    Id = freeelancer.Id,
+                    Name = freeelancer.User.Name,
+                    Username = freeelancer.User.Username,
+                    Skills = freeelancer.Skills,
+                };
+            }
+            else if(loadProjects == 1)
+            {
+                Freelancer? freeelancer = await _mainAppContext.Freelancers
+                    .Include(f => f.User)
+                    .Include(f=> f.Projects)
+                    .FirstOrDefaultAsync(f => f.Id == id);
+                if (freeelancer == null)
+                {
+                    apiResponse = new()
+                    {
+                        IsSuccess = false,
+                        Error = new Error() { Code = 404, Message = $"Freelancer {id} Not Found." },
+                    };
+                    return NotFound(apiResponse);
+                }
+
+                freelancerDTO = new()
+                {
+                    Id = freeelancer.Id,
+                    Name = freeelancer.User.Name,
+                    Username = freeelancer.User.Username,
+                    Skills = freeelancer.Skills,
+                    Projects = freeelancer.Projects,
+                };
+            }
+            else
             {
                 apiResponse = new()
                 {
                     IsSuccess = false,
-                    Error = new Error() { Code = 404, Message = $"Freelancer { id } Not Found."},
+                    Error = new Error() { Code= 400, Message = $"{ loadProjects }: is invalid loadProjectss value." }
                 };
-                return NotFound(apiResponse);
+                return BadRequest(apiResponse);
             }
-                
-            FreelancerOutDTO freelancerDTO = new()
-            {
-                Id = freeelancer.Id,
-                Name = freeelancer.User.Name,
-                Username = freeelancer.User.Username,
-                Skills = freeelancer.Skills,
-            };
             apiResponse = new()
             {
                 IsSuccess = true,
