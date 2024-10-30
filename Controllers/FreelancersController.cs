@@ -28,9 +28,9 @@ namespace AonFreelancing.Controllers
         //api/freelancers/
         // Create freelancer 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] FreelancerInputDTO freelancerDTO)
+        public async Task<IActionResult> Create([FromBody] FreelancerDTO freelancerDTO)
         {
-            // I created FreelancerInputDTO instead of Freelance to get rid of the (password required) bug
+            // I created FreelancerDTO instead of Freelance to get rid of the (password required) bug
             // Api Response for validation
             ApiResponse<object> apiResponse;
 
@@ -57,6 +57,8 @@ namespace AonFreelancing.Controllers
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] FreelancerDTO freelancerDTO)
         {
+            // I created FreelancerDTO instead of Freelance to get rid of the (password required) bug
+            // Api Response for validation
             ApiResponse<object> apiResponse;
 
             Freelancer f = new Freelancer();
@@ -77,20 +79,48 @@ namespace AonFreelancing.Controllers
             return Ok(apiResponse);
         }
 
-        // Read freelancer by id
+        // api/v1/freelancers/{id}?loadProjects=x
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetFreelancer(int id)
+        public async Task<IActionResult> GetAll(int id, [FromQuery] int? loadProjects)
         {
-
-            Freelancer? fr = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
-
-            if (fr == null)
+            FreelancerOutDTO? freelnacer = new FreelancerOutDTO();
+            if (loadProjects == null || loadProjects == 0)
             {
-                return NotFound("The resoucre is not found!");
+                freelnacer = await _mainAppContext.Freelancers
+                     .Include(f => f.Projects)
+                   .Select(f => new FreelancerOutDTO
+                   {
+                       Id = f.Id,
+                       Name = f.Name,
+                       Username = f.Username,
+                       Skills = f.Skills,
+
+                   })
+                  .FirstOrDefaultAsync(f => f.Id == id);
             }
+            if (loadProjects == 1)
+            {
+                freelnacer = await _mainAppContext.Freelancers
+                .Include(f => f.Projects)
+                 .Select(f => new FreelancerOutDTO
+                 {
+                     Id = f.Id,
+                     Name = f.Name,
+                     Username = f.Username,
+                     Skills = f.Skills,
+                     Projects = f.Projects.Select(p => new ProjectOutDTO
+                     {
+                         Id = p.Id,
+                         Title = p.Title,
+                         Description = p.Description,
+                         ClientId = p.ClientId,
+                         FreelancerId = p.FreelancerId
 
-            return Ok(fr);
-
+                     })
+                 })
+               .FirstOrDefaultAsync(f => f.Id == id);
+            }
+            return Ok(freelnacer);
         }
 
         // Delete Freelancer by id 
@@ -111,7 +141,7 @@ namespace AonFreelancing.Controllers
 
         // update Freelancer by id (update name, username, password, skills)
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] FreelancerInputDTO freelancerDTO)
+        public async Task<IActionResult> Update(int id, [FromBody] FreelancerDTO freelancerDTO)
         {
             Freelancer? f = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
             if (f != null)

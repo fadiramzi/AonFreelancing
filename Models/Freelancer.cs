@@ -11,7 +11,7 @@ namespace AonFreelancing.Models
     public class Freelancer : User
     {
 
-        public string Skills { get; set; }
+        public string? Skills { get; set; }
 
 
         // Has many projects, 1-m

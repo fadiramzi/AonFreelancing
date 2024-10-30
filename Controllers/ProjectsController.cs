@@ -30,6 +30,7 @@ namespace AonFreelancing.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateProject([FromBody] ProjectInputDTO project)
         {
+            // we can use Api Response for validation But I don't want to use it here
             Project p = new Project();
             p.Title = project.Title;
             p.Description = project.Description;
@@ -44,8 +45,7 @@ namespace AonFreelancing.Controllers
         // Get project by id
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProject(int id)
-        {
-
+        { 
             Project? p = await _mainAppContext.Projects.FirstOrDefaultAsync(p => p.Id == id);
 
             if (p == null)
@@ -56,7 +56,6 @@ namespace AonFreelancing.Controllers
             return Ok(p);
 
         }
-
 
         // Delete Projects by id 
         [HttpDelete("{id}")]

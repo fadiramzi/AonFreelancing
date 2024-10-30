@@ -10,7 +10,7 @@ namespace AonFreelancing.Models
     [Table("SystemUsers")]
     public class SystemUser : User
     {
-        public string Permissions { get; set; }
+        public string? Permissions { get; set; }
 
         public override void DisplayProfile()
         {

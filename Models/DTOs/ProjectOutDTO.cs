@@ -7,10 +7,10 @@ namespace AonFreelancing.Models.DTOs
     public class ProjectOutDTO
     {
         public int Id { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
+        public string? Title { get; set; }
+        public string? Description { get; set; }
 
-        public int ClientId { get; set; }//FK
+        public int? ClientId { get; set; }//FK
         [ForeignKey("ClientId")]
 
         public int FreelancerId { get; set; }//FK

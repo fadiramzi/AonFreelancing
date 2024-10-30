@@ -2,21 +2,19 @@
 
 namespace AonFreelancing.Models.DTOs
 {
-    public class ClientDTO:UserOutDTO
+    public class ClientDTO:UserDTO
     {
         public string? CompanyName { get; set; }
 
-        // Has many projects, 1-m
-        public IEnumerable<ProjectOutDTO>? Projects { get; set; }
+        //public IEnumerable<ProjectOutDTO>? Projects { get; set; } // for fast testing.
     }
 
-    public class ClientInputDTO: UserOutDTO
+    public class ClientOutDTO: UserOutDTO
     {
         [Required]
         [MinLength(4,ErrorMessage ="Invalid Company Name")]
         public string? CompanyName { get; set; }
-        //public IEnumerable<ProjectOutDTO> Projects { get; set; }  // for testing.
-        public string? Password { get; set; }
+        public IEnumerable<ProjectOutDTO>? Projects { get; set; }  
 
     }
 }

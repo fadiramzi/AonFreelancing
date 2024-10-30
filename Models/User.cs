@@ -12,14 +12,15 @@ namespace AonFreelancing.Models
     public abstract class User : IUserAuthOperations,IUserPrintOperations
     {
         [StringLength(512)]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [StringLength(256)]
-        public string Username { get; set; }
+        public string? Username { get; set; }
 
         [JsonIgnore]
-        public string Password { get; set; }
+        public string? Password { get; set; }
 
+        [Key]
         //[JsonIgnore]
         public int Id { get; set; }
 
