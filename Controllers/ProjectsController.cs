@@ -33,6 +33,22 @@ namespace AonFreelancing.Controllers
             return Ok(project);
         }
 
+        // Get all projects
+        [HttpGet]
+        public async Task<IActionResult> GetAllProjects()
+        {
+            List<ProjectOutDTO> projects = await _mainAppContext.Projects
+                .Select(project => new ProjectOutDTO() 
+                {
+                    Title = project.Title,
+                    Description = project.Description,
+                    ClientId = project.ClientId,
+                    Id = project.Id
+                })
+                .ToListAsync();
+            return Ok(projects);
+        }
+
         // Get Project by Id
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProjectById(int id)
