@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace AonFreelancing.Models.DTOs
+namespace AonFreelancing.Models.DTOs.ProjectDTOs
 {
     public class ProjectInputDTO
     {

@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
-namespace AonFreelancing.Models.DTOs
+namespace AonFreelancing.Models.DTOs.ProjectDTOs
 {
     public class ProjectOutDTO
     {

@@ -1,8 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using AonFreelancing.Models.DTOs.ProjectDTOs;
+using AonFreelancing.Models.DTOs.UserDTOs;
 
-namespace AonFreelancing.Models.DTOs
+namespace AonFreelancing.Models.DTOs.ClientDTO
 {
-    public class ClientDTO:UserOutDTO
+    public class ClientDTO : UserOutDTO
     {
         public string CompanyName { get; set; }
 
@@ -10,10 +12,10 @@ namespace AonFreelancing.Models.DTOs
         public IEnumerable<ProjectOutDTO> Projects { get; set; }
     }
 
-    public class ClientInputDTO: UserDTO
+    public class ClientInputDTO : UserDTO
     {
         [Required]
-        [MinLength(4,ErrorMessage ="Invalid Company Name")]
+        [MinLength(4, ErrorMessage = "Invalid Company Name")]
         public string CompanyName { get; set; }
     }
 }
