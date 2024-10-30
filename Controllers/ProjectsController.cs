@@ -68,6 +68,18 @@ namespace AonFreelancing.Controllers
         
         }
 
-
+        // Updating Project data
+        [HttpPut]
+        public async Task<IActionResult> UpdateProjectById(int id, [FromBody] ProjectInputDTO projectDTO)
+        {
+            Project? project = await _mainAppContext.Projects.FindAsync(id);
+            if (project == null)
+                return NotFound($"Project { id } is not found.");
+            project.Title = projectDTO.Title;
+            project.Description = projectDTO.Description;
+            project.ClientId = projectDTO.ClientId;
+            await _mainAppContext.SaveChangesAsync();
+            return Ok();
+        }
     }
 }
