@@ -12,14 +12,12 @@ namespace AonFreelancing.Models
     {
 
         public string Skills { get; set; }
-
+        public IEnumerable<Project>? Projects { get; set; }
 
         public override void DisplayProfile()
         {
-            Console.WriteLine($"Overrided Method in Freelancer Class");
+            Console.WriteLine($"Override Method in Freelancer Class");
         }
 
     }
-
-
 }
