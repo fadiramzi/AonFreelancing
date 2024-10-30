@@ -16,4 +16,14 @@ namespace AonFreelancing.Models.DTOs
         [MinLength(4,ErrorMessage ="Invalid Company Name")]
         public string CompanyName { get; set; }
     }
+
+    public class ClienOutDTO : UserOutDTO
+    {
+        [Required]
+        [MinLength(4, ErrorMessage = "Invalid Company Name")]
+
+        // Has many projects, 1-m
+        public IEnumerable<ProjectOutDTO> Projects { get; set; }
+        public string CompanyName { get; set; }
+    }
 }

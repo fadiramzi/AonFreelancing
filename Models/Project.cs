@@ -22,6 +22,13 @@ namespace AonFreelancing.Models
         [ForeignKey("ClientId")]
         public Client Client { get; set; }
 
+
+        public int FreeLancerId { get; set; }//FK
+
+        // Belongs to a client
+        [ForeignKey("FreeLancerId")]
+        public Freelancer Freelancer { get; set; }
+
         DateTime CreatedAt { get; set; }
 
 
