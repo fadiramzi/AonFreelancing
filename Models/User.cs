@@ -18,8 +18,9 @@ namespace AonFreelancing.Models
         public string Username { get; set; }
 
 
-        [JsonIgnore]
+        [Required]
         public string Password { get; set; }
+
         public int Id { get; set; }
 
         public abstract void DisplayProfile();

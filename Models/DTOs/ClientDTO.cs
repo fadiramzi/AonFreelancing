@@ -4,6 +4,8 @@ namespace AonFreelancing.Models.DTOs
 {
     public class ClientDTO:UserOutDTO
     {
+        [Required]
+        [MinLength(4, ErrorMessage = "اسم الشركة غير صالح")]
         public string CompanyName { get; set; }
 
         // Has many projects, 1-m
@@ -13,7 +15,7 @@ namespace AonFreelancing.Models.DTOs
     public class ClientInputDTO: UserDTO
     {
         [Required]
-        [MinLength(4,ErrorMessage ="Invalid Company Name")]
+        [MinLength(4,ErrorMessage = "اسم الشركة غير صالح")]
         public string CompanyName { get; set; }
     }
 }

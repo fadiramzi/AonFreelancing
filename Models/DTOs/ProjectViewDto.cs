@@ -4,18 +4,19 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace AonFreelancing.Models.DTOs
 {
-    public class ProjectOutDTO
+    // خاص بعرض معلومات المشروع
+    public class ProjectViewDto
     {
         public int Id { get; set; }
-
-        [StringLength(200)]
-        [MinLength(2, ErrorMessage = "يرجى ادخال  عنوان صالح ")]
+        [Required]
         public string Title { get; set; }
+
+        [AllowNull]
         public string Description { get; set; }
 
-        public int ClientId { get; set; }
+        public int ClientId { get; set; } 
 
-        public int FreelancerId { get; set; }
+        public int FreelancerId { get; set; }      
 
         DateTime CreatedAt { get; set; }
     }

@@ -18,9 +18,15 @@ namespace AonFreelancing.Models
 
         public int ClientId { get; set; }//FK
 
-        // Belongs to a client
+        // ينتمي ألى العميل
         [ForeignKey("ClientId")]
         public Client Client { get; set; }
+
+        public int FreelancerId { get; set; }//FK
+
+        //ينتمي ألى العامل المستقل
+        [ForeignKey("FreelancerId")]
+        public Freelancer Freelancer { get; set; }
 
         DateTime CreatedAt { get; set; }
 

@@ -17,92 +17,130 @@ namespace AonFreelancing.Controllers
         {
             _mainAppContext = mainAppContext;
         }
+        //عرض معلومات العاملين المستقلين
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] string? Mode)
         {
-            // entryPoint of DB comuniction
-            var data = _mainAppContext.Freelancers.ToList();
-            return Ok(data);
-        }
-        //api/freelancers/
-        [HttpPost]
-        public IActionResult Create([FromBody] Freelancer freelancer) {
-            _mainAppContext.Freelancers.Add(freelancer);
-            _mainAppContext.SaveChanges(); 
+            var FreelancerList = new List<FreelancerDTO>();
+            //number 0 -> عرض معلومات العمال فقط 
+            if (Mode == null || Mode == "0")
+            {
+                FreelancerList = await _mainAppContext.Freelancers
+                 .Include(c => c.Projects)
+                  .Select(c => new FreelancerDTO
+                  {
+                      Id = c.Id,
+                      Skills = c.Skills,
+                      Name = c.Name,
+                      Username = c.Username
+                  })
+                 .ToListAsync();
+            }
+            //number 1-> عرض معلومات العمال مع المشاريع المستلمة ان وجدت
+            if (Mode == "1")
+            {
 
-            return CreatedAtAction("Create", new { Id = freelancer.Id }, freelancer);
+                FreelancerList = await _mainAppContext.Freelancers
+                .Include(c => c.Projects)
+
+                 .Select(c => new FreelancerDTO
+                 {
+                     Id = c.Id,
+                     Skills = c.Skills,
+                     Name = c.Name,
+                     Username = c.Username,
+                     Projects = c.Projects.Select(p => new ProjectOutDTO
+                     {
+                         Id = p.Id,
+                         Title = p.Title,
+                         Description = p.Description,
+                         ClientId = p.ClientId,
+                         FreelancerId = p.FreelancerId,
+
+                     })
+                 })
+                .ToListAsync();
+            }
+
+            return Ok(FreelancerList);
         }
 
-        //api/freelancers/Register
+       //تسجيل عامل مستقل جديد
         [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] FreelancerDTO freelancerDTO)
+        public async Task<IActionResult> Register([FromBody] FreelancerInputDto freelancerInputDto)
         {
             ApiResponse<object> apiResponse;
-           
-            Freelancer f = new Freelancer();
-            f.Name = freelancerDTO.Name;
-            f.Username = freelancerDTO.Username;
-            f.Password = freelancerDTO.Password;
-            f.Skills = freelancerDTO.Skills;
-           
+
+            Freelancer f = new Freelancer
+            {
+                Name = freelancerInputDto.Name,
+                Username = freelancerInputDto.Username,
+                Password = freelancerInputDto.Password,
+                Skills = freelancerInputDto.Skills
+            };
+
             await _mainAppContext.Freelancers.AddAsync(f);
-            await _mainAppContext.SaveChangesAsync();
+           await _mainAppContext.SaveChangesAsync();
             apiResponse = new ApiResponse<object>
             {
                 IsSuccess = true,
                 Results = f
             };
-           
 
             return Ok(apiResponse);
         }
 
+        //عرض معلومات العامل حسب المعرف
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetFreelancer(int id)
+        public async Task<IActionResult> GetFreelancerId(int id)
         {
-           
+
             Freelancer? fr = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
-           
+
             if (fr == null)
             {
-                return NotFound("The resoucre is not found!");
+                return NotFound(" ! لا يوجد عامل مستقل بهذا المعرف  ");
             }
 
             return Ok(fr);
 
         }
 
-        [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
-        {
-            Freelancer f = _mainAppContext.Freelancers.FirstOrDefault(f=>f.Id == id);
-            if(f!= null)
-            {
-                _mainAppContext.Remove(f);
-                _mainAppContext.SaveChanges();
-                return Ok("Deleted");
-
-            }
-
-            return NotFound();
-        }
-
+        //تحديث معلومات العمال المستقلين
         [HttpPut("{id}")]
-        public IActionResult Update(int id, [FromBody] Freelancer freelancer)
+        public async Task<IActionResult> Update(int id, [FromBody] FreelancerUpdateDto freelancerUpdateDto)
         {
-            Freelancer f = _mainAppContext.Freelancers.FirstOrDefault(f => f.Id == id);
+            Freelancer f = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
             if (f != null)
             {
-                f.Name = freelancer.Name;
+                f.Name = freelancerUpdateDto.Name;
+                f.Username = freelancerUpdateDto.Username;
+                f.Password = freelancerUpdateDto.password;
+                f.Skills = freelancerUpdateDto.Skills;
 
-                _mainAppContext.SaveChanges();
-                return Ok(f);
+               await _mainAppContext.SaveChangesAsync();
+                return Ok($"{id} : تم تحديث معلومات العامل المستقل المعرف ");
 
             }
 
-            return NotFound();
+            return NotFound(" ! لا يوجد عامل مستقل بهذا المعرف ");
         }
 
+        // حذف عامل مستقل
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            Freelancer f = await _mainAppContext.Freelancers.FirstOrDefaultAsync(f => f.Id == id);
+            if (f != null)
+            {
+                _mainAppContext.Remove(f);
+                await _mainAppContext.SaveChangesAsync();
+                return Ok($"{id} : تم حذف العامل المستقل بنجاح معرف العامل ");
+
+            }
+
+            return NotFound("! لا يوجد عامل مستقل بهذا المعرف لحذفه ");
+        }
 
 
     }

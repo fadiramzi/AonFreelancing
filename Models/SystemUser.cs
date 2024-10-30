@@ -12,6 +12,9 @@ namespace AonFreelancing.Models
     {
         public string Permissions { get; set; }
 
+
+
+
         public override void DisplayProfile()
         {
             Console.WriteLine("System User PRofile");
