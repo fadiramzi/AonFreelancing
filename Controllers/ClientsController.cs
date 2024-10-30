@@ -33,8 +33,8 @@ namespace AonFreelancing.Controllers
                   {
                       Id = c.Id,
                       CompanyName = c.CompanyName,
-                      Name = c.Name,
-                      Username = c.Username
+                      Name = c.User.Name,
+                      Username = c.User.Username
                   })
                  .ToListAsync();
             }
@@ -46,8 +46,8 @@ namespace AonFreelancing.Controllers
                  {
                      Id = c.Id,
                      CompanyName = c.CompanyName,
-                     Name = c.Name,
-                     Username = c.Username,
+                     Name = c.User.Name,
+                     Username = c.User.Username,
                      Projects = c.Projects.Select(p => new ProjectOutDTO
                      {
                          Id = p.Id,
@@ -75,8 +75,8 @@ namespace AonFreelancing.Controllers
                     {
                         Id = c.Id,
                         CompanyName = c.CompanyName,
-                        Name = c.Name,
-                        Username = c.Username
+                        Name = c.User.Name,
+                        Username = c.User.Username
                     }).SingleOrDefaultAsync();
             }
             else if (loadProjects == 1)
@@ -86,10 +86,10 @@ namespace AonFreelancing.Controllers
                  .Include(c => c.Projects)
                  .Select(c => new ClientDTO
                  {
-                    Id = c.Id,
+                    Id = c.User.Id,
                     CompanyName = c.CompanyName,
-                    Name = c.Name,
-                    Username = c.Username,
+                    Name = c.User.Name,
+                    Username = c.User.Username,
                     Projects = c.Projects.Select(p => new ProjectOutDTO
                     {
                         Id = p.Id,
@@ -111,10 +111,11 @@ namespace AonFreelancing.Controllers
         public async Task<IActionResult> CreateClient([FromBody] ClientInputDTO clientDTO)
         {
             Client client = new();
-            client.Name = clientDTO.Name;
-            client.Username = clientDTO.Username;
+            client.User = new User();
             client.CompanyName = clientDTO.CompanyName;
-            client.Password = clientDTO.Password;
+            client.User.Name = clientDTO.Name;
+            client.User.Username = clientDTO.Username;
+            client.User.Password = clientDTO.Password;
             await _mainAppContext.Clients.AddAsync(client);
             await _mainAppContext.SaveChangesAsync();
             return Ok(client);
@@ -142,10 +143,10 @@ namespace AonFreelancing.Controllers
                 return NotFound($"Client {Id} is Not Found.");
 
             // Updating client values
-            client.Name = clientDTO.Name;
-            client.Username = clientDTO.Username;
+            client.User.Name = clientDTO.Name;
+            client.User.Username = clientDTO.Username;
             client.CompanyName = clientDTO.CompanyName;
-            client.Password = clientDTO.Password;
+            client.User.Password = clientDTO.Password;
 
             await _mainAppContext.SaveChangesAsync();
             return Ok(client);

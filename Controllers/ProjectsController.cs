@@ -26,6 +26,7 @@ namespace AonFreelancing.Controllers
                 Title = projectDTO.Title,
                 Description = projectDTO.Description,
                 ClientId = projectDTO.ClientId,
+                FreelancerId = projectDTO.FreelancerId,
             };
 
             await _mainAppContext.Projects.AddAsync(project);

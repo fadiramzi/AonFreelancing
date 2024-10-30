@@ -34,10 +34,11 @@ namespace AonFreelancing.Controllers
         {
             ApiResponse<object> apiResponse;
 
-            Freelancer freelancer = new Freelancer();
-            freelancer.Name = freelancerDTO.Name;
-            freelancer.Username = freelancerDTO.Username;
-            freelancer.Password = freelancerDTO.Password;
+            Freelancer freelancer = new();
+            freelancer.User = new User();
+            freelancer.User.Name = freelancerDTO.Name;
+            freelancer.User.Username = freelancerDTO.Username;
+            freelancer.User.Password = freelancerDTO.Password;
             freelancer.Skills = freelancerDTO.Skills;
 
             await _mainAppContext.Freelancers.AddAsync(freelancer);
@@ -62,8 +63,8 @@ namespace AonFreelancing.Controllers
             FreelancerOutDTO freelancerDTO = new()
             {
                 Id = freeelancer.Id,
-                Name = freeelancer.Name,
-                Username = freeelancer.Username,
+                Name = freeelancer.User.Name,
+                Username = freeelancer.User.Username,
                 Skills = freeelancer.Skills,
             };
 
@@ -89,9 +90,9 @@ namespace AonFreelancing.Controllers
             Freelancer? freelancer = await _mainAppContext.Freelancers.FindAsync(id);
             if (freelancer == null)
                 return NotFound($"Freelancer { id } is not found.");
-            freelancer.Name = freelancerDTO.Name; 
-            freelancer.Username = freelancerDTO.Username;
-            freelancer.Password = freelancerDTO.Password;
+            freelancer.User.Name = freelancerDTO.Name; 
+            freelancer.User.Username = freelancerDTO.Username;
+            freelancer.User.Password = freelancerDTO.Password;
             freelancer.Skills = freelancerDTO.Skills;
 
             await _mainAppContext.SaveChangesAsync();

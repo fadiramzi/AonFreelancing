@@ -9,6 +9,8 @@ namespace AonFreelancing.Models.DTOs.ProjectDTOs
         [AllowNull]
         public string Description { get; set; }
 
-        public int ClientId { get; set; }//FK
+        public int ClientId { get; set; }
+        [AllowNull]
+        public int? FreelancerId { get; set; }
     }
 }

@@ -9,35 +9,28 @@ using AonFreelancing.Interfaces;
 
 namespace AonFreelancing.Models
 {
-    public abstract class User : IUserAuthOperations,IUserPrintOperations
+    public class User : IUserAuthOperations, IUserPrintOperations
     {
         [StringLength(512)]
         public string Name { get; set; }
-
         [StringLength(256)]
         public string Username { get; set; }
-
-
         [JsonIgnore]
         public string Password { get; set; }
+        [Key]
         public int Id { get; set; }
 
-        public abstract void DisplayProfile();
-       
-        
-
+        public Freelancer? Freelancer { get; set; }
+        public Client? Client { get; set; }
+        public SystemUser? SystemUser { get; set; }
+        public void DisplayProfile(){}
         public void Login()
         {
 
         }
-
-
         public  void Logout()
         {
 
         }
-
-
-
     }
 }
