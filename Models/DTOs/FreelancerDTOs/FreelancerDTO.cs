@@ -1,4 +1,5 @@
-﻿using AonFreelancing.Models.DTOs.UserDTOs;
+﻿using AonFreelancing.Models.DTOs.ProjectDTOs;
+using AonFreelancing.Models.DTOs.UserDTOs;
 
 namespace AonFreelancing.Models.DTOs.FreelancerDTOs
 {
@@ -6,5 +7,7 @@ namespace AonFreelancing.Models.DTOs.FreelancerDTOs
     {
 
         public string Skills { get; set; }
+        public IEnumerable<ProjectOutDTO> Projects { get; set; }
+
     }
 }

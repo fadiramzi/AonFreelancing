@@ -1,6 +1,8 @@
 ﻿using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs.FreelancerDTOs;
+using AonFreelancing.Models.DTOs.ProjectDTOs;
+using AonFreelancing.Models.DTOs.ResponseDTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -23,8 +25,24 @@ namespace AonFreelancing.Controllers
         public async Task<IActionResult> GetAllFreelancers()
         {
             // entryPoint of DB comuniction
-            List<Freelancer> freelancers = await _mainAppContext.Freelancers.ToListAsync();
-            return Ok(freelancers);
+            List<FreelancerOutDTO> freelancers = await _mainAppContext.Freelancers
+                .Include(f => f.User)
+                .Select(f => new FreelancerOutDTO()
+                {
+                    Id = f.Id,
+                    Name = f.User.Name,
+                    Username = f.User.Username,
+                    Skills = f.Skills,
+                })
+                .ToListAsync();
+            
+            ApiResponseDTO<List<FreelancerOutDTO>> apiResponse= new()
+            {
+                IsSuccess = true,
+                Results = freelancers
+            };
+
+            return Ok(apiResponse);
         }
 
         // Create a new Freelancer
@@ -32,8 +50,6 @@ namespace AonFreelancing.Controllers
         [HttpPost("Register")]
         public async Task<IActionResult> CreateFreelancer([FromBody] FreelancerInputDTO freelancerDTO)
         {
-            ApiResponse<object> apiResponse;
-
             Freelancer freelancer = new();
             freelancer.User = new User();
             freelancer.User.Name = freelancerDTO.Name;
@@ -43,7 +59,8 @@ namespace AonFreelancing.Controllers
 
             await _mainAppContext.Freelancers.AddAsync(freelancer);
             await _mainAppContext.SaveChangesAsync();
-            apiResponse = new ApiResponse<object>
+            
+            ApiResponseDTO<object> apiResponse= new()
             {
                 IsSuccess = true,
                 Results = freelancer
@@ -56,10 +73,20 @@ namespace AonFreelancing.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetFreelancerById(int id)
         {
-            Freelancer? freeelancer = await _mainAppContext.Freelancers.FindAsync(id);
+            ApiResponseDTO<object> apiResponse;
+            Freelancer? freeelancer = await _mainAppContext.Freelancers
+                .Include(f=>f.User)
+                .FirstOrDefaultAsync(f=>f.Id == id);
             if (freeelancer == null)
-                return NotFound($"Freelancer {id} is not found.");
-
+            {
+                apiResponse = new()
+                {
+                    IsSuccess = false,
+                    Error = new Error() { Code = 404, Message = $"Freelancer { id } Not Found."},
+                };
+                return NotFound(apiResponse);
+            }
+                
             FreelancerOutDTO freelancerDTO = new()
             {
                 Id = freeelancer.Id,
@@ -67,38 +94,79 @@ namespace AonFreelancing.Controllers
                 Username = freeelancer.User.Username,
                 Skills = freeelancer.Skills,
             };
+            apiResponse = new()
+            {
+                IsSuccess = true,
+                Results = freelancerDTO
+            };
 
-            return Ok(freelancerDTO);
+            return Ok(apiResponse);
         }
 
         // Remove Freelancer by id
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveFreelancerById(int id)
         {
+            ApiResponseDTO <object> apiResponse;
             Freelancer? freelancer = await _mainAppContext.Freelancers.FindAsync(id);
             if(freelancer == null)
-                return NotFound($"Freelancer { id } is not found.");
+            {
+                apiResponse = new()
+                {
+                    IsSuccess = false,
+                    Error = new Error() { Code = 404, Message = $"Freelancer {id} Not Found." },
+                };
+                return NotFound(apiResponse);
+            }
             _mainAppContext.Remove(freelancer);
             await _mainAppContext.SaveChangesAsync();
-            return NoContent();
+            apiResponse = new()
+            {
+                IsSuccess = true,
+                Results = freelancer
+            };
+            return Ok(apiResponse);
         }
 
         // Updating Freelancer by Id
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateFreelancerById(int id, [FromBody] FreelancerInputDTO freelancerDTO)
         {
-            Freelancer? freelancer = await _mainAppContext.Freelancers.FindAsync(id);
+            ApiResponseDTO<object> apiResponse;
+            Freelancer? freelancer = await _mainAppContext.Freelancers
+                .Include(f => f.User)
+                .FirstOrDefaultAsync(f => f.Id == id);
             if (freelancer == null)
-                return NotFound($"Freelancer { id } is not found.");
+            {
+                apiResponse = new()
+                {
+                    IsSuccess = false,
+                    Error = new Error() { Code = 404, Message = $"Freelancer {id} Not Found." },
+                };
+                return NotFound(apiResponse);
+            }
+            // updating freelancer data
             freelancer.User.Name = freelancerDTO.Name; 
             freelancer.User.Username = freelancerDTO.Username;
             freelancer.User.Password = freelancerDTO.Password;
             freelancer.Skills = freelancerDTO.Skills;
 
             await _mainAppContext.SaveChangesAsync();
-            return Ok();
+            // Creating freelancerOutDTO
+            FreelancerOutDTO freelancerOutDTO = new()
+            {
+                Id = id,
+                Name = freelancer.User.Name,
+                Username = freelancer.User.Username,
+                Skills = freelancer.Skills,
+            };
+            
+            apiResponse = new()
+            {
+                IsSuccess = true,
+                Results = freelancerOutDTO,
+            };
+            return Ok(apiResponse);
         }
-
-
     }
 }

@@ -3,6 +3,7 @@ using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.DTOs.ClientDTO;
 using AonFreelancing.Models.DTOs.ProjectDTOs;
+using AonFreelancing.Models.DTOs.ResponseDTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,8 @@ namespace AonFreelancing.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] int? loadProjects) {
             var ClientList = new List<ClientDTO>();
-            if(loadProjects == null || loadProjects == 0)
+            ApiResponseDTO<object> apiResponseDTO;
+            if (loadProjects == null || loadProjects == 0)
             {
                 ClientList = await _mainAppContext.Clients
                   .Select(c => new ClientDTO
@@ -38,7 +40,7 @@ namespace AonFreelancing.Controllers
                   })
                  .ToListAsync();
             }
-            else if(loadProjects == 1)
+            else if (loadProjects == 1)
             {
                 ClientList = await _mainAppContext.Clients
                 .Include(c => c.Projects)
@@ -59,14 +61,27 @@ namespace AonFreelancing.Controllers
                 .ToListAsync();
             }
             else
-                return BadRequest($"{loadProjects} is not a valid value.");
-            return Ok(ClientList);
+            {
+                apiResponseDTO = new ApiResponseDTO<object>
+                {
+                    IsSuccess = false,
+                    Error = new Error { Code = 400, Message = $"{loadProjects} is not a valid value." }
+                };
+                return BadRequest(apiResponseDTO);
+            }
+            apiResponseDTO = new ApiResponseDTO<object>
+            {
+                IsSuccess = true,
+                Results = ClientList,
+            };
+            return Ok(apiResponseDTO);
         }
         //Get client by Id
         [HttpGet("{Id}")]
         public async Task<IActionResult> GetClientById(int Id, [FromQuery] int? loadProjects)
         {
             var client = new ClientDTO();
+            ApiResponseDTO<object> apiResponseDTO;
             if (loadProjects == null || loadProjects == 0)
             {
                 client = await _mainAppContext.Clients
@@ -99,17 +114,38 @@ namespace AonFreelancing.Controllers
                  }).SingleOrDefaultAsync(); 
             }
             else
-                return BadRequest($"{loadProjects} is not a valid value.");
+            {
+                apiResponseDTO = new()
+                {
+                    IsSuccess = false,
+                    Error = new Error() { Code = 400, Message = $"{loadProjects} is not a valid value." }
+                };
+                return BadRequest(apiResponseDTO);
+            }
 
-            if (client is not null)
-                return Ok(client);
-            return NotFound($"No client with {Id} ID.");
+            if (client == null)
+            {
+                apiResponseDTO = new()
+                {
+                    IsSuccess = false,
+                    Error = new Error() { Code = 404, Message = $"No client with {Id} ID."}
+                };
+                return NotFound(apiResponseDTO);
+            }
+            apiResponseDTO = new()
+            {
+                IsSuccess = true,
+                Results = client
+            };
+            return Ok(apiResponseDTO);
+
         }
 
         //Creating a new client
         [HttpPost]
         public async Task<IActionResult> CreateClient([FromBody] ClientInputDTO clientDTO)
         {
+            ApiResponseDTO<object> apiResponseDTO;
             Client client = new();
             client.User = new User();
             client.CompanyName = clientDTO.CompanyName;
@@ -118,29 +154,80 @@ namespace AonFreelancing.Controllers
             client.User.Password = clientDTO.Password;
             await _mainAppContext.Clients.AddAsync(client);
             await _mainAppContext.SaveChangesAsync();
-            return Ok(client);
+
+            apiResponseDTO = new()
+            {
+                IsSuccess = true,
+                Results = new ClientDTO()
+                {
+                    Username = client.User.Username,
+                    Name = client.User.Name,
+                    Id = client.Id,
+                    CompanyName = client.CompanyName,
+                }
+            };
+
+            return Ok(apiResponseDTO);
         }
 
         //Removing a client
         [HttpDelete]
-        public async Task<IActionResult> RemoveClientById([FromQuery] int Id)
+        public async Task<IActionResult> RemoveClientById([FromQuery] int id)
         {
-            Client? client = await _mainAppContext.Clients.FindAsync(Id);
+            ApiResponseDTO<object> apiResponseDTO;
+            Client? client = await _mainAppContext.Clients.Include(c=>c.User).FirstOrDefaultAsync(c=>c.Id == id);
             if (client is null)
-                return NotFound($"Client {Id} is Not Found.");
+            {
+                apiResponseDTO = new()
+                {
+                    IsSuccess = false,
+                    Error = new Error()
+                    {
+                        Code = 404, Message = $"Client {id} is Not Found.",
+                    }
+                };
+
+                return NotFound(apiResponseDTO);
+            }
             _mainAppContext.Clients.Remove(client);
             await _mainAppContext.SaveChangesAsync();
 
-            return NoContent();
+
+            apiResponseDTO = new()
+            {
+                IsSuccess = true,
+                Results = new ClientDTO()
+                {
+                    Username = client.User.Username,
+                    Name = client.User.Name,
+                    Id = client.Id,
+                    CompanyName = client.CompanyName,
+                },
+            };
+            return Ok(apiResponseDTO);
         }
 
         //Updating Client by Id
         [HttpPut]
-        public async Task<IActionResult> UpdateClientById([FromQuery] int Id, [FromBody] ClientInputDTO clientDTO)
+        public async Task<IActionResult> UpdateClientById([FromQuery] int id, [FromBody] ClientInputDTO clientDTO)
         {
-            Client? client = await _mainAppContext.Clients.FindAsync(Id);
+            ApiResponseDTO<object> apiResponseDTO;
+
+            Client? client = await _mainAppContext.Clients.Include(c => c.User).FirstOrDefaultAsync(c => c.Id == id);
             if (client is null)
-                return NotFound($"Client {Id} is Not Found.");
+            {
+                apiResponseDTO = new()
+                {
+                    IsSuccess = false,
+                    Error = new Error()
+                    {
+                        Code = 404,
+                        Message = $"Client {id} is Not Found.",
+                    }
+                };
+
+                return NotFound(apiResponseDTO);
+            }
 
             // Updating client values
             client.User.Name = clientDTO.Name;
@@ -149,7 +236,18 @@ namespace AonFreelancing.Controllers
             client.User.Password = clientDTO.Password;
 
             await _mainAppContext.SaveChangesAsync();
-            return Ok(client);
+            apiResponseDTO = new()
+            {
+                IsSuccess = true,
+                Results = new ClientDTO()
+                {
+                    Username = client.User.Username,
+                    Name = client.User.Name,
+                    Id = client.Id,
+                    CompanyName = client.CompanyName,
+                },
+            };
+            return Ok(apiResponseDTO);
         }
 
     }
