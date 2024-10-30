@@ -13,6 +13,8 @@ namespace AonFreelancing.Models
 
         public string Skills { get; set; }
 
+        //  Freelancer Has many projects, 1-m
+        public IEnumerable<Project>? Projects { get; set; }
 
         public override void DisplayProfile()
         {

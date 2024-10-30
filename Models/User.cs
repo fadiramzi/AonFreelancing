@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -18,8 +19,10 @@ namespace AonFreelancing.Models
         public string Username { get; set; }
 
 
-        [JsonIgnore]
+         [JsonIgnore]
         public string Password { get; set; }
+      //  [JsonIgnore]
+        [Key]
         public int Id { get; set; }
 
         public abstract void DisplayProfile();

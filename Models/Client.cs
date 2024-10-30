@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
@@ -16,7 +17,8 @@ namespace AonFreelancing.Models
 
         // Has many projects, 1-m
         public IEnumerable<Project>? Projects { get; set; }
-  
+       
+
 
         public override void DisplayProfile()
         {

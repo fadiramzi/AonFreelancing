@@ -17,30 +17,83 @@ namespace AonFreelancing.Controllers
             _mainAppContext = mainAppContext;
         }
 
-        [HttpPost]
-        public IActionResult CreateProject([FromBody] ProjectInputDTO project)
+        // get all projects
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
-            Project p = new Project();
-            p.Title = project.Title;
-            p.Description = project.Description;
-            p.ClientId = project.ClientId;
+            // entryPoint of DB comuniction
+            var data = await _mainAppContext.Projects.ToListAsync();
+            return Ok(data);
+        }
 
-            _mainAppContext.Projects.Add(p);
-            _mainAppContext.SaveChanges();
+        //retrieve a single project by his id
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProjectById(int id)
+        {
+            var Project = await _mainAppContext.Projects.FirstOrDefaultAsync(p => p.Id == id);
+            if (Project == null)
+            {
+                return NotFound();
+            }
+           
+            return Ok(Project);
+        }
+
+        // Add new project
+        [HttpPost]
+        public async Task<IActionResult> CreateProject([FromBody] ProjectInputDTO projectInputDTO)
+        {
+
+            Project p = new Project();
+            p.Title = projectInputDTO.Title;
+            p.Description = projectInputDTO.Description;
+            p.ClientId = projectInputDTO.ClientId;
+            p.FreelancerId = projectInputDTO.FreelancerId;
+          
+            await _mainAppContext.Projects.AddAsync(p);
+            await _mainAppContext.SaveChangesAsync();
             return Ok(p);
         }
 
-
-        [HttpGet("{id}")]
-        public IActionResult GetProject(int id)
+        // Delete exicting project
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteProject(int id)
         {
-            var project = _mainAppContext.Projects
-                .Include(p=>p.Client)
-                .FirstOrDefault(p => p.Id == id);
+            Project? p = await _mainAppContext.Projects.FirstOrDefaultAsync(p => p.Id == id);
+            if (p != null)
+            {
+                _mainAppContext.Remove(p);
+                await _mainAppContext.SaveChangesAsync();
+                return Ok("Deleted");
 
-            return Ok(project);
-            
+            }
+
+            return NotFound();
         }
+
+        // Update existing project
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateProject(int id, [FromBody] ProjectInputDTO projectInputDTO)
+        {
+            Project? p = await _mainAppContext.Projects.FirstOrDefaultAsync(p => p.Id == id);
+            
+            if (p != null)
+            {
+                p.ClientId = projectInputDTO.ClientId;
+                p.FreelancerId= projectInputDTO.FreelancerId;
+                p.Title= projectInputDTO.Title;
+                p.Description = projectInputDTO.Description;
+                
+                await _mainAppContext.SaveChangesAsync();
+                return Ok(p);
+
+            }
+
+            return NotFound();
+        }
+
+
+
 
 
     }
