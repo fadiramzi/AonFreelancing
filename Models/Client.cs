@@ -11,11 +11,13 @@ namespace AonFreelancing.Models
     [Table("Clients")]
     public class Client : User
     {
+        public int ClintId { get; set; }
         public string CompanyName { get; set; }
 
+        public User User { get; set; }
 
         // Has many projects, 1-m
-        public IEnumerable<Project>? Projects { get; set; }
+        public ICollection<Project>? Projects { get; set; }
   
 
         public override void DisplayProfile()

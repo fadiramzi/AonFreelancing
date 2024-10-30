@@ -11,6 +11,8 @@ namespace AonFreelancing.Models
 {
     public abstract class User : IUserAuthOperations,IUserPrintOperations
     {
+        public int UserId { get; set; }
+
         [StringLength(512)]
         public string Name { get; set; }
 
@@ -21,6 +23,11 @@ namespace AonFreelancing.Models
         [JsonIgnore]
         public string Password { get; set; }
         public int Id { get; set; }
+
+        //one to one relationships
+        public Freelancer Freelancer { get; set; }
+        public Client Client { get; set; }
+        public SystemUser SystemUser { get; set; }
 
         public abstract void DisplayProfile();
        

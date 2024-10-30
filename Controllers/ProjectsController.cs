@@ -16,32 +16,86 @@ namespace AonFreelancing.Controllers
         {
             _mainAppContext = mainAppContext;
         }
-
-        [HttpPost]
-        public IActionResult CreateProject([FromBody] ProjectInputDTO project)
+        [HttpGet]
+        public IActionResult GetAll()
         {
+            // entryPoint of DB comuniction
+            var data = _mainAppContext.Projects.ToList();
+            return Ok(data);
+        }
+
+        [HttpPost("Register")]
+        public async Task<IActionResult> Register([FromBody] ProjectInputDTO project)
+            
+        {
+            ApiResponse<object> apiResponse;
+
             Project p = new Project();
             p.Title = project.Title;
             p.Description = project.Description;
             p.ClientId = project.ClientId;
 
-            _mainAppContext.Projects.Add(p);
-            _mainAppContext.SaveChanges();
-            return Ok(p);
+            await _mainAppContext.Projects.AddAsync(p);
+            await _mainAppContext.SaveChangesAsync();
+            apiResponse = new ApiResponse<object>
+            {
+                IsSuccess = true,
+                Results = p
+            };
+
+
+            return Ok(apiResponse);
         }
 
-
+        
         [HttpGet("{id}")]
-        public IActionResult GetProject(int id)
+        public async Task<IActionResult> GetFreelancer(int id)
         {
-            var project = _mainAppContext.Projects
-                .Include(p=>p.Client)
-                .FirstOrDefault(p => p.Id == id);
 
-            return Ok(project);
-            
+            Project? fr = await _mainAppContext.Projects.FirstOrDefaultAsync(f => f.Id == id);
+
+            if (fr == null)
+            {
+                return NotFound("The resoucre is not found!");
+            }
+
+            return Ok(fr);
+
         }
 
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            Project f = _mainAppContext.Projects.FirstOrDefault(f => f.Id == id);
+            if (f != null)
+            {
+                _mainAppContext.Remove(f);
+                _mainAppContext.SaveChanges();
+                return Ok("Deleted");
 
+            }
+
+            return NotFound();
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Update(int id, [FromBody] ProjectInputDTO project)
+             
+        {
+            Project f = _mainAppContext.Projects.FirstOrDefault(f => f.Id == id);
+            if (f != null)
+            {
+                
+                f.Title = project.Title;
+                f.Description = project.Description;
+                f.ClientId = project.ClientId;
+
+                _mainAppContext.SaveChanges();
+                return Ok(f);
+
+            }
+
+            return NotFound();
+        }
     }
 }

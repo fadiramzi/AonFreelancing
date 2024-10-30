@@ -11,6 +11,9 @@ namespace AonFreelancing.Models
     public class SystemUser : User
     {
         public string Permissions { get; set; }
+        public int SystemUserId { get; set; }
+
+        public User User { get; set; }
 
         public override void DisplayProfile()
         {
