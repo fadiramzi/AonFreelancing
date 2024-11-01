@@ -245,7 +245,9 @@ namespace AonFreelancing.Controllers
 
             try
             {
-                var client = await _mainAppContext.Clients.FirstOrDefaultAsync(c => c.Id == id);
+                var client = await _mainAppContext.Clients
+                    .Include(c=>c.Projects)
+                    .FirstOrDefaultAsync(c => c.Id == id);
                 if (client == null)
                 {
                     response.IsSuccess = false;
@@ -256,7 +258,7 @@ namespace AonFreelancing.Controllers
                     };
                     return NotFound(response);
                 }
-                
+                client.Projects = null;
                 _mainAppContext.Clients.Remove(client);
                 await _mainAppContext.SaveChangesAsync();
                 

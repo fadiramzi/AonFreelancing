@@ -267,8 +267,7 @@ namespace AonFreelancing.Controllers
 
             try
             {
-                var freelancer = await _mainAppContext.Freelancers.
-                    Include(f=>f.Projects)
+                var freelancer = await _mainAppContext.Freelancers
                     .FirstOrDefaultAsync(f => f.Id == id);
                 if (freelancer == null)
                 {
@@ -281,7 +280,6 @@ namespace AonFreelancing.Controllers
                     return NotFound(response);
                 }
                 
-                freelancer.Projects = new List<Project>();
                 _mainAppContext.Freelancers.Remove(freelancer);
                 await _mainAppContext.SaveChangesAsync();
                 
