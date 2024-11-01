@@ -107,7 +107,7 @@ namespace AonFreelancing.Controllers
             {
                 c.Name = clint.Name;
 
-                _mainAppContext.SaveChanges();
+                await _mainAppContext.SaveChangesAsync();
                 return Ok(c);
 
             }
