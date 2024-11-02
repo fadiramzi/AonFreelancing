@@ -34,7 +34,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegRequest Req)
+        public async Task<IActionResult> RegisterAsync([FromBody] RegRequest Req)
         {
             // Enhancement for identifying which user type is
             User u = new User();
@@ -121,7 +121,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] AuthRequest Req)
+        public async Task<IActionResult> LoginAsync([FromBody] AuthRequest Req)
         {
             var user = await _userManager.FindByNameAsync(Req.UserName);
             if (user != null && await _userManager.CheckPasswordAsync(user, Req.Password))
@@ -160,13 +160,14 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
         [HttpPost("verify")]
-        public async Task<IActionResult> Verify([FromBody] VerifyReq Req)
+        public async Task<IActionResult> VerifyAsync([FromBody] VerifyReq Req)
         {
             var user = await _userManager.Users.Where(x => x.PhoneNumber == Req.Phone).FirstOrDefaultAsync();
             if (user != null && !await _userManager.IsPhoneNumberConfirmedAsync(user))
             {
                 // Get sent OTP to the user
-                // Get from DB
+                // Get from DB via otps table, usernane of the sender
+                // Check expiration and if it is used or not
                 var sentOTP = OTPManager.GenerateOtp();// TO-READ(Week 05 - Task)
                 // verify OTP
                 if (Req.Otp.Equals(sentOTP))

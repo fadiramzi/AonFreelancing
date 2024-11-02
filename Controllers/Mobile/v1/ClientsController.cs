@@ -24,7 +24,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] string? Mode)
+        public async Task<IActionResult> GetAllAsync([FromQuery] string? Mode)
         {
             var ClientList = new List<ClientDTO>();
             if (Mode == null || Mode == "basic")
