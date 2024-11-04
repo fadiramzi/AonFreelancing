@@ -22,6 +22,7 @@ namespace AonFreelancing
             builder.Services.AddIdentity<User,ApplicationRole>()
                 .AddEntityFrameworkStores<MainAppContext>()
                 .AddDefaultTokenProviders();
+            builder.Configuration.AddJsonFile("appsettings.json");
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
