@@ -22,54 +22,55 @@ namespace AonFreelancing.Controllers.Mobile.v1
         private readonly MainAppContext _mainAppContext;
         private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly OTPManager _otpManager;
         public AuthController(
             UserManager<User> userManager,
             MainAppContext mainAppContext,
-            IConfiguration configuration
+            IConfiguration configuration,
+            OTPManager otpManager
             )
         {
             _userManager = userManager;
             _mainAppContext = mainAppContext;
             _configuration = configuration;
+            _otpManager = otpManager;
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterAsync([FromBody] RegRequest Req)
+        public async Task<IActionResult> RegisterAsync([FromBody] RegRequest regRequest)
         {
             // Enhancement for identifying which user type is
-            User u = new User();
-            if (Req.UserType == "Freelancer")
+            User user = new User();
+            if (regRequest.UserType == Constants.USER_TYPE_FREELANCER)
             {
                 // Register User
-                u = new Freelancer
+                user = new Freelancer
                 {
-                    Name = Req.Name,
-                    UserName = Req.Username,
-                    PhoneNumber = Req.PhoneNumber,
+                    Name = regRequest.Name,
+                    UserName = regRequest.Username,
+                    PhoneNumber = regRequest.PhoneNumber,
                     Skills = "Programming, Net core 8, Communication"
                 };
             }
-            if (Req.UserType == "Client")
+            else if (regRequest.UserType == Constants.USER_TYPE_CLIENT)
             {
-                u = new Models.Client
+                user = new Models.Client
                 {
-                    Name = Req.Name,
-                    UserName = Req.Username,
-                    PhoneNumber = Req.PhoneNumber,
-                    CompanyName = Req.CompanyName
+                    Name = regRequest.Name,
+                    UserName = regRequest.Username,
+                    PhoneNumber = regRequest.PhoneNumber,
+                    CompanyName = regRequest.CompanyName
                 };
             }
 
 
-            var Result = await _userManager.CreateAsync(u, Req.Password);
+            var userCreationResult = await _userManager.CreateAsync(user, regRequest.Password);
 
-            if (!Result.Succeeded)
+            if (!userCreationResult.Succeeded)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>()
                 {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = Result.Errors
+                    Errors = userCreationResult.Errors
                     .Select(e => new Error()
                     {
                         Code = e.Code,
@@ -77,47 +78,72 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     })
                     .ToList()
                 });
-
             }
-            // Get created User
-            var CreatedUser = await _mainAppContext.Users.OfType<Freelancer>()
-                .Where(u => u.UserName == Req.Username)
-                .Select(u => new FreelancerResponseDTO()
-                {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Username = u.UserName,
-                    PhoneNumber = u.PhoneNumber,
-                    Skills = u.Skills,
-                    UserType = Constants.USER_TYPE_FREELANCER   // // TO-READ (Week 05 Task)we defined constant Freelancer, to avoid code writing error
 
-                })
-                .FirstOrDefaultAsync();
-            var otp = OTPManager.GenerateOtp();
-            // TO-DO(Week 05 Task)
-            // This should be enhanced using AppSetting 
-            var accountSid = _configuration["Twilio:Sid"];
-            var authToken = _configuration["Twilio:Token"];
-            TwilioClient.Init(accountSid, authToken);
+            string otpCode = OTPManager.GenerateOtp();
 
-            var messageOptions = new CreateMessageOptions(
-                new PhoneNumber($"whatsapp:{Req.PhoneNumber}")); //To
-            messageOptions.From = new PhoneNumber("whatsapp:+14155238886");
-            messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
-            messageOptions.ContentVariables = "{\"1\":\""+ otp + "\"}";
-
-
-            var message = MessageResource.Create(messageOptions);
-
-            return Ok(new ApiResponse<FreelancerResponseDTO>()
+            //persist the otp to the otps table
+            OTP otp = new OTP()
             {
-                IsSuccess = true,
-                Errors = [],
-                Results = CreatedUser
-            });
+                Code = otpCode,
+                PhoneNumber = regRequest.PhoneNumber,
+                CreatedDate = DateTime.Now,
+                ExpiresAt = DateTime.Now.AddMinutes(5),
+            };
+            await _mainAppContext.OTPs.AddAsync(otp);
+            await _mainAppContext.SaveChangesAsync();
 
+            //send the otp to the specified phone number
+            await _otpManager.SendOTPAsync(otp.Code, otp.PhoneNumber);
 
+            // Get created User (if it is a freelancer)
+            if (regRequest.UserType == Constants.USER_TYPE_FREELANCER)
+            {
+                var createdUser = await _mainAppContext.Users.OfType<Freelancer>()
+                        .Where(u => u.UserName == regRequest.Username)
+                        .Select(u => new FreelancerResponseDTO()
+                        {
+                            Id = u.Id,
+                            Name = u.Name,
+                            Username = u.UserName,
+                            PhoneNumber = u.PhoneNumber,
+                            Skills = u.Skills,
+                            UserType = Constants.USER_TYPE_FREELANCER   // // TO-READ (Week 05 Task)we defined constant Freelancer, to avoid code writing error
 
+                        })
+                        .FirstOrDefaultAsync();
+                return Ok(new ApiResponse<object>()
+                {
+                    IsSuccess = true,
+                    Errors = [],
+                    Results = createdUser
+                });
+            }
+            // Get created User (if it is a client)
+            else if (regRequest.UserType == Constants.USER_TYPE_CLIENT)
+            {
+                var createdUser = await _mainAppContext.Users.OfType<Models.Client>()
+                          .Where(c => c.UserName == regRequest.Username)
+                          .Select(c => new ClientResponseDTO
+                          {
+                              Id = c.Id,
+                              Name = c.Name,
+                              Username = c.UserName,
+                              PhoneNumber = c.PhoneNumber,
+                              CompanyName = c.CompanyName,
+                              UserType = Constants.USER_TYPE_CLIENT
+                          })
+                          .FirstOrDefaultAsync();
+                return Ok(new ApiResponse<object>
+                {
+                    IsSuccess = true,
+                    Errors = [],
+                    Results = createdUser
+                });
+            }
+
+            //this fallback return value will not be returned due to model validation.
+            return Ok();
         }
 
         [HttpPost("login")]
@@ -140,7 +166,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 // Generate JWT
                 var jwt = "";
                 // Your Task
-           
+
                 return Ok(new ApiResponse<string>
                 {
                     IsSuccess = true,
@@ -160,32 +186,33 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
         [HttpPost("verify")]
-        public async Task<IActionResult> VerifyAsync([FromBody] VerifyReq Req)
+        public async Task<IActionResult> VerifyAsync([FromBody] VerifyReq verifyReq)
         {
-            var user = await _userManager.Users.Where(x => x.PhoneNumber == Req.Phone).FirstOrDefaultAsync();
+            var user = await _userManager.Users.Where(x => x.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
             if (user != null && !await _userManager.IsPhoneNumberConfirmedAsync(user))
             {
-                // Get sent OTP to the user
-                // Get from DB via otps table, usernane of the sender
-                // Check expiration and if it is used or not
-                var sentOTP = OTPManager.GenerateOtp();// TO-READ(Week 05 - Task)
+                OTP? otp = await _mainAppContext.OTPs.Where(o => o.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
+
                 // verify OTP
-                if (Req.Otp.Equals(sentOTP))
+                if (otp != null && verifyReq.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpiresAt)
                 {
                     user.PhoneNumberConfirmed = true;
                     await _userManager.UpdateAsync(user);
-                    // Delete or disable sent OTP
-                    return Ok(new ApiResponse<string>(){
-                            IsSuccess = true,
-                            Results = "Activated",
-                            Errors = []
+
+                    // disable sent OTP
+                    otp.IsUsed = true;
+                    await _mainAppContext.SaveChangesAsync();
+
+                    return Ok(new ApiResponse<string>()
+                    {
+                        IsSuccess = true,
+                        Results = "Activated",
+                        Errors = []
                     });
                 }
             }
             return Unauthorized((new ApiResponse<string>()
             {
-                IsSuccess = false,
-                Results = null,
                 Errors = new List<Error>() {
                     new Error(){
                         Code = StatusCodes.Status401Unauthorized.ToString(),

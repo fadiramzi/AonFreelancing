@@ -1,12 +1,39 @@
-﻿namespace AonFreelancing.Utilities
+﻿using Twilio.Types;
+using Twilio;
+using Twilio.Rest.Api.V2010.Account;
+
+namespace AonFreelancing.Utilities
 {
     public class OTPManager
     {
-        private static Random _random = new Random();
+        static Random _random = new Random();
+
+        readonly IConfiguration _configuration;
+
+        public OTPManager(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
+        public async Task<string> SendOTPAsync(string otp,string receiverPhoneNumber)
+        {
+            var accountSid = _configuration["Twilio:Sid"];
+            var authToken = _configuration["Twilio:Token"];
+            TwilioClient.Init(accountSid, authToken);
+
+            var messageOptions = new CreateMessageOptions(new PhoneNumber($"whatsapp:{receiverPhoneNumber}")); //To
+            messageOptions.From = new PhoneNumber(_configuration["Twilio:From"]);//TODO use appsetting.json
+            messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
+            messageOptions.ContentVariables = "{\"1\":\"" + otp + "\"}";
+
+
+            var message =await MessageResource.CreateAsync(messageOptions);
+            return otp;
+        }
 
         public static string GenerateOtp()
         {
-           
+
             // Generate a random number between 0 and 999999
             int otp = _random.Next(0, (int)Math.Pow(10, 6));
 

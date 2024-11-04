@@ -7,9 +7,12 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using AonFreelancing.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace AonFreelancing.Models
 {
+    [Index(nameof(PhoneNumber), IsUnique = true)]
+
     public class User : IdentityUser<long>
     {
         public string Name { get; set; }

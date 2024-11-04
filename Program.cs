@@ -1,6 +1,7 @@
 
 using AonFreelancing.Contexts;
 using AonFreelancing.Models;
+using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,11 +19,14 @@ namespace AonFreelancing
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddSingleton<OTPManager>();
             builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlite("Data Source=aon.db"));
             builder.Services.AddIdentity<User,ApplicationRole>()
                 .AddEntityFrameworkStores<MainAppContext>()
                 .AddDefaultTokenProviders();
             builder.Configuration.AddJsonFile("appsettings.json");
+            
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
