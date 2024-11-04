@@ -2,6 +2,7 @@
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.Requests;
+using AonFreelancing.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
@@ -22,15 +23,18 @@ namespace AonFreelancing.Controllers.Mobile.v1
         private readonly MainAppContext _mainAppContext;
         private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly JwtService _jwtService;
         public AuthController(
             UserManager<User> userManager,
             MainAppContext mainAppContext,
-            IConfiguration configuration
+            IConfiguration configuration,
+            JwtService jwtService
             )
         {
             _userManager = userManager;
             _mainAppContext = mainAppContext;
             _configuration = configuration;
+            _jwtService = jwtService;
         }
 
         [HttpPost("register")]
@@ -132,13 +136,13 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     new Error(){
                         Code = StatusCodes.Status401Unauthorized.ToString(),
                         Message = "Verify Your Account First"
-                    }
-                });
+                        }
+                    });
                 }
 
                 // TO-DO(Week 05 - Task)
                 // Generate JWT
-                var jwt = "";
+                var jwt = _jwtService.CreateToken(user);
                 // Your Task
            
                 return Ok(new ApiResponse<string>

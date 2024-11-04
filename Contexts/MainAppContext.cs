@@ -5,7 +5,8 @@ using System.Reflection.Emit;
 
 namespace AonFreelancing.Contexts
 {
-    public class MainAppContext:IdentityDbContext<User, ApplicationRole, long>
+    public class MainAppContext(DbContextOptions<MainAppContext> contextOptions) 
+        : IdentityDbContext<User, ApplicationRole, long>(contextOptions)
     {
         // For TPT design, no need to define each one
         //public DbSet<Freelancer> Freelancers { get; set; }
@@ -13,11 +14,7 @@ namespace AonFreelancing.Contexts
         //public DbSet<Client> Clients { get; set; }
 
         // instead, use User only
-        public DbSet<User> Users { get; set; } // Will access Freelancers, Clients, SystemUsers through inheritance and ofType 
-
-        public MainAppContext(DbContextOptions<MainAppContext> contextOptions) : base(contextOptions) {
-
-        }
+        public new DbSet<User> Users { get; set; } // Will access Freelancers, Clients, SystemUsers through inheritance and ofType 
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
