@@ -2,6 +2,7 @@
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Utilities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
+    [Authorize]
     [Route("api/mobile/v1/freelancers")]
     [ApiController]
     public class FreelancersController : ControllerBase
