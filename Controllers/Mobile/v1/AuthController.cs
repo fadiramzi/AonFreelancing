@@ -9,10 +9,12 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
+using Twilio.TwiML.Messaging;
 using Twilio.Types;
 
 namespace AonFreelancing.Controllers.Mobile.v1
@@ -47,7 +49,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] RegRequest regRequest)
         {
-           
+
             User user = new User();
             if (regRequest.UserType == Constants.USER_TYPE_FREELANCER)
             {
@@ -89,7 +91,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             //assign a role to the newly created User
             var role = new ApplicationRole { Name = regRequest.UserType };
             await _roleManager.CreateAsync(role);
-            await _userManager.AddToRoleAsync(user,role.Name);
+            await _userManager.AddToRoleAsync(user, role.Name);
 
             string otpCode = OTPManager.GenerateOtp();
             //persist the otp to the otps table
@@ -119,7 +121,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                             PhoneNumber = u.PhoneNumber,
                             Skills = u.Skills,
                             UserType = Constants.USER_TYPE_FREELANCER,   // // TO-READ (Week 05 Task)we defined constant Freelancer, to avoid code writing error
-                            Role = new RoleResponseDTO { Id =role.Id, Name = role.Name }
+                            Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
                         })
                         .FirstOrDefaultAsync();
                 return Ok(new ApiResponse<object>()
@@ -183,7 +185,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                         AccessToken = token,
                         UserDetailsDTO = new UserDetailsDTO(user, role)
                     }
-                });            
+                });
             }
 
             return Unauthorized(new List<Error>() {
@@ -231,5 +233,30 @@ namespace AonFreelancing.Controllers.Mobile.v1
             }));
         }
 
+        [HttpPost("forgotpassword")]
+        public async Task<IActionResult> ForgotPasswordMethod([FromBody] ForgotPasswordReq forgotPasswordRequest)
+        {
+            var user = await _userManager.Users.Where(u => u.PhoneNumber == forgotPasswordRequest.PhoneNumber).FirstOrDefaultAsync();
+            if (user != null)
+            {
+                string token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+                //send whatsapp  message containing the reset password url
+                await _otpManager.sendForgotPasswordMessageAsync(token, user.PhoneNumber);
+            }
+            // to maintain confidentiality, we always return an OK response even if the user was not found. 
+            return Ok("Check your WhatsApp inbox for password reset token.");
+        }
+
+        [HttpPost("resetpassword")]
+        public async Task<IActionResult> ResetPasswordMethod([FromBody] ResetPasswordReq resetPasswordReq)
+        {
+            User? user = await _userManager.Users.Where(u => u.PhoneNumber == resetPasswordReq.PhoneNumber).FirstOrDefaultAsync();
+            if (user != null)
+                await _userManager.ResetPasswordAsync(user, resetPasswordReq.Token, resetPasswordReq.Password);
+          
+            // to maintain confidentiality, we always return an OK response even if the user was not found. 
+            return Ok("Your password have been reset");
+        }
     }
 }
