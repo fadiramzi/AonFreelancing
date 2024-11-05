@@ -2,6 +2,7 @@
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.Requests;
+using AonFreelancing.Models.Responses;
 using AonFreelancing.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authentication;
@@ -172,21 +173,17 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 });
                 }
 
-                // TO-DO(Week 05 - Task)
-                // Generate JWT
                 var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
                 var token = _jwtService.GenerateJWT(user, role);
-                return Ok(new { Token = token });            
-
-
-                //return Ok(new ApiResponse<string>
-                //{
-                //    IsSuccess = true,
-                //    Errors = [],
-                //    Results = jwt
-
-                //});
-
+                return Ok(new ApiResponse<LoginResponse>
+                {
+                    IsSuccess = true,
+                    Results = new LoginResponse()
+                    {
+                        AccessToken = token,
+                        UserDetailsDTO = new UserDetailsDTO(user, role)
+                    }
+                });            
             }
 
             return Unauthorized(new List<Error>() {
