@@ -19,6 +19,7 @@ namespace AonFreelancing
             // Add services to the container.
 
             builder.Services.AddSingleton<JwtService>();
+            builder.Services.AddSingleton<TwilioService>();
 
             builder.Services.AddAuthentication(options =>
             {
