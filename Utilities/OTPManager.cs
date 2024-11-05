@@ -14,7 +14,7 @@ namespace AonFreelancing.Utilities
         {
             _configuration = configuration;
         }
-
+        //TODO: make this method void
         public async Task<string> SendOTPAsync(string otp,string receiverPhoneNumber)
         {
             var accountSid = _configuration["Twilio:Sid"];

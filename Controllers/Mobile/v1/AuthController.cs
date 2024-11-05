@@ -2,6 +2,7 @@
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.Requests;
+using AonFreelancing.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
@@ -21,25 +22,31 @@ namespace AonFreelancing.Controllers.Mobile.v1
     {
         private readonly MainAppContext _mainAppContext;
         private readonly UserManager<User> _userManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly OTPManager _otpManager;
+        private readonly JwtService _jwtService;
         public AuthController(
             UserManager<User> userManager,
             MainAppContext mainAppContext,
+            RoleManager<ApplicationRole> roleManager,
             IConfiguration configuration,
-            OTPManager otpManager
+            OTPManager otpManager,
+            JwtService jwtService
             )
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _mainAppContext = mainAppContext;
             _configuration = configuration;
             _otpManager = otpManager;
+            _jwtService = jwtService;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] RegRequest regRequest)
         {
-            // Enhancement for identifying which user type is
+           
             User user = new User();
             if (regRequest.UserType == Constants.USER_TYPE_FREELANCER)
             {
@@ -49,7 +56,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     Name = regRequest.Name,
                     UserName = regRequest.Username,
                     PhoneNumber = regRequest.PhoneNumber,
-                    Skills = "Programming, Net core 8, Communication"
+                    Skills = regRequest.Skills
                 };
             }
             else if (regRequest.UserType == Constants.USER_TYPE_CLIENT)
@@ -63,9 +70,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 };
             }
 
-
+            //create new User with hashed passworrd in the database
             var userCreationResult = await _userManager.CreateAsync(user, regRequest.Password);
-
             if (!userCreationResult.Succeeded)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>()
@@ -79,9 +85,12 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     .ToList()
                 });
             }
+            //assign a role to the newly created User
+            var role = new ApplicationRole { Name = regRequest.UserType };
+            await _roleManager.CreateAsync(role);
+            await _userManager.AddToRoleAsync(user,role.Name);
 
             string otpCode = OTPManager.GenerateOtp();
-
             //persist the otp to the otps table
             OTP otp = new OTP()
             {
@@ -108,8 +117,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                             Username = u.UserName,
                             PhoneNumber = u.PhoneNumber,
                             Skills = u.Skills,
-                            UserType = Constants.USER_TYPE_FREELANCER   // // TO-READ (Week 05 Task)we defined constant Freelancer, to avoid code writing error
-
+                            UserType = Constants.USER_TYPE_FREELANCER,   // // TO-READ (Week 05 Task)we defined constant Freelancer, to avoid code writing error
+                            Role = new RoleResponseDTO { Id =role.Id, Name = role.Name }
                         })
                         .FirstOrDefaultAsync();
                 return Ok(new ApiResponse<object>()
@@ -131,7 +140,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                               Username = c.UserName,
                               PhoneNumber = c.PhoneNumber,
                               CompanyName = c.CompanyName,
-                              UserType = Constants.USER_TYPE_CLIENT
+                              UserType = Constants.USER_TYPE_CLIENT,
+                              Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
                           })
                           .FirstOrDefaultAsync();
                 return Ok(new ApiResponse<object>
@@ -164,16 +174,18 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
                 // TO-DO(Week 05 - Task)
                 // Generate JWT
-                var jwt = "";
-                // Your Task
+                var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+                var token = _jwtService.GenerateJWT(user, role);
+                return Ok(new { Token = token });            
 
-                return Ok(new ApiResponse<string>
-                {
-                    IsSuccess = true,
-                    Errors = [],
-                    Results = jwt
 
-                });
+                //return Ok(new ApiResponse<string>
+                //{
+                //    IsSuccess = true,
+                //    Errors = [],
+                //    Results = jwt
+
+                //});
 
             }
 
