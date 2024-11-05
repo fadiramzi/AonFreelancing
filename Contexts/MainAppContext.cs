@@ -22,12 +22,20 @@ namespace AonFreelancing.Contexts
         protected override void OnModelCreating(ModelBuilder builder)
         {
             // For TPT design
-            builder.Entity<User>().ToTable("AspNetUsers");
+            builder.Entity<User>().ToTable("AspNetUsers")
+                                        .HasIndex(u=>u.PhoneNumber).IsUnique();
             builder.Entity<Freelancer>().ToTable("Freelancers");
             builder.Entity<Client>().ToTable("Clients");
             builder.Entity<SystemUser>().ToTable("SystemUsers");
-            //create a constraint to ensure no invalid otp code gets stored in the database
             builder.Entity<OTP>().ToTable("otps", o => o.HasCheckConstraint("CK_CODE","length([Code]) = 6"));
+
+            //set up relationships
+            builder.Entity<User>().HasOne<OTP>()
+                                    .WithOne()
+                                    .HasForeignKey<OTP>()
+                                    .HasPrincipalKey<User>(nameof(User.PhoneNumber));
+
+
             base.OnModelCreating(builder);
         }
 

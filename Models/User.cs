@@ -11,7 +11,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AonFreelancing.Models
 {
-    [Index(nameof(PhoneNumber), IsUnique = true)]
+    //Replaced with 'builder.Entity<User>().HasIndex(u => u.PhoneNumber).IsUnique();' in OnModelCreate
+    //[Index(nameof(PhoneNumber), IsUnique = true)]
 
     public class User : IdentityUser<long>
     {
