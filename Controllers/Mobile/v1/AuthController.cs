@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
+using Client = AonFreelancing.Models.Client;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -132,24 +133,48 @@ namespace AonFreelancing.Controllers.Mobile.v1
             {
                 if (!await _userManager.IsPhoneNumberConfirmedAsync(user))
                 {
-                    return Unauthorized(new List<Error>() {
-                    new Error(){
-                        Code = StatusCodes.Status401Unauthorized.ToString(),
-                        Message = "Verify Your Account First"
+                    return Unauthorized(new ApiResponse<string>
+                    {
+                        IsSuccess = false,
+                        Errors = new List<Error>() {
+                            new Error(){
+                            Code = StatusCodes.Status401Unauthorized.ToString(),
+                            Message = "Verify Your Account First"
+                            }
                         }
                     });
                 }
 
-                // TO-DO(Week 05 - Task)
-                // Generate JWT
-                var jwt = _jwtService.CreateToken(user);
-                // Your Task
+                string userType = user switch
+                {
+                    Freelancer    => Constants.USER_TYPE_FREELANCER,
+                    Client        => Constants.USER_TYPE_CLIENT,
+                    SystemUser    => Constants.USER_TYPE_SYSTEM_USER,
+
+                    _ => "Unknown"
+                };
+               
+                var token = _jwtService.CreateToken(user);
+
+                var userResponse = new UserResponseDTO
+                {
+                    Id = user.Id,
+                    Name = user.Name,
+                    Username = user.UserName ?? "",
+                    PhoneNumber = user.PhoneNumber ?? "",
+                    IsPhoneNumberVerified = user.PhoneNumberConfirmed,
+                    UserType = userType,
+                };
            
-                return Ok(new ApiResponse<string>
+                return Ok(new ApiResponse<object>
                 {
                     IsSuccess = true,
                     Errors = [],
-                    Results = jwt
+                    Results = new
+                    {
+                        UserDetails = userResponse,
+                        AccessToken = token
+                    }
 
                 });
 
