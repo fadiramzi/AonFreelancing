@@ -1,5 +1,6 @@
 
 using AonFreelancing.Contexts;
+using AonFreelancing.Middlewares;
 using AonFreelancing.Models;
 using AonFreelancing.Services;
 using AonFreelancing.Utilities;
@@ -66,6 +67,8 @@ namespace AonFreelancing
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
 
             app.UseHttpsRedirection();
 
