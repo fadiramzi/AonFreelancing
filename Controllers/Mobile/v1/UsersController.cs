@@ -15,7 +15,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Authorize]
     [Route("api/mobile/v1/users")]
     [ApiController]
-    public class UsersController : ControllerBase
+    public class UsersController : BaseController
     {
         private readonly MainAppContext _mainAppContext;
         private readonly RoleManager<ApplicationRole> _roleManager;
@@ -42,42 +42,29 @@ namespace AonFreelancing.Controllers.Mobile.v1
                                                                     Skills = f.Skills,
                                                                 }).FirstOrDefaultAsync();
             if (freelancerResponseDTO != null)
-            {
-                return Ok(new ApiResponse<FreelancerResponseDTO>
-                {
-                    IsSuccess = true,
-                    Results = freelancerResponseDTO
-                });
-            }
-            else
-            {
-                var clientResponseDTO = await _mainAppContext.Users.OfType<Client>()
-                                                                    .Where(c => c.Id == id)
-                                                                    .Include(c => c.Projects)
-                                                                    .Select(c => new ClientResponseDTO
-                                                                    {
-                                                                        Id = c.Id,
-                                                                        Name = c.Name,
-                                                                        Username = c.UserName,
-                                                                        PhoneNumber = c.PhoneNumber,
-                                                                        UserType = Constants.USER_TYPE_CLIENT,
-                                                                        IsPhoneNumberVerified = c.PhoneNumberConfirmed,
-                                                                        Role = new RoleResponseDTO { Name = Constants.USER_TYPE_CLIENT },
-                                                                        CompanyName = c.CompanyName,
-                                                                        Projects = c.Projects
-                                                                    }).FirstOrDefaultAsync();
+                return Ok(CreateSuccessResponse(freelancerResponseDTO));
 
-                if (clientResponseDTO != null)
-                {
-                    return Ok(new ApiResponse<ClientResponseDTO>
-                    {
-                        IsSuccess = true,
-                        Results = clientResponseDTO
-                    });
-                }
-            }
 
-            return NotFound(new ApiResponse<object> { Errors = [new Error { Code = "404", Message = "User not found" }] });
+            var clientResponseDTO = await _mainAppContext.Users.OfType<Client>()
+                                                                .Where(c => c.Id == id)
+                                                                .Include(c => c.Projects)
+                                                                .Select(c => new ClientResponseDTO
+                                                                {
+                                                                    Id = c.Id,
+                                                                    Name = c.Name,
+                                                                    Username = c.UserName,
+                                                                    PhoneNumber = c.PhoneNumber,
+                                                                    UserType = Constants.USER_TYPE_CLIENT,
+                                                                    IsPhoneNumberVerified = c.PhoneNumberConfirmed,
+                                                                    Role = new RoleResponseDTO { Name = Constants.USER_TYPE_CLIENT },
+                                                                    CompanyName = c.CompanyName,
+                                                                    Projects = c.Projects
+                                                                }).FirstOrDefaultAsync();
+
+            if (clientResponseDTO != null)
+                return Ok(CreateSuccessResponse(clientResponseDTO));
+
+            return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "User not found"));
         }
 
     }

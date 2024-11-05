@@ -21,7 +21,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
 {
     [Route("api/mobile/v1/auth")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController : BaseController
     {
         private readonly MainAppContext _mainAppContext;
         private readonly UserManager<User> _userManager;
@@ -76,7 +76,6 @@ namespace AonFreelancing.Controllers.Mobile.v1
             //create new User with hashed passworrd in the database
             var userCreationResult = await _userManager.CreateAsync(user, regRequest.Password);
             if (!userCreationResult.Succeeded)
-            {
                 return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>()
                 {
                     Errors = userCreationResult.Errors
@@ -87,7 +86,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     })
                     .ToList()
                 });
-            }
+            
             //assign a role to the newly created User
             var role = new ApplicationRole { Name = regRequest.UserType };
             await _roleManager.CreateAsync(role);
@@ -120,16 +119,11 @@ namespace AonFreelancing.Controllers.Mobile.v1
                             Username = u.UserName,
                             PhoneNumber = u.PhoneNumber,
                             Skills = u.Skills,
-                            UserType = Constants.USER_TYPE_FREELANCER,   // // TO-READ (Week 05 Task)we defined constant Freelancer, to avoid code writing error
+                            UserType = Constants.USER_TYPE_FREELANCER,
                             Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
                         })
                         .FirstOrDefaultAsync();
-                return Ok(new ApiResponse<object>()
-                {
-                    IsSuccess = true,
-                    Errors = [],
-                    Results = createdUser
-                });
+                return Ok(CreateSuccessResponse(createdUser));
             }
             // Get created User (if it is a client)
             else if (regRequest.UserType == Constants.USER_TYPE_CLIENT)
@@ -147,14 +141,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                               Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
                           })
                           .FirstOrDefaultAsync();
-                return Ok(new ApiResponse<object>
-                {
-                    IsSuccess = true,
-                    Errors = [],
-                    Results = createdUser
-                });
+                return Ok(CreateSuccessResponse(createdUser));
             }
-
             //this fallback return value will not be returned due to model validation.
             return Ok();
         }
@@ -166,34 +154,18 @@ namespace AonFreelancing.Controllers.Mobile.v1
             if (user != null && await _userManager.CheckPasswordAsync(user, Req.Password))
             {
                 if (!await _userManager.IsPhoneNumberConfirmedAsync(user))
-                {
-                    return Unauthorized(new List<Error>() {
-                    new Error(){
-                        Code = StatusCodes.Status401Unauthorized.ToString(),
-                        Message = "Verify Your Account First"
-                    }
-                });
-                }
+                    return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(),"Verify Your Account First"));
 
                 var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
                 var token = _jwtService.GenerateJWT(user, role);
-                return Ok(new ApiResponse<LoginResponse>
+                return Ok(CreateSuccessResponse(new LoginResponse()
                 {
-                    IsSuccess = true,
-                    Results = new LoginResponse()
-                    {
-                        AccessToken = token,
-                        UserDetailsDTO = new UserDetailsDTO(user, role)
-                    }
-                });
+                    AccessToken = token,
+                    UserDetailsDTO = new UserDetailsDTO(user, role)
+                }));
             }
 
-            return Unauthorized(new List<Error>() {
-                    new Error(){
-                        Code = StatusCodes.Status401Unauthorized.ToString(),
-                        Message = "UnAuthorized"
-                    }
-                });
+            return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "UnAuthorized"));
         }
 
         [HttpPost("verify")]
@@ -214,23 +186,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     otp.IsUsed = true;
                     await _mainAppContext.SaveChangesAsync();
 
-                    return Ok(new ApiResponse<string>()
-                    {
-                        IsSuccess = true,
-                        Results = "Activated",
-                        Errors = []
-                    });
+                    return Ok(CreateSuccessResponse("Activated"));
                 }
             }
-            return Unauthorized((new ApiResponse<string>()
-            {
-                Errors = new List<Error>() {
-                    new Error(){
-                        Code = StatusCodes.Status401Unauthorized.ToString(),
-                        Message = "UnAuthorized"
-                    }
-                }
-            }));
+            return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "UnAuthorized"));
         }
 
         [HttpPost("forgotpassword")]
@@ -245,7 +204,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 await _otpManager.sendForgotPasswordMessageAsync(token, user.PhoneNumber);
             }
             // to maintain confidentiality, we always return an OK response even if the user was not found. 
-            return Ok("Check your WhatsApp inbox for password reset token.");
+            return Ok(CreateSuccessResponse("Check your WhatsApp inbox for password reset token."));
         }
 
         [HttpPost("resetpassword")]
@@ -256,7 +215,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 await _userManager.ResetPasswordAsync(user, resetPasswordReq.Token, resetPasswordReq.Password);
           
             // to maintain confidentiality, we always return an OK response even if the user was not found. 
-            return Ok("Your password have been reset");
+            return Ok(CreateSuccessResponse("Your password have been reset"));
         }
     }
 }

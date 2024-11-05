@@ -13,7 +13,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Authorize]
     [Route("api/mobile/v1/freelancers")]
     [ApiController]
-    public class FreelancersController : ControllerBase
+    public class FreelancersController : BaseController
     {
         private readonly UserManager<User> _userManager;
         private readonly MainAppContext _mainAppContext;
@@ -40,14 +40,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     Skills = u.Skills,
                 })
                 .ToListAsync();
-            return Ok(
-                new ApiResponse<IEnumerable<FreelancerResponseDTO>>()
-                {
-                    IsSuccess = true,
-                    Errors = [],
-                    Results = data
-                }
-                );
+            return Ok(CreateSuccessResponse(data));
         }
         //api/freelancers/
         //[HttpPost]
