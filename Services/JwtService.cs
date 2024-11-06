@@ -8,7 +8,7 @@ namespace AonFreelancing.Services
 {
     public sealed class JwtService(IConfiguration configuration)
     {
-        public string CreateToken(User user)
+        public string CreateToken(User user, string role)
         {
             string secritKey = configuration["Jwt:Key"];
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secritKey));
@@ -21,7 +21,8 @@ namespace AonFreelancing.Services
                 {
                     new (ClaimTypes.Name, value: user.UserName ?? ""),
                     new (ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new (ClaimTypes.MobilePhone, value: user.PhoneNumber ?? "")
+                    new (ClaimTypes.MobilePhone, value: user.PhoneNumber ?? ""),
+                    new (ClaimTypes.Role, role)
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(configuration.GetValue<int>("Jwt:ExpiryInMinutes")),
                 SigningCredentials = credentials,

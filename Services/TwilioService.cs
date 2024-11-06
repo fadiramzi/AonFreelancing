@@ -13,7 +13,19 @@ namespace AonFreelancing.Services
             _configuration = configuration;
         }
 
-        public async Task SendOtpAsync(string phoneNumber, string data)
+        public async Task SendOtpAsync(string phoneNumber, string otp)
+        {
+            TwilioClient.Init(_configuration["Twilio:Sid"], _configuration["Twilio:Token"]);
+
+            var messageOptions = new CreateMessageOptions(new PhoneNumber($"whatsapp:{phoneNumber}"));
+            messageOptions.From = new PhoneNumber(_configuration["Twilio:From"]);
+            messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
+            messageOptions.ContentVariables = "{\"1\":\"" + otp + "\"}";
+
+            var message = await MessageResource.CreateAsync(messageOptions);
+        }
+
+        public async Task SendFogotPassowrdAsync(string phoneNumber, string data)
         {
             TwilioClient.Init(_configuration["Twilio:Sid"], _configuration["Twilio:Token"]);
 
@@ -22,7 +34,7 @@ namespace AonFreelancing.Services
             messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
             messageOptions.ContentVariables = "{\"1\":\"" + data + "\"}";
 
-            var message = await MessageResource.CreateAsync(messageOptions);
+            var resource = await MessageResource.CreateAsync(messageOptions);
         }
     }
 
