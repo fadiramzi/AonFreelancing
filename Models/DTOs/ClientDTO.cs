@@ -10,6 +10,14 @@ namespace AonFreelancing.Models.DTOs
         public IEnumerable<ProjectOutDTO> Projects { get; set; }
     }
 
+    public class ClientResponseDTO : UserResponseDTO
+    {
+        public string CompanyName { get; set; }
+
+        // Has many projects, 1-m
+        public IEnumerable<ProjectOutDTO> Projects { get; set; }
+    }
+
     public class ClientInputDTO: UserDTO
     {
         [Required]

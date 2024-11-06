@@ -34,7 +34,7 @@ namespace AonFreelancing.Utilities
             messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
             messageOptions.ContentVariables = "{\"1\":\"" + otp.Code + "\"}";
 
-            var message = MessageResource.Create(messageOptions);
+            MessageResource.Create(messageOptions);
         }
     }
 
