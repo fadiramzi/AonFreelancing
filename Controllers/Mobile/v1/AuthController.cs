@@ -221,16 +221,18 @@ namespace AonFreelancing.Controllers.Mobile.v1
             var user = await _userManager.Users.Where(x => x.PhoneNumber == req.Phone).FirstOrDefaultAsync();
             if (user != null && !await _userManager.IsPhoneNumberConfirmedAsync(user))
             {
-                // Get sent OTP to the user
-                // Get from DB via otps table, usernane of the sender
-                // Check expiration and if it is used or not
-                var sentOTP = OTPManager.GenerateOtp();// TO-READ(Week 05 - Task)
-                // verify OTP
-                if (req.Otp.Equals(sentOTP))
+                var otp = await _mainAppContext.Otps.Where(o => o.PhoneNumber == req.Phone)
+                    .OrderByDescending(o => o.CreatedDate)
+                    .FirstOrDefaultAsync();
+
+                if (otp != null && req.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpiresAt)
                 {
                     user.PhoneNumberConfirmed = true;
                     await _userManager.UpdateAsync(user);
-                    // Delete or disable sent OTP
+                    
+                    otp.IsUsed = true;
+                    await _mainAppContext.SaveChangesAsync();
+
                     return Ok(new ApiResponse<string>(){
                             IsSuccess = true,
                             Results = "Activated",
@@ -238,6 +240,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     });
                 }
             }
+
             return Unauthorized((new ApiResponse<string>()
             {
                 IsSuccess = false,

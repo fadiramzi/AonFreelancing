@@ -20,7 +20,7 @@ namespace AonFreelancing
 
             builder.Services.AddSingleton<JwtService>();
             builder.Services.AddSingleton<TwilioService>();
-
+     
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

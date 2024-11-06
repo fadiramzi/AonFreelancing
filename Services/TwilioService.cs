@@ -7,29 +7,22 @@ namespace AonFreelancing.Services
     public sealed class TwilioService
     {
         private readonly IConfiguration _configuration;
-        private readonly string _accountSid;
-        private readonly string _authToken;
-        private readonly string _twilioNumber;
-        private readonly string _contentSid;
 
         public TwilioService(IConfiguration configuration)
         {
             _configuration = configuration;
-            _accountSid = _configuration["Twilio:AccountSid"] ?? "";
-            _authToken = _configuration["Twilio:AuthToken"] ?? "";
-            _twilioNumber = _configuration["Twilio:PhoneNumber"] ?? "";
-            _contentSid = _configuration["Twilio:ContentSid"] ?? "";
         }
 
         public async Task SendOtpAsync(string phoneNumber, string otp)
         {
-            TwilioClient.Init(_accountSid, _authToken);
-            var message = await MessageResource.CreateAsync(
-                body: $"Your OTP is {otp}",
-                from: new PhoneNumber(_twilioNumber),
-                to: new PhoneNumber(phoneNumber),
-                contentSid: _contentSid
-            );
+            TwilioClient.Init(_configuration["Twilio:Sid"], _configuration["Twilio:Token"]);
+
+            var messageOptions = new CreateMessageOptions(new PhoneNumber($"whatsapp:{phoneNumber}"));
+            messageOptions.From = new PhoneNumber(_configuration["Twilio:From"]);
+            messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
+            messageOptions.ContentVariables = "{\"1\":\"" + otp + "\"}";
+
+            var message = await MessageResource.CreateAsync(messageOptions);
         }
     }
 
