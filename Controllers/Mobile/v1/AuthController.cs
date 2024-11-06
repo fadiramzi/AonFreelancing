@@ -4,16 +4,10 @@ using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.Requests;
 using AonFreelancing.Services;
 using AonFreelancing.Utilities;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Twilio;
-using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
-using Client = AonFreelancing.Models.Client;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -25,56 +19,71 @@ namespace AonFreelancing.Controllers.Mobile.v1
         private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
         private readonly JwtService _jwtService;
+        private readonly TwilioService _twitterService;
+
         public AuthController(
             UserManager<User> userManager,
             MainAppContext mainAppContext,
             IConfiguration configuration,
-            JwtService jwtService
+            JwtService jwtService,
+            TwilioService twilioService
             )
         {
             _userManager = userManager;
             _mainAppContext = mainAppContext;
             _configuration = configuration;
             _jwtService = jwtService;
+            _twitterService = twilioService;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] RegRequest req)
         {
-            // Enhancement for identifying which user type is
-            User u = new User();
-            if (req.UserType == "Freelancer")
+            User user = req.UserType switch
             {
-                // Register User
-                u = new Freelancer
+                Constants.USER_TYPE_FREELANCER => new Freelancer
                 {
                     Name = req.Name,
                     UserName = req.Username,
                     PhoneNumber = req.PhoneNumber,
-                    Skills = "Programming, Net core 8, Communication"
-                };
-            }
-            if (req.UserType == "Client")
-            {
-                u = new Client
+                    Skills = req.Skills ?? string.Empty
+                },
+                Constants.USER_TYPE_CLIENT => new Models.Client
                 {
                     Name = req.Name,
                     UserName = req.Username,
                     PhoneNumber = req.PhoneNumber,
-                    CompanyName = req.CompanyName
-                };
+                    CompanyName = req.CompanyName ?? string.Empty
+                },
+                _ => new SystemUser()
+            };
+
+            bool isUsernameTaken = await _userManager.Users.AnyAsync(u => u.UserName == req.Username);
+
+            if (isUsernameTaken)
+            {
+                return BadRequest(new ApiResponse<string>()
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error>() {
+                        new Error() {
+                            Code = StatusCodes.Status400BadRequest.ToString(),
+                            Message = "Username is already taken"
+                        }
+                    }
+                });
             }
 
+            var result = await _userManager.CreateAsync(user, req.Password);
 
-            var Result = await _userManager.CreateAsync(u, req.Password);
-
-            if (!Result.Succeeded)
+            if (!result.Succeeded)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>()
                 {
                     IsSuccess = false,
                     Results = null,
-                    Errors = Result.Errors
+                    Errors = result.Errors
                     .Select(e => new Error()
                     {
                         Code = e.Code,
@@ -84,41 +93,59 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 });
 
             }
-            // Get created User
-            var CreatedUser = await _mainAppContext.Users.OfType<Freelancer>()
-                .Where(u => u.UserName == req.Username)
-                .Select(u => new FreelancerResponseDTO()
-                {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Username = u.UserName,
-                    PhoneNumber = u.PhoneNumber,
-                    Skills = u.Skills,
-                    UserType = Constants.USER_TYPE_FREELANCER   // // TO-READ (Week 05 Task)we defined constant Freelancer, to avoid code writing error
 
-                })
-                .FirstOrDefaultAsync();
-            var otp = OTPManager.GenerateOtp();
-            // TO-DO(Week 05 Task)
-            // This should be enhanced using AppSetting 
-            var accountSid = _configuration["Twilio:Sid"];
-            var authToken = _configuration["Twilio:Token"];
-            TwilioClient.Init(accountSid, authToken);
+            var code = OTPManager.GenerateOtp();
+            var otp = new Otp
+            {
+                Code = code,
+                PhoneNumber = req.PhoneNumber,
+                CreatedDate = DateTime.Now,
+                ExpiresAt = DateTime.Now.AddMinutes(1)
+            };
 
-            var messageOptions = new CreateMessageOptions(
-                new PhoneNumber($"whatsapp:{req.PhoneNumber}")); //To
-            messageOptions.From = new PhoneNumber("whatsapp:+14155238886");
-            messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
-            messageOptions.ContentVariables = "{\"1\":\""+ otp + "\"}";
+            await _mainAppContext.Otps.AddAsync(otp);
+            await _mainAppContext.SaveChangesAsync();
+
+            await _twitterService.SendOtpAsync(otp.PhoneNumber, otp.Code);
 
 
-            var message = MessageResource.Create(messageOptions);
+            var createdUser = req.UserType switch
+            {
+                Constants.USER_TYPE_FREELANCER => await _mainAppContext.Users.OfType<Freelancer>()
+                                .Where(u => u.UserName == req.Username)
+                                .Select(u => new FreelancerResponseDTO()
+                                {
+                                    Id = u.Id,
+                                    Name = u.Name,
+                                    Username = u.UserName ?? string.Empty,
+                                    PhoneNumber = u.PhoneNumber ?? string.Empty,
+                                    Skills = u.Skills,
+                                    UserType = Constants.USER_TYPE_FREELANCER
 
-            return Ok(new ApiResponse<FreelancerResponseDTO>()
+                                })
+                                .FirstOrDefaultAsync() as UserResponseDTO,
+                Constants.USER_TYPE_CLIENT => await _mainAppContext.Users.OfType<Models.Client>()
+                    .Where(u => u.UserName == req.Username)
+                    .Select(u => new ClientResponseDTO()
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        Username = u.UserName ?? string.Empty,
+                        PhoneNumber = u.PhoneNumber ?? string.Empty,
+                        CompanyName = u.CompanyName,
+                        UserType = Constants.USER_TYPE_CLIENT
+
+                    })
+                    .FirstOrDefaultAsync() as UserResponseDTO,
+                _ => null
+            };
+
+
+            return Ok(new ApiResponse<object>()
             {
                 IsSuccess = true,
                 Errors = [],
-                Results = CreatedUser
+                Results = createdUser ?? new UserResponseDTO()
             });
 
 
@@ -148,7 +175,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 string userType = user switch
                 {
                     Freelancer    => Constants.USER_TYPE_FREELANCER,
-                    Client        => Constants.USER_TYPE_CLIENT,
+                    Models.Client => Constants.USER_TYPE_CLIENT,
                     SystemUser    => Constants.USER_TYPE_SYSTEM_USER,
 
                     _ => "Unknown"
