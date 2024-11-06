@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.TwiML.Messaging;
@@ -72,7 +73,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     CompanyName = regRequest.CompanyName
                 };
             }
-
+            //check if username or phoneNumber is taken
+            if (await _userManager.Users.Where(u => u.UserName == regRequest.Username || u.PhoneNumber == regRequest.PhoneNumber).FirstOrDefaultAsync() != null)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "username or phone number is already used by an account"));
+            
             //create new User with hashed passworrd in the database
             var userCreationResult = await _userManager.CreateAsync(user, regRequest.Password);
             if (!userCreationResult.Succeeded)
@@ -86,7 +90,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     })
                     .ToList()
                 });
-            
+
             //assign a role to the newly created User
             var role = new ApplicationRole { Name = regRequest.UserType };
             await _roleManager.CreateAsync(role);
@@ -154,7 +158,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             if (user != null && await _userManager.CheckPasswordAsync(user, Req.Password))
             {
                 if (!await _userManager.IsPhoneNumberConfirmedAsync(user))
-                    return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(),"Verify Your Account First"));
+                    return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "Verify Your Account First"));
 
                 var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
                 var token = _jwtService.GenerateJWT(user, role);
@@ -213,7 +217,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             User? user = await _userManager.Users.Where(u => u.PhoneNumber == resetPasswordReq.PhoneNumber).FirstOrDefaultAsync();
             if (user != null)
                 await _userManager.ResetPasswordAsync(user, resetPasswordReq.Token, resetPasswordReq.Password);
-          
+
             // to maintain confidentiality, we always return an OK response even if the user was not found. 
             return Ok(CreateSuccessResponse("Your password have been reset"));
         }
