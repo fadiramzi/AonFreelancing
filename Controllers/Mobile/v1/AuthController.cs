@@ -69,7 +69,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     Errors = new List<Error>() {
                         new Error() {
                             Code = StatusCodes.Status400BadRequest.ToString(),
-                            Message = "Username is already taken"
+                            Message = "Username is already taken."
                         }
                     }
                 });
@@ -254,5 +254,52 @@ namespace AonFreelancing.Controllers.Mobile.v1
             }));
         }
 
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPasswordAsync([FromBody] ForgotPasswordReq req)
+        {
+            var user = await _userManager.Users.Where(u => u.PhoneNumber == req.PhoneNumber).FirstOrDefaultAsync();
+            if (user != null && user.PhoneNumber != null)
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                await _twitterService.SendOtpAsync(user.PhoneNumber, token);
+            }
+            return Ok(new ApiResponse<string>
+            {
+                IsSuccess = true,
+                Results = "If the phone number is registered, you will receive an OTP.",
+                Errors = []
+            });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordReq req)
+        {
+            var user = await _userManager.Users.Where(u => u.PhoneNumber == req.PhoneNumber).FirstOrDefaultAsync();
+            if (user != null && user.PhoneNumber != null 
+                && req.Token != null && req.Password != null)
+            {
+                var result = await _userManager.ResetPasswordAsync(user, req.Token, req.Password);
+                if (result.Succeeded)
+                {
+                    return Ok(new ApiResponse<string>
+                    {
+                        IsSuccess = true,
+                        Results = "Password reset successfully.",
+                        Errors = []
+                    });
+                }
+            }
+            return BadRequest(new ApiResponse<string>
+            {
+                IsSuccess = false,
+                Results = null,
+                Errors = new List<Error>() {
+                    new Error(){
+                        Code = StatusCodes.Status400BadRequest.ToString(),
+                        Message = "Password reset failed."
+                    }
+                }
+            });
+        }
     }
 }
