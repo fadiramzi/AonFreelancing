@@ -3,25 +3,28 @@ using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("api/mobile/v1/users")]
     [ApiController]
     public class UserController : ControllerBase
     {
         private readonly MainAppContext _mainAppContext;
+        private readonly RoleManager<ApplicationRole> _roleManager;
 
-        public UserController(MainAppContext mainAppContext)
+        public UserController(MainAppContext mainAppContext, RoleManager<ApplicationRole> roleManager)
         {
             _mainAppContext = mainAppContext;
+            _roleManager = roleManager;
         }
 
         [HttpGet("{id}/profile")]
-        public async Task<IActionResult> GetProfile([FromRoute]long id)
+        public async Task<IActionResult> GetProfileAysnc([FromRoute]long id)
         {
 
 
@@ -77,6 +80,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             return NotFound(new ApiResponse<string>
             {
                 IsSuccess = false,
+                Results = null,
                 Errors = new List<Error> {
                         new Error
                         {

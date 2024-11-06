@@ -20,13 +20,15 @@ namespace AonFreelancing.Controllers.Mobile.v1
         private readonly IConfiguration _configuration;
         private readonly JwtService _jwtService;
         private readonly TwilioService _twitterService;
+        private readonly RoleManager<ApplicationRole> _roleManager;
 
         public AuthController(
             UserManager<User> userManager,
             MainAppContext mainAppContext,
             IConfiguration configuration,
             JwtService jwtService,
-            TwilioService twilioService
+            TwilioService twilioService,
+            RoleManager<ApplicationRole> roleManager
             )
         {
             _userManager = userManager;
@@ -34,6 +36,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             _configuration = configuration;
             _jwtService = jwtService;
             _twitterService = twilioService;
+            _roleManager = roleManager;
         }
 
         [HttpPost("register")]
@@ -94,6 +97,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
             }
 
+            var role = new ApplicationRole { Name = req.UserType };
+            await _roleManager.CreateAsync(role);
+            await _userManager.AddToRoleAsync(user, role.Name);
+
             var code = OTPManager.GenerateOtp();
             var otp = new Otp
             {
@@ -120,7 +127,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                                     Username = u.UserName ?? string.Empty,
                                     PhoneNumber = u.PhoneNumber ?? string.Empty,
                                     Skills = u.Skills,
-                                    UserType = Constants.USER_TYPE_FREELANCER
+                                    UserType = Constants.USER_TYPE_FREELANCER,
+                                    Role = new RoleResponseDTO { Id = role.Id ,Name = role.Name }
 
                                 })
                                 .FirstOrDefaultAsync() as UserResponseDTO,
@@ -133,7 +141,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                         Username = u.UserName ?? string.Empty,
                         PhoneNumber = u.PhoneNumber ?? string.Empty,
                         CompanyName = u.CompanyName,
-                        UserType = Constants.USER_TYPE_CLIENT
+                        UserType = Constants.USER_TYPE_CLIENT,
+                        Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
 
                     })
                     .FirstOrDefaultAsync() as UserResponseDTO,
@@ -181,7 +190,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     _ => "Unknown"
                 };
                
-                var token = _jwtService.CreateToken(user);
+                var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+                var token = _jwtService.CreateToken(user, role);
 
                 var userResponse = new UserResponseDTO
                 {
@@ -191,6 +201,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     PhoneNumber = user.PhoneNumber ?? "",
                     IsPhoneNumberVerified = user.PhoneNumberConfirmed,
                     UserType = userType,
+                    Role = new RoleResponseDTO { Name = role }
                 };
            
                 return Ok(new ApiResponse<object>
@@ -261,7 +272,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             if (user != null && user.PhoneNumber != null)
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                await _twitterService.SendOtpAsync(user.PhoneNumber, token);
+                await _twitterService.SendFogotPassowrdAsync(user.PhoneNumber, token);
             }
             return Ok(new ApiResponse<string>
             {
