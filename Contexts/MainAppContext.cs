@@ -1,7 +1,7 @@
 ﻿using AonFreelancing.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
+using static System.Net.WebRequestMethods;
 
 namespace AonFreelancing.Contexts
 {
@@ -15,6 +15,7 @@ namespace AonFreelancing.Contexts
 
         // instead, use User only
         public new DbSet<User> Users { get; set; } // Will access Freelancers, Clients, SystemUsers through inheritance and ofType 
+        public DbSet<Otp> Otps { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -23,6 +24,12 @@ namespace AonFreelancing.Contexts
             builder.Entity<Freelancer>().ToTable("Freelancers");
             builder.Entity<Client>().ToTable("Clients");
             builder.Entity<SystemUser>().ToTable("SystemUsers");
+
+            builder.Entity<User>().HasOne<Otp>()
+            .WithOne()
+            .HasForeignKey<Otp>()
+            .HasPrincipalKey<User>(nameof(User.PhoneNumber));
+
             base.OnModelCreating(builder);
         }
 

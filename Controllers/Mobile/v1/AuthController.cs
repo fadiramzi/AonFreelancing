@@ -39,34 +39,34 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterAsync([FromBody] RegRequest Req)
+        public async Task<IActionResult> RegisterAsync([FromBody] RegRequest req)
         {
             // Enhancement for identifying which user type is
             User u = new User();
-            if (Req.UserType == "Freelancer")
+            if (req.UserType == "Freelancer")
             {
                 // Register User
                 u = new Freelancer
                 {
-                    Name = Req.Name,
-                    UserName = Req.Username,
-                    PhoneNumber = Req.PhoneNumber,
+                    Name = req.Name,
+                    UserName = req.Username,
+                    PhoneNumber = req.PhoneNumber,
                     Skills = "Programming, Net core 8, Communication"
                 };
             }
-            if (Req.UserType == "Client")
+            if (req.UserType == "Client")
             {
-                u = new Models.Client
+                u = new Client
                 {
-                    Name = Req.Name,
-                    UserName = Req.Username,
-                    PhoneNumber = Req.PhoneNumber,
-                    CompanyName = Req.CompanyName
+                    Name = req.Name,
+                    UserName = req.Username,
+                    PhoneNumber = req.PhoneNumber,
+                    CompanyName = req.CompanyName
                 };
             }
 
 
-            var Result = await _userManager.CreateAsync(u, Req.Password);
+            var Result = await _userManager.CreateAsync(u, req.Password);
 
             if (!Result.Succeeded)
             {
@@ -86,7 +86,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             }
             // Get created User
             var CreatedUser = await _mainAppContext.Users.OfType<Freelancer>()
-                .Where(u => u.UserName == Req.Username)
+                .Where(u => u.UserName == req.Username)
                 .Select(u => new FreelancerResponseDTO()
                 {
                     Id = u.Id,
@@ -106,7 +106,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             TwilioClient.Init(accountSid, authToken);
 
             var messageOptions = new CreateMessageOptions(
-                new PhoneNumber($"whatsapp:{Req.PhoneNumber}")); //To
+                new PhoneNumber($"whatsapp:{req.PhoneNumber}")); //To
             messageOptions.From = new PhoneNumber("whatsapp:+14155238886");
             messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
             messageOptions.ContentVariables = "{\"1\":\""+ otp + "\"}";
@@ -126,10 +126,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> LoginAsync([FromBody] AuthRequest Req)
+        public async Task<IActionResult> LoginAsync([FromBody] AuthRequest req)
         {
-            var user = await _userManager.FindByNameAsync(Req.UserName);
-            if (user != null && await _userManager.CheckPasswordAsync(user, Req.Password))
+            var user = await _userManager.FindByNameAsync(req.UserName);
+            if (user != null && await _userManager.CheckPasswordAsync(user, req.Password))
             {
                 if (!await _userManager.IsPhoneNumberConfirmedAsync(user))
                 {
@@ -189,9 +189,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
         [HttpPost("verify")]
-        public async Task<IActionResult> VerifyAsync([FromBody] VerifyReq Req)
+        public async Task<IActionResult> VerifyAsync([FromBody] VerifyReq req)
         {
-            var user = await _userManager.Users.Where(x => x.PhoneNumber == Req.Phone).FirstOrDefaultAsync();
+            var user = await _userManager.Users.Where(x => x.PhoneNumber == req.Phone).FirstOrDefaultAsync();
             if (user != null && !await _userManager.IsPhoneNumberConfirmedAsync(user))
             {
                 // Get sent OTP to the user
@@ -199,7 +199,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 // Check expiration and if it is used or not
                 var sentOTP = OTPManager.GenerateOtp();// TO-READ(Week 05 - Task)
                 // verify OTP
-                if (Req.Otp.Equals(sentOTP))
+                if (req.Otp.Equals(sentOTP))
                 {
                     user.PhoneNumberConfirmed = true;
                     await _userManager.UpdateAsync(user);
