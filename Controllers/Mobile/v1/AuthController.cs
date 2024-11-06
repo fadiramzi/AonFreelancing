@@ -1,4 +1,6 @@
-﻿using AonFreelancing.Contexts;
+﻿using System.Data;
+using System.Runtime.CompilerServices;
+using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.Requests;
@@ -9,9 +11,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Twilio;
-using Twilio.Rest.Api.V2010.Account;
-using Twilio.Types;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -22,15 +21,18 @@ namespace AonFreelancing.Controllers.Mobile.v1
         private readonly MainAppContext _mainAppContext;
         private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly JwtService _jwtService;
         public AuthController(
             UserManager<User> userManager,
             MainAppContext mainAppContext,
-            IConfiguration configuration
+            IConfiguration configuration,
+            JwtService jwtService
             )
         {
             _userManager = userManager;
             _mainAppContext = mainAppContext;
             _configuration = configuration;
+            _jwtService = jwtService;
         }
 
         [HttpPost("register")]
@@ -93,21 +95,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
                 })
                 .FirstOrDefaultAsync();
-            var otp = OTPManager.GenerateOtp();
-            // TO-DO(Week 05 Task)
-            // This should be enhanced using AppSetting 
-            var accountSid = _configuration["Twilio:Sid"];
-            var authToken = _configuration["Twilio:Token"];
-            TwilioClient.Init(accountSid, authToken);
 
-            var messageOptions = new CreateMessageOptions(
-                new PhoneNumber($"whatsapp:{Req.PhoneNumber}")); //To
-            messageOptions.From = new PhoneNumber("whatsapp:+14155238886");
-            messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
-            messageOptions.ContentVariables = "{\"1\":\""+ otp + "\"}";
-
-
-            var message = MessageResource.Create(messageOptions);
+            OTPMesseger messager = new OTPMesseger(_configuration, _mainAppContext);
+            await messager.SendOTPAsync(Req.PhoneNumber);
 
             return Ok(new ApiResponse<FreelancerResponseDTO>()
             {
@@ -115,9 +105,6 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 Errors = [],
                 Results = CreatedUser
             });
-
-
-
         }
 
         [HttpPost("login")]
@@ -138,7 +125,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
                 // TO-DO(Week 05 - Task)
                 // Generate JWT
-                var jwt = "";
+                var jwt = _jwtService.GenerateJWT(user, "Client");
                 // Your Task
            
                 return Ok(new ApiResponse<string>
@@ -168,19 +155,59 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 // Get sent OTP to the user
                 // Get from DB via otps table, usernane of the sender
                 // Check expiration and if it is used or not
-                var sentOTP = OTPManager.GenerateOtp();// TO-READ(Week 05 - Task)
                 // verify OTP
-                if (Req.Otp.Equals(sentOTP))
+                OTPManager otpManger = new OTPManager(_mainAppContext);
+
+                var correct = await otpManger.VerifyAsync(Req.Otp);
+                var Expired = await otpManger.ExpiredAsync(Req.Otp);
+                
+                if (Expired == true)
                 {
-                    user.PhoneNumberConfirmed = true;
-                    await _userManager.UpdateAsync(user);
-                    // Delete or disable sent OTP
-                    return Ok(new ApiResponse<string>(){
-                            IsSuccess = true,
-                            Results = "Activated",
-                            Errors = []
+                    return BadRequest(new ApiResponse<string>()
+                    {
+                        IsSuccess = false,
+                        Errors = [new Error() {
+                            Code = "401",
+                            Message = "Otp is expired."
+                        }]
                     });
                 }
+                if (!correct)
+                {
+                    return BadRequest(new ApiResponse<string>()
+                    {
+                        IsSuccess = false,
+                        Errors = [new Error() {
+                            Code = "401",
+                            Message = "Incorect."
+                        }]
+                    });
+                }
+
+                var isUsed = (await _mainAppContext.OTPs.FirstOrDefaultAsync(o => o.Code.Equals(Req.Otp))).IsUsed;
+                if (isUsed)
+                {
+                    return BadRequest(new ApiResponse<string>()
+                    {
+                        IsSuccess = false,
+                        Errors = [new Error() {
+                            Code = "401",
+                            Message = "Otp is has been used before."
+                        }]
+                    });
+                }
+
+
+                user.PhoneNumberConfirmed = true;
+                await _userManager.UpdateAsync(user);
+                // disapling sent OTP
+                await otpManger.DisabledAsync(Req.Otp);
+                return Ok(new ApiResponse<string>()
+                {
+                    IsSuccess = true,
+                    Results = "Activated",
+                    Errors = []
+                });
             }
             return Unauthorized((new ApiResponse<string>()
             {
