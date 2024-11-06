@@ -125,8 +125,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
                 // TO-DO(Week 05 - Task)
                 // Generate JWT
-                var jwt = _jwtService.GenerateJWT(user, "Client");
-                // Your Task
+                var jwt = _jwtService.GenerateJWT(user, "");
            
                 return Ok(new ApiResponse<string>
                 {
