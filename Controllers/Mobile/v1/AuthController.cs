@@ -7,38 +7,19 @@ using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Twilio.Types;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
     [Route("api/mobile/v1/auth")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController(
+        UserManager<User> userManager,
+        MainAppContext mainAppContext,
+        JwtService jwtService,
+        TwilioService twilioService,
+        RoleManager<ApplicationRole> roleManager)
+        : ControllerBase
     {
-        private readonly MainAppContext _mainAppContext;
-        private readonly UserManager<User> _userManager;
-        private readonly IConfiguration _configuration;
-        private readonly JwtService _jwtService;
-        private readonly TwilioService _twitterService;
-        private readonly RoleManager<ApplicationRole> _roleManager;
-
-        public AuthController(
-            UserManager<User> userManager,
-            MainAppContext mainAppContext,
-            IConfiguration configuration,
-            JwtService jwtService,
-            TwilioService twilioService,
-            RoleManager<ApplicationRole> roleManager
-            )
-        {
-            _userManager = userManager;
-            _mainAppContext = mainAppContext;
-            _configuration = configuration;
-            _jwtService = jwtService;
-            _twitterService = twilioService;
-            _roleManager = roleManager;
-        }
-
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] RegRequest req)
         {
@@ -51,7 +32,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     PhoneNumber = req.PhoneNumber,
                     Skills = req.Skills ?? string.Empty
                 },
-                Constants.USER_TYPE_CLIENT => new Models.Client
+                Constants.USER_TYPE_CLIENT => new Client
                 {
                     Name = req.Name,
                     UserName = req.Username,
@@ -61,7 +42,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 _ => new SystemUser()
             };
 
-            bool isUsernameTaken = await _userManager.Users.AnyAsync(u => u.UserName == req.Username);
+            var isUsernameTaken = await userManager.Users.AnyAsync(u => u.UserName == req.Username);
 
             if (isUsernameTaken)
             {
@@ -70,7 +51,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     IsSuccess = false,
                     Results = null,
                     Errors = new List<Error>() {
-                        new Error() {
+                        new() {
                             Code = StatusCodes.Status400BadRequest.ToString(),
                             Message = "Username is already taken."
                         }
@@ -78,7 +59,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 });
             }
 
-            var result = await _userManager.CreateAsync(user, req.Password);
+            var result = await userManager.CreateAsync(user, req.Password);
 
             if (!result.Succeeded)
             {
@@ -98,8 +79,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
             }
 
             var role = new ApplicationRole { Name = req.UserType };
-            await _roleManager.CreateAsync(role);
-            await _userManager.AddToRoleAsync(user, role.Name);
+            await roleManager.CreateAsync(role);
+            await userManager.AddToRoleAsync(user, role.Name);
 
             var code = OTPManager.GenerateOtp();
             var otp = new Otp
@@ -110,15 +91,15 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 ExpiresAt = DateTime.Now.AddMinutes(1)
             };
 
-            await _mainAppContext.Otps.AddAsync(otp);
-            await _mainAppContext.SaveChangesAsync();
+            await mainAppContext.Otps.AddAsync(otp);
+            await mainAppContext.SaveChangesAsync();
 
-            await _twitterService.SendOtpAsync(otp.PhoneNumber, otp.Code);
+            await twilioService.SendOtpAsync(otp.PhoneNumber, otp.Code);
 
 
             var createdUser = req.UserType switch
             {
-                Constants.USER_TYPE_FREELANCER => await _mainAppContext.Users.OfType<Freelancer>()
+                Constants.USER_TYPE_FREELANCER => await mainAppContext.Users.OfType<Freelancer>()
                                 .Where(u => u.UserName == req.Username)
                                 .Select(u => new FreelancerResponseDTO()
                                 {
@@ -130,9 +111,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                                     UserType = Constants.USER_TYPE_FREELANCER,
                                     Role = new RoleResponseDTO { Id = role.Id ,Name = role.Name }
 
-                                })
-                                .FirstOrDefaultAsync() as UserResponseDTO,
-                Constants.USER_TYPE_CLIENT => await _mainAppContext.Users.OfType<Models.Client>()
+                                }).FirstOrDefaultAsync() as UserResponseDTO,
+                Constants.USER_TYPE_CLIENT => await mainAppContext.Users.OfType<Client>()
                     .Where(u => u.UserName == req.Username)
                     .Select(u => new ClientResponseDTO()
                     {
@@ -143,9 +123,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                         CompanyName = u.CompanyName,
                         UserType = Constants.USER_TYPE_CLIENT,
                         Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
-
-                    })
-                    .FirstOrDefaultAsync() as UserResponseDTO,
+                    }).FirstOrDefaultAsync(),
                 _ => null
             };
 
@@ -164,16 +142,16 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("login")]
         public async Task<IActionResult> LoginAsync([FromBody] AuthRequest req)
         {
-            var user = await _userManager.FindByNameAsync(req.UserName);
-            if (user != null && await _userManager.CheckPasswordAsync(user, req.Password))
+            var user = await userManager.FindByNameAsync(req.UserName);
+            if (user != null && await userManager.CheckPasswordAsync(user, req.Password))
             {
-                if (!await _userManager.IsPhoneNumberConfirmedAsync(user))
+                if (!await userManager.IsPhoneNumberConfirmedAsync(user))
                 {
                     return Unauthorized(new ApiResponse<string>
                     {
                         IsSuccess = false,
                         Errors = new List<Error>() {
-                            new Error(){
+                            new(){
                             Code = StatusCodes.Status401Unauthorized.ToString(),
                             Message = "Verify Your Account First"
                             }
@@ -184,14 +162,14 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 string userType = user switch
                 {
                     Freelancer    => Constants.USER_TYPE_FREELANCER,
-                    Models.Client => Constants.USER_TYPE_CLIENT,
+                    Client => Constants.USER_TYPE_CLIENT,
                     SystemUser    => Constants.USER_TYPE_SYSTEM_USER,
 
                     _ => "Unknown"
                 };
                
-                var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
-                var token = _jwtService.CreateToken(user, role);
+                var role = (await userManager.GetRolesAsync(user)).FirstOrDefault();
+                var token = jwtService.CreateAppToken(user, role);
 
                 var userResponse = new UserResponseDTO
                 {
@@ -201,7 +179,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     PhoneNumber = user.PhoneNumber ?? "",
                     IsPhoneNumberVerified = user.PhoneNumberConfirmed,
                     UserType = userType,
-                    Role = new RoleResponseDTO { Name = role }
+                    Role = new RoleResponseDTO { Name = role ?? "" }
                 };
            
                 return Ok(new ApiResponse<object>
@@ -219,7 +197,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             }
 
             return Unauthorized(new List<Error>() {
-                    new Error(){
+                    new(){
                         Code = StatusCodes.Status401Unauthorized.ToString(),
                         Message = "UnAuthorized"
                     }
@@ -229,20 +207,20 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyAsync([FromBody] VerifyReq req)
         {
-            var user = await _userManager.Users.Where(x => x.PhoneNumber == req.Phone).FirstOrDefaultAsync();
-            if (user != null && !await _userManager.IsPhoneNumberConfirmedAsync(user))
+            var user = await userManager.Users.Where(x => x.PhoneNumber == req.Phone).FirstOrDefaultAsync();
+            if (user != null && !await userManager.IsPhoneNumberConfirmedAsync(user))
             {
-                var otp = await _mainAppContext.Otps.Where(o => o.PhoneNumber == req.Phone)
+                var otp = await mainAppContext.Otps.Where(o => o.PhoneNumber == req.Phone)
                     .OrderByDescending(o => o.CreatedDate)
                     .FirstOrDefaultAsync();
 
                 if (otp != null && req.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpiresAt)
                 {
                     user.PhoneNumberConfirmed = true;
-                    await _userManager.UpdateAsync(user);
+                    await userManager.UpdateAsync(user);
                     
                     otp.IsUsed = true;
-                    await _mainAppContext.SaveChangesAsync();
+                    await mainAppContext.SaveChangesAsync();
 
                     return Ok(new ApiResponse<string>(){
                             IsSuccess = true,
@@ -257,7 +235,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 IsSuccess = false,
                 Results = null,
                 Errors = new List<Error>() {
-                    new Error(){
+                    new(){
                         Code = StatusCodes.Status401Unauthorized.ToString(),
                         Message = "UnAuthorized"
                     }
@@ -268,12 +246,32 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPasswordAsync([FromBody] ForgotPasswordReq req)
         {
-            var user = await _userManager.Users.Where(u => u.PhoneNumber == req.PhoneNumber).FirstOrDefaultAsync();
-            if (user != null && user.PhoneNumber != null)
+            if (string.IsNullOrEmpty(req.PhoneNumber))
             {
-                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                await _twitterService.SendFogotPassowrdAsync(user.PhoneNumber, token);
+                return BadRequest(new ApiResponse<string>
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error> {
+                        new() { Code = StatusCodes.Status400BadRequest.ToString(), Message = "Invalid request." }
+                    }
+                });
             }
+
+            var user = await userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
+            if (user == null)
+            {
+                return Ok(new ApiResponse<string>
+                {
+                    IsSuccess = true,
+                    Results = "If the phone number is registered, you will receive an OTP.",
+                    Errors = []
+                });
+            }
+
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            await twilioService.SendForgotPasswordAsync(user.PhoneNumber ?? string.Empty, token);
+            
             return Ok(new ApiResponse<string>
             {
                 IsSuccess = true,
@@ -282,35 +280,80 @@ namespace AonFreelancing.Controllers.Mobile.v1
             });
         }
 
+
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordReq req)
         {
-            var user = await _userManager.Users.Where(u => u.PhoneNumber == req.PhoneNumber).FirstOrDefaultAsync();
-            if (user != null && user.PhoneNumber != null 
-                && req.Token != null && req.Password != null)
+            if (string.IsNullOrEmpty(req.PhoneNumber) || string.IsNullOrEmpty(req.Token) 
+                || string.IsNullOrEmpty(req.Password))
             {
-                var result = await _userManager.ResetPasswordAsync(user, req.Token, req.Password);
-                if (result.Succeeded)
+                return BadRequest(new ApiResponse<string>
                 {
-                    return Ok(new ApiResponse<string>
-                    {
-                        IsSuccess = true,
-                        Results = "Password reset successfully.",
-                        Errors = []
-                    });
-                }
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error> {
+                        new() { 
+                            Code = StatusCodes.Status400BadRequest.ToString(),
+                            Message = "Invalid request." 
+                        }
+                    }
+                });
             }
+
+            var user = await userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
+            if (user == null)
+            {
+                return BadRequest(new ApiResponse<string>
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error> {
+                        new() { 
+                            Code = StatusCodes.Status400BadRequest.ToString(),
+                            Message = "User not found." 
+                        }
+                    }
+                });
+            }
+
+            if (req.Password != req.ConfirmPassword)
+            {
+                return BadRequest(new ApiResponse<string>
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error> {
+                        new()
+                        {
+                            Code = StatusCodes.Status400BadRequest.ToString(), 
+                            Message = "Passwords do not match."
+                        }
+                    }
+                });
+            }
+
+            var result = await userManager.ResetPasswordAsync(user, req.Token, req.Password);
+            if (result.Succeeded)
+            {
+                return Ok(new ApiResponse<string>
+                {
+                    IsSuccess = true,
+                    Results = "Password reset successfully.",
+                    Errors = []
+                });
+            }
+
             return BadRequest(new ApiResponse<string>
             {
                 IsSuccess = false,
                 Results = null,
-                Errors = new List<Error>() {
-                    new Error(){
-                        Code = StatusCodes.Status400BadRequest.ToString(),
-                        Message = "Password reset failed."
-                    }
-                }
+                Errors = result.Errors.Select(e => new Error
+                {
+                    Code = e.Code,
+                    Message = e.Description
+                }).ToList()
             });
         }
+
     }
 }

@@ -12,30 +12,22 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Authorize]
     [Route("api/mobile/v1/users")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UserController(MainAppContext mainAppContext, RoleManager<ApplicationRole> roleManager)
+        : ControllerBase
     {
-        private readonly MainAppContext _mainAppContext;
-        private readonly RoleManager<ApplicationRole> _roleManager;
+        private readonly RoleManager<ApplicationRole> _roleManager = roleManager;
 
-        public UserController(MainAppContext mainAppContext, RoleManager<ApplicationRole> roleManager)
+        [HttpGet("{id:long}/profile")]
+        public async Task<IActionResult> GetProfileAsync([FromRoute]long id)
         {
-            _mainAppContext = mainAppContext;
-            _roleManager = roleManager;
-        }
-
-        [HttpGet("{id}/profile")]
-        public async Task<IActionResult> GetProfileAysnc([FromRoute]long id)
-        {
-
-
-            var freelancer = await _mainAppContext.Users
+            var freelancer = await mainAppContext.Users 
                 .OfType<Freelancer>().Where(f => f.Id == id)
                 .Select(f => new FreelancerResponseDTO
                 {
                     Id = f.Id,
                     Name = f.Name,
-                    Username = f.UserName,
-                    PhoneNumber = f.PhoneNumber,
+                    Username = f.UserName ?? string.Empty,
+                    PhoneNumber = f.PhoneNumber ?? string.Empty,
                     UserType = Constants.USER_TYPE_FREELANCER,
                     IsPhoneNumberVerified = f.PhoneNumberConfirmed,
                     Role = new RoleResponseDTO { Name = Constants.USER_TYPE_FREELANCER },
@@ -52,15 +44,15 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 });
 
 
-            var client = await _mainAppContext.Users
+            var client = await mainAppContext.Users
                 .OfType<Client>()
                 .Where(c => c.Id == id)
                 .Select(c => new ClientResponseDTO
                  {
                      Id = c.Id,
                      Name = c.Name,
-                     Username = c.UserName,
-                     PhoneNumber = c.PhoneNumber,
+                     Username = c.UserName ?? string.Empty, 
+                     PhoneNumber = c.PhoneNumber ?? string.Empty,
                      UserType = Constants.USER_TYPE_CLIENT,
                      IsPhoneNumberVerified = c.PhoneNumberConfirmed,
                      Role = new RoleResponseDTO { Name = Constants.USER_TYPE_CLIENT },
@@ -82,7 +74,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 IsSuccess = false,
                 Results = null,
                 Errors = new List<Error> {
-                        new Error
+                        new()
                         {
                             Code = StatusCodes.Status404NotFound.ToString(),
                             Message = "User not found"

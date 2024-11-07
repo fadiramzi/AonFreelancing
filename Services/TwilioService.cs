@@ -4,35 +4,32 @@ using Twilio.Types;
 
 namespace AonFreelancing.Services
 {
-    public sealed class TwilioService
+    public sealed class TwilioService(IConfiguration configuration)
     {
-        private readonly IConfiguration _configuration;
-
-        public TwilioService(IConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
-
         public async Task SendOtpAsync(string phoneNumber, string otp)
         {
-            TwilioClient.Init(_configuration["Twilio:Sid"], _configuration["Twilio:Token"]);
+            TwilioClient.Init(configuration["Twilio:Sid"], configuration["Twilio:Token"]);
 
-            var messageOptions = new CreateMessageOptions(new PhoneNumber($"whatsapp:{phoneNumber}"));
-            messageOptions.From = new PhoneNumber(_configuration["Twilio:From"]);
-            messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
-            messageOptions.ContentVariables = "{\"1\":\"" + otp + "\"}";
+            var messageOptions = new CreateMessageOptions(new PhoneNumber($"whatsapp:{phoneNumber}"))
+            {
+                From = new PhoneNumber(configuration["Twilio:From"]),
+                ContentSid = configuration["Twilio:ContentSid"],
+                ContentVariables = "{\"1\":\"" + otp + "\"}"
+            };
 
             var message = await MessageResource.CreateAsync(messageOptions);
         }
 
-        public async Task SendFogotPassowrdAsync(string phoneNumber, string data)
+        public async Task SendForgotPasswordAsync(string phoneNumber, string data)
         {
-            TwilioClient.Init(_configuration["Twilio:Sid"], _configuration["Twilio:Token"]);
+            TwilioClient.Init(configuration["Twilio:Sid"], configuration["Twilio:Token"]);
 
-            var messageOptions = new CreateMessageOptions(new PhoneNumber($"whatsapp:{phoneNumber}"));
-            messageOptions.From = new PhoneNumber(_configuration["Twilio:From"]);
-            messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
-            messageOptions.ContentVariables = "{\"1\":\"" + data + "\"}";
+            var messageOptions = new CreateMessageOptions(new PhoneNumber($"whatsapp:{phoneNumber}"))
+            {
+                From = new PhoneNumber(configuration["Twilio:From"]),
+                ContentSid = configuration["Twilio:ContentSid"],
+                ContentVariables = "{\"1\":\"" + data + "\"}"
+            };
 
             var resource = await MessageResource.CreateAsync(messageOptions);
         }
