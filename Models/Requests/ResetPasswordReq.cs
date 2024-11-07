@@ -10,10 +10,6 @@ namespace AonFreelancing.Models.Requests
         string? ConfirmPassword,
     
         [Required, Phone, StringLength(14, MinimumLength = 14)]
-        string? PhoneNumber,
-    
-        [Required] 
-        string? Token
+        string? PhoneNumber
     );
-
 }

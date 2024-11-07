@@ -17,7 +17,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
     {
         private readonly RoleManager<ApplicationRole> _roleManager = roleManager;
 
-        [HttpGet("{id:long}/profile")]
+        [HttpGet("{id}/profile")]
         public async Task<IActionResult> GetProfileAsync([FromRoute]long id)
         {
             var freelancer = await mainAppContext.Users 
@@ -82,6 +82,12 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     }
             });
 
+        }
+
+        [HttpGet("/")]
+        public IActionResult GetAll()
+        {
+            return Ok();
         }
     }
    

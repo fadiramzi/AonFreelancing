@@ -4,6 +4,7 @@ using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.Requests;
 using AonFreelancing.Services;
 using AonFreelancing.Utilities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -242,7 +243,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 }
             }));
         }
-
+        
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPasswordAsync([FromBody] ForgotPasswordReq req)
         {
@@ -280,12 +281,11 @@ namespace AonFreelancing.Controllers.Mobile.v1
             });
         }
 
-
+        [Authorize(Roles = "Freelancer, Client")]
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordReq req)
         {
-            if (string.IsNullOrEmpty(req.PhoneNumber) || string.IsNullOrEmpty(req.Token) 
-                || string.IsNullOrEmpty(req.Password))
+            if (string.IsNullOrEmpty(req.PhoneNumber) || string.IsNullOrEmpty(req.Password))
             {
                 return BadRequest(new ApiResponse<string>
                 {
@@ -303,13 +303,13 @@ namespace AonFreelancing.Controllers.Mobile.v1
             var user = await userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
             if (user == null)
             {
-                return BadRequest(new ApiResponse<string>
+                return NotFound(new ApiResponse<string>
                 {
                     IsSuccess = false,
                     Results = null,
                     Errors = new List<Error> {
                         new() { 
-                            Code = StatusCodes.Status400BadRequest.ToString(),
+                            Code = StatusCodes.Status404NotFound.ToString(),
                             Message = "User not found." 
                         }
                     }
@@ -332,7 +332,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 });
             }
 
-            var result = await userManager.ResetPasswordAsync(user, req.Token, req.Password);
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await userManager.ResetPasswordAsync(user, token ,req.Password);
+
             if (result.Succeeded)
             {
                 return Ok(new ApiResponse<string>
