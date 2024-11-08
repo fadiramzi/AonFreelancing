@@ -7,9 +7,13 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using AonFreelancing.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace AonFreelancing.Models
 {
+    //Replaced with 'builder.Entity<User>().HasIndex(u => u.PhoneNumber).IsUnique();' in OnModelCreate
+    //[Index(nameof(PhoneNumber), IsUnique = true)]
+
     public class User : IdentityUser<long>
     {
         public string Name { get; set; }
