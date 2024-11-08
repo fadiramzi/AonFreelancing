@@ -57,8 +57,6 @@ namespace AonFreelancing
             // Add controllers
             builder.Services.AddControllers();
             
-            // Adding appsetting file
-            //builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
             var app = builder.Build();
 
