@@ -19,6 +19,14 @@ namespace AonFreelancing
             builder.Services.AddSingleton<JwtService>();
             builder.Services.AddSingleton<TwilioService>();
      
+            builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+            builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlite("Data Source=aon.db"));
+            builder.Services.AddIdentity<User, ApplicationRole>()
+                .AddEntityFrameworkStores<MainAppContext>()
+                .AddDefaultTokenProviders();
+
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -38,15 +46,7 @@ namespace AonFreelancing
                 };
             });
 
-            builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-            builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlite("Data Source=aon.db"));
-            builder.Services.AddIdentity<User,ApplicationRole>()
-                .AddEntityFrameworkStores<MainAppContext>()
-                .AddDefaultTokenProviders();
             var app = builder.Build();
-
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();

@@ -83,12 +83,6 @@ namespace AonFreelancing.Controllers.Mobile.v1
             });
 
         }
-
-        [HttpGet("/")]
-        public IActionResult GetAll()
-        {
-            return Ok();
-        }
     }
    
 }
