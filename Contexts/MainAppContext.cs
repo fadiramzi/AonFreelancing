@@ -16,9 +16,6 @@ namespace AonFreelancing.Contexts
         // instead, use User only
         public DbSet<User> Users { get; set; } // Will access Freelancers, Clients, SystemUsers through inheritance and ofType 
         public DbSet<OTP> OTPs { get; set; }
-        public MainAppContext(DbContextOptions<MainAppContext> contextOptions) : base(contextOptions) {
-
-        }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

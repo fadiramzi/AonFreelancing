@@ -121,8 +121,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                         {
                             Id = u.Id,
                             Name = u.Name,
-                            Username = u.UserName,
-                            PhoneNumber = u.PhoneNumber,
+                            Username = u.UserName ?? string.Empty,
+                            PhoneNumber = u.PhoneNumber ?? string.Empty,
                             Skills = u.Skills,
                             UserType = Constants.USER_TYPE_FREELANCER,
                             Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
@@ -139,8 +139,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                           {
                               Id = c.Id,
                               Name = c.Name,
-                              Username = c.UserName,
-                              PhoneNumber = c.PhoneNumber,
+                              Username = c.UserName ?? string.Empty,
+                              PhoneNumber = c.PhoneNumber ?? string.Empty,
                               CompanyName = c.CompanyName,
                               UserType = Constants.USER_TYPE_CLIENT,
                               Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
@@ -155,18 +155,18 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("login")]
         public async Task<IActionResult> LoginAsync([FromBody] AuthRequest req)
         {
-            var user = await userManager.FindByNameAsync(req.UserName);
-            if (user != null && await userManager.CheckPasswordAsync(user, req.Password))
+            var user = await _userManager.FindByNameAsync(req.UserName);
+            if (user != null && await _userManager.CheckPasswordAsync(user, req.Password))
             {
                 if (!await _userManager.IsPhoneNumberConfirmedAsync(user))
                     return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "Verify Your Account First"));
 
                 var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
-                var token = _jwtService.GenerateJWT(user, role);
+                var token = _jwtService.GenerateJWT(user, role ?? string.Empty);
                 return Ok(CreateSuccessResponse(new LoginResponse()
                 {
                     AccessToken = token,
-                    UserDetailsDTO = new UserDetailsDTO(user, role)
+                    UserDetailsDTO = new UserDetailsDTO(user, role ?? string.Empty)
                 }));
             }
 
@@ -212,7 +212,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 });
             }
 
-            var user = await userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
             if (user == null)
             {
                 return Ok(new ApiResponse<string>
@@ -223,8 +223,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 });
             }
 
-            var token = await userManager.GeneratePasswordResetTokenAsync(user);
-            await twilioService.SendForgotPasswordAsync(user.PhoneNumber ?? string.Empty, token);
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            await _otpManager.SendOTPAsync(user.PhoneNumber ?? string.Empty, token);
             
             return Ok(new ApiResponse<string>
             {
@@ -253,7 +253,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 });
             }
 
-            var user = await userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
             if (user == null)
             {
                 return NotFound(new ApiResponse<string>
@@ -285,8 +285,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 });
             }
 
-            var token = await userManager.GeneratePasswordResetTokenAsync(user);
-            var result = await userManager.ResetPasswordAsync(user, token ,req.Password);
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, token ,req.Password);
 
             if (result.Succeeded)
             {

@@ -57,10 +57,7 @@ namespace AonFreelancing
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
             });
-
-
-            var app = builder.Build();
-
+            
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

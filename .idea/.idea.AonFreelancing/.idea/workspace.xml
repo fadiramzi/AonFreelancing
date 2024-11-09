@@ -9,18 +9,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d72a9860-66cf-4199-b228-76eeede6fab8" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.AonFreelancing/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.AonFreelancing/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Contexts/MainAppContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Contexts/MainAppContext.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Controllers/Mobile/v1/AuthController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Controllers/Mobile/v1/AuthController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Controllers/Mobile/v1/UserController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Controllers/Mobile/v1/UserController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Models/Requests/AuthRequest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Models/Requests/AuthRequest.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Models/Requests/ForgotPasswordReq.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Models/Requests/ForgotPasswordReq.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Models/Requests/RegisterRequest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Models/Requests/RegisterRequest.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Models/Requests/ResetPasswordReq.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Models/Requests/ResetPasswordReq.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Models/Requests/VerifyReq.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Models/Requests/VerifyReq.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Services/JwtService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Services/JwtService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Services/TwilioService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Services/TwilioService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/aon.db" beforeDir="false" afterPath="$PROJECT_DIR$/aon.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/aon.db-shm" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/aon.db-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Models/Otp.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Models/Otp.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,33 +28,37 @@
   </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/d3c06dfec966418aab2bb3ff28f65b801f220/7c/a8bb30bf/JsonWebTokenHandler.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/7d382df578ec93391918cfaa4ce7f4b8f35c9aed1241d6556dc9be26df13c/IdentityUser.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/bf9021a960b74107a7e141aa06bc9d8a0a53c929178c2fb95b1597be8af8dc/ExceptionDispatchInfo.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="SWEA" />
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 2
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
   <component name="ProjectId" id="2oVcBB5GtL4VCp6ipfvZQeBKzvW" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    ".NET Launch Settings Profile.AonFreelancing: http.executor": "Debug",
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "diyarHussein/aon-project",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;.NET Launch Settings Profile.AonFreelancing: http.executor&quot;: &quot;Debug&quot;,
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;diyarHussein/aon-project&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected=".NET Launch Settings Profile.AonFreelancing: http">
     <configuration name="AonFreelancing: http" type="LaunchSettings" factoryName=".NET Launch Settings Profile">
       <option name="LAUNCH_PROFILE_PROJECT_FILE_PATH" value="$PROJECT_DIR$/AonFreelancing.csproj" />
@@ -103,6 +100,7 @@
       <option name="presentableId" value="Default" />
       <updated>1730958048918</updated>
       <workItem from="1730958051978" duration="3988000" />
+      <workItem from="1731152573010" duration="328000" />
     </task>
     <servers />
   </component>
