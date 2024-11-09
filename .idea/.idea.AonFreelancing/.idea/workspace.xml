@@ -10,9 +10,8 @@
   <component name="ChangeListManager">
     <list default="true" id="d72a9860-66cf-4199-b228-76eeede6fab8" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.AonFreelancing/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.AonFreelancing/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Contexts/MainAppContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Contexts/MainAppContext.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Controllers/Mobile/v1/AuthController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Controllers/Mobile/v1/AuthController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Models/Otp.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Models/Otp.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Controllers/Mobile/v1/UsersController.cs" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -100,7 +99,7 @@
       <option name="presentableId" value="Default" />
       <updated>1730958048918</updated>
       <workItem from="1730958051978" duration="3988000" />
-      <workItem from="1731152573010" duration="328000" />
+      <workItem from="1731152573010" duration="2228000" />
     </task>
     <servers />
   </component>

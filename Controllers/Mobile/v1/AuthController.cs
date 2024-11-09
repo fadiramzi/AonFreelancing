@@ -69,7 +69,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     Name = regRequest.Name,
                     UserName = regRequest.Username,
                     PhoneNumber = regRequest.PhoneNumber,
-                    CompanyName = regRequest.CompanyName
+                    CompanyName = regRequest.CompanyName ?? string.Empty
                 };
             }
             //check if username or phoneNumber is taken
@@ -197,143 +197,119 @@ namespace AonFreelancing.Controllers.Mobile.v1
             return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "UnAuthorized"));
         }
         
-        [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPasswordAsync([FromBody] ForgotPasswordReq req)
-        {
-            if (string.IsNullOrEmpty(req.PhoneNumber))
-            {
-                return BadRequest(new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error> {
-                        new() { Code = StatusCodes.Status400BadRequest.ToString(), Message = "Invalid request." }
-                    }
-                });
-            }
+        // [HttpPost("forgot-password")]
+        // public async Task<IActionResult> ForgotPasswordAsync([FromBody] ForgotPasswordReq req)
+        // {
+        //     if (string.IsNullOrEmpty(req.PhoneNumber))
+        //     {
+        //         return BadRequest(new ApiResponse<string>
+        //         {
+        //             IsSuccess = false,
+        //             Results = null,
+        //             Errors = new List<Error> {
+        //                 new() { Code = StatusCodes.Status400BadRequest.ToString(), Message = "Invalid request." }
+        //             }
+        //         });
+        //     }
+        //
+        //     var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
+        //     if (user == null)
+        //     {
+        //         return Ok(new ApiResponse<string>
+        //         {
+        //             IsSuccess = true,
+        //             Results = "If the phone number is registered, you will receive an OTP.",
+        //             Errors = []
+        //         });
+        //     }
+        //
+        //     var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        //     await _otpManager.SendOTPAsync(user.PhoneNumber ?? string.Empty, token);
+        //     
+        //     return Ok(new ApiResponse<string>
+        //     {
+        //         IsSuccess = true,
+        //         Results = "If the phone number is registered, you will receive an OTP.",
+        //         Errors = []
+        //     });
+        // }
+        //
+        // [Authorize(Roles = "Freelancer, Client")]
+        // [HttpPost("reset-password")]
+        // public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordReq req)
+        // {
+        //     if (string.IsNullOrEmpty(req.PhoneNumber) || string.IsNullOrEmpty(req.Password))
+        //     {
+        //         return BadRequest(new ApiResponse<string>
+        //         {
+        //             IsSuccess = false,
+        //             Results = null,
+        //             Errors = new List<Error> {
+        //                 new() { 
+        //                     Code = StatusCodes.Status400BadRequest.ToString(),
+        //                     Message = "Invalid request." 
+        //                 }
+        //             }
+        //         });
+        //     }
+        //
+        //     var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
+        //     if (user == null)
+        //     {
+        //         return NotFound(new ApiResponse<string>
+        //         {
+        //             IsSuccess = false,
+        //             Results = null,
+        //             Errors = new List<Error> {
+        //                 new() { 
+        //                     Code = StatusCodes.Status404NotFound.ToString(),
+        //                     Message = "User not found." 
+        //                 }
+        //             }
+        //         });
+        //     }
+        //
+        //     if (req.Password != req.ConfirmPassword)
+        //     {
+        //         return BadRequest(new ApiResponse<string>
+        //         {
+        //             IsSuccess = false,
+        //             Results = null,
+        //             Errors = new List<Error> {
+        //                 new()
+        //                 {
+        //                     Code = StatusCodes.Status400BadRequest.ToString(), 
+        //                     Message = "Passwords do not match."
+        //                 }
+        //             }
+        //         });
+        //     }
+        //
+        //     var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        //     var result = await _userManager.ResetPasswordAsync(user, token ,req.Password);
+        //
+        //     if (result.Succeeded)
+        //     {
+        //         return Ok(new ApiResponse<string>
+        //         {
+        //             IsSuccess = true,
+        //             Results = "Password reset successfully.",
+        //             Errors = []
+        //         });
+        //     }
+        //
+        //     return BadRequest(new ApiResponse<string>
+        //     {
+        //         IsSuccess = false,
+        //         Results = null,
+        //         Errors = result.Errors.Select(e => new Error
+        //         {
+        //             Code = e.Code,
+        //             Message = e.Description
+        //         }).ToList()
+        //     });
+        // }
 
-            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
-            if (user == null)
-            {
-                return Ok(new ApiResponse<string>
-                {
-                    IsSuccess = true,
-                    Results = "If the phone number is registered, you will receive an OTP.",
-                    Errors = []
-                });
-            }
-
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            await _otpManager.SendOTPAsync(user.PhoneNumber ?? string.Empty, token);
-            
-            return Ok(new ApiResponse<string>
-            {
-                IsSuccess = true,
-                Results = "If the phone number is registered, you will receive an OTP.",
-                Errors = []
-            });
-        }
-
-        [Authorize(Roles = "Freelancer, Client")]
-        [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordReq req)
-        {
-            if (string.IsNullOrEmpty(req.PhoneNumber) || string.IsNullOrEmpty(req.Password))
-            {
-                return BadRequest(new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error> {
-                        new() { 
-                            Code = StatusCodes.Status400BadRequest.ToString(),
-                            Message = "Invalid request." 
-                        }
-                    }
-                });
-            }
-
-            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
-            if (user == null)
-            {
-                return NotFound(new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error> {
-                        new() { 
-                            Code = StatusCodes.Status404NotFound.ToString(),
-                            Message = "User not found." 
-                        }
-                    }
-                });
-            }
-
-            if (req.Password != req.ConfirmPassword)
-            {
-                return BadRequest(new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error> {
-                        new()
-                        {
-                            Code = StatusCodes.Status400BadRequest.ToString(), 
-                            Message = "Passwords do not match."
-                        }
-                    }
-                });
-            }
-
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var result = await _userManager.ResetPasswordAsync(user, token ,req.Password);
-
-            if (result.Succeeded)
-            {
-                return Ok(new ApiResponse<string>
-                {
-                    IsSuccess = true,
-                    Results = "Password reset successfully.",
-                    Errors = []
-                });
-            }
-
-            return BadRequest(new ApiResponse<string>
-            {
-                IsSuccess = false,
-                Results = null,
-                Errors = result.Errors.Select(e => new Error
-                {
-                    Code = e.Code,
-                    Message = e.Description
-                }).ToList()
-            });
-        }
-
-        //[HttpPost("forgotpassword")]
-        //public async Task<IActionResult> ForgotPasswordMethod([FromBody] ForgotPasswordReq forgotPasswordRequest)
-        //{
-        //    var user = await _userManager.Users.Where(u => u.PhoneNumber == forgotPasswordRequest.PhoneNumber).FirstOrDefaultAsync();
-        //    if (user != null)
-        //    {
-        //        string token = await _userManager.GeneratePasswordResetTokenAsync(user);
-
-        //        //send whatsapp  message containing the reset password url
-        //        await _otpManager.sendForgotPasswordMessageAsync(token, user.PhoneNumber);
-        //    }
-        //    // to maintain confidentiality, we always return an OK response even if the user was not found. 
-        //    return Ok(CreateSuccessResponse("Check your WhatsApp inbox for password reset token."));
-        //}
-
-        //[HttpPost("resetpassword")]
-        //public async Task<IActionResult> ResetPasswordMethod([FromBody] ResetPasswordReq resetPasswordReq)
-        //{
-        //    User? user = await _userManager.Users.Where(u => u.PhoneNumber == resetPasswordReq.PhoneNumber).FirstOrDefaultAsync();
-        //    if (user != null)
-        //        await _userManager.ResetPasswordAsync(user, resetPasswordReq.Token, resetPasswordReq.Password);
-
-        //    // to maintain confidentiality, we always return an OK response even if the user was not found. 
-        //    return Ok(CreateSuccessResponse("Your password have been reset"));
-        //}
+      
     }
 }
