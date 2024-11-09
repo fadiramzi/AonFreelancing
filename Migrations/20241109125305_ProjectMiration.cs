@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AonFreelancing.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class ProjectMiration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -199,20 +199,21 @@ namespace AonFreelancing.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Otp",
+                name: "otps",
                 columns: table => new
                 {
                     PhoneNumber = table.Column<string>(type: "TEXT", nullable: false),
-                    Code = table.Column<string>(type: "TEXT", maxLength: 6, nullable: false),
-                    IsUsed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Code = table.Column<string>(type: "TEXT", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ExpiresAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    ExpiresAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    IsUsed = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Otp", x => x.PhoneNumber);
+                    table.PrimaryKey("PK_otps", x => x.PhoneNumber);
+                    table.CheckConstraint("CK_CODE", "length([Code]) = 6");
                     table.ForeignKey(
-                        name: "FK_Otp_AspNetUsers_PhoneNumber",
+                        name: "FK_otps_AspNetUsers_PhoneNumber",
                         column: x => x.PhoneNumber,
                         principalTable: "AspNetUsers",
                         principalColumn: "PhoneNumber",
@@ -246,7 +247,12 @@ namespace AonFreelancing.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Title = table.Column<string>(type: "TEXT", nullable: false),
                     Description = table.Column<string>(type: "TEXT", nullable: false),
-                    ClientId = table.Column<long>(type: "INTEGER", nullable: false)
+                    ClientId = table.Column<long>(type: "INTEGER", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    PriceType = table.Column<string>(type: "TEXT", nullable: false),
+                    Budget = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Qualification = table.Column<string>(type: "TEXT", nullable: false),
+                    FreelancerId = table.Column<long>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -257,6 +263,11 @@ namespace AonFreelancing.Migrations
                         principalTable: "Clients",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Projects_Freelancers_FreelancerId",
+                        column: x => x.FreelancerId,
+                        principalTable: "Freelancers",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
@@ -291,6 +302,12 @@ namespace AonFreelancing.Migrations
                 column: "NormalizedEmail");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_PhoneNumber",
+                table: "AspNetUsers",
+                column: "PhoneNumber",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
@@ -300,6 +317,11 @@ namespace AonFreelancing.Migrations
                 name: "IX_Projects_ClientId",
                 table: "Projects",
                 column: "ClientId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Projects_FreelancerId",
+                table: "Projects",
+                column: "FreelancerId");
         }
 
         /// <inheritdoc />
@@ -321,10 +343,7 @@ namespace AonFreelancing.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Freelancers");
-
-            migrationBuilder.DropTable(
-                name: "Otp");
+                name: "otps");
 
             migrationBuilder.DropTable(
                 name: "Projects");
@@ -337,6 +356,9 @@ namespace AonFreelancing.Migrations
 
             migrationBuilder.DropTable(
                 name: "Clients");
+
+            migrationBuilder.DropTable(
+                name: "Freelancers");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

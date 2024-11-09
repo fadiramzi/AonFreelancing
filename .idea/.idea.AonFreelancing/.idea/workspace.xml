@@ -10,9 +10,27 @@
   <component name="ChangeListManager">
     <list default="true" id="d72a9860-66cf-4199-b228-76eeede6fab8" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.AonFreelancing/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.AonFreelancing/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Controllers/Mobile/v1/AuthController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Controllers/Mobile/v1/AuthController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Controllers/Mobile/v1/UsersController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Controllers/Mobile/v1/ProjectsController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Controllers/Mobile/v1/ProjectsController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241104104334_otp-mig.Designer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241104104334_otp-mig.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241104112027_otp-mig-with-check.Designer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241104112027_otp-mig-with-check.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241104134504_unique-phoneNumber-aspnetusers-mig.Designer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241104134504_unique-phoneNumber-aspnetusers-mig.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241105102718_Make_otp_phonenumber_foreignkey_mig.Designer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241105102718_Make_otp_phonenumber_foreignkey_mig.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241105131703_add-createdAt-in-projects.Designer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241105131703_add-createdAt-in-projects.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241106202613_InitialMigration.Designer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241106202613_InitialMigration.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241107173325_lastMigration.Designer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20241107173325_lastMigration.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/MainAppContextModelSnapshot.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Models/DTOs/ProjectInputDTO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Models/DTOs/ProjectInputDTO.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Models/Project.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Models/Project.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/aon.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/aon.db-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/aon.db-wal" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -99,7 +117,7 @@
       <option name="presentableId" value="Default" />
       <updated>1730958048918</updated>
       <workItem from="1730958051978" duration="3988000" />
-      <workItem from="1731152573010" duration="2228000" />
+      <workItem from="1731152573010" duration="5232000" />
     </task>
     <servers />
   </component>

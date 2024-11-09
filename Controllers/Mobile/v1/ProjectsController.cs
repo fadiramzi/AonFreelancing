@@ -1,4 +1,5 @@
-﻿using AonFreelancing.Contexts;
+﻿using System.Security.Claims;
+using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -11,26 +12,24 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Authorize]
     [Route("api/mobile/v1/projects")]
     [ApiController]
-    public class ProjectsController : BaseController
+    public class ProjectsController(MainAppContext mainAppContext) : BaseController
     {
-        //private readonly MainAppContext _mainAppContext;
-        //public ProjectsController(MainAppContext mainAppContext)
-        //{
-        //    _mainAppContext = mainAppContext;
-        //}
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> CreateProject([FromBody] ProjectInputDto project)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var p = new Project
+            {
+                Title = project.Title,
+                Description = project.Description,
+            };
 
-        //[HttpPost]
-        //public IActionResult CreateProject([FromBody] ProjectInputDTO project)
-        //{
-        //    Project p = new Project();
-        //    p.Title = project.Title;
-        //    p.Description = project.Description;
-        //    p.ClientId = project.ClientId;
-
-        //    _mainAppContext.Projects.Add(p);
-        //    _mainAppContext.SaveChanges();
-        //    return Ok(CreateSuccessResponse(p));
-        //}
+            await mainAppContext.Projects.AddAsync(p);
+            await mainAppContext.SaveChangesAsync();
+            
+            return Ok(CreateSuccessResponse(p));
+        }
 
 
         //[HttpGet("{id}")]

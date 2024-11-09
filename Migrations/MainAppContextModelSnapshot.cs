@@ -76,6 +76,9 @@ namespace AonFreelancing.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<decimal>("Budget")
+                        .HasColumnType("TEXT");
+
                     b.Property<long>("ClientId")
                         .HasColumnType("INTEGER");
 
@@ -86,6 +89,17 @@ namespace AonFreelancing.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<long?>("FreelancerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PriceType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Qualification")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -93,6 +107,8 @@ namespace AonFreelancing.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ClientId");
+
+                    b.HasIndex("FreelancerId");
 
                     b.ToTable("Projects");
                 });
@@ -322,7 +338,13 @@ namespace AonFreelancing.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("AonFreelancing.Models.Freelancer", "Freelancer")
+                        .WithMany()
+                        .HasForeignKey("FreelancerId");
+
                     b.Navigation("Client");
+
+                    b.Navigation("Freelancer");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
