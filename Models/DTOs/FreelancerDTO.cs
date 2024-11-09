@@ -1,4 +1,6 @@
-﻿namespace AonFreelancing.Models.DTOs
+﻿using AonFreelancing.Utilities;
+
+namespace AonFreelancing.Models.DTOs
 {
     public class FreelancerDTO:UserDTO
     {
@@ -13,5 +15,6 @@
 
     public class FreelancerResponseDTO : UserResponseDTO { 
         public string? Skills { get; set; }
+      
     }
 }

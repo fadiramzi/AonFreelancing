@@ -1,38 +1,35 @@
-﻿using AonFreelancing.Models;
-using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
 namespace AonFreelancing.Services
 {
-    public sealed class JwtService(IConfiguration configuration)
+    public class JwtService
     {
-        public string CreateAppToken(User user, string? role)
+        private readonly IConfiguration _config;
+
+        public JwtService(IConfiguration config)
         {
-            var secretKey = configuration["Jwt:Key"] ?? string.Empty;
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            _config = config;
+        }
 
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+        public string GenerateJWT(Models.User user, string role)
+        {
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var token = new JwtSecurityToken(
+                issuer: _config["Jwt:Issuer"],
+                audience: _config["Jwt:Audience"],
+                claims:
+                [
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+                new Claim(ClaimTypes.Role, role)
+                ],
+                expires: DateTime.Now.AddMinutes(Convert.ToDouble(_config["Jwt:ExpireInMinutes"])),
+                signingCredentials: creds);
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity([
-                    new Claim(ClaimTypes.Name, value: user.UserName ?? ""),
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.MobilePhone, value: user.PhoneNumber ?? ""),
-                    new Claim(ClaimTypes.Role, role ?? string.Empty)
-                ]),
-                Expires = DateTime.UtcNow.AddMinutes(configuration.GetValue<int>("Jwt:ExpiryInMinutes")),
-                SigningCredentials = credentials,
-                Issuer = configuration["Jwt:Issuer"],
-                Audience = configuration["Jwt:Audience"]
-            };
-
-            var tokenHandler = new JsonWebTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-
-            return token;
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

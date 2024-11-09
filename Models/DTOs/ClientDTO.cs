@@ -19,6 +19,7 @@ namespace AonFreelancing.Models.DTOs
 
     public class ClientResponseDTO : UserResponseDTO
     {
-        public string? CompanyName { get; set; }
+        public string CompanyName { get; set; }
+        public List<Project>? Projects { get; set; }
     }
 }

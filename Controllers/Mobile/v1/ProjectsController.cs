@@ -1,46 +1,48 @@
 ﻿using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
+    [Authorize]
     [Route("api/mobile/v1/projects")]
     [ApiController]
-    public class ProjectsController : ControllerBase
+    public class ProjectsController : BaseController
     {
-        private readonly MainAppContext _mainAppContext;
-        public ProjectsController(MainAppContext mainAppContext)
-        {
-            _mainAppContext = mainAppContext;
-        }
+        //private readonly MainAppContext _mainAppContext;
+        //public ProjectsController(MainAppContext mainAppContext)
+        //{
+        //    _mainAppContext = mainAppContext;
+        //}
 
-        [HttpPost]
-        public IActionResult CreateProject([FromBody] ProjectInputDTO project)
-        {
-            Project p = new Project();
-            p.Title = project.Title;
-            p.Description = project.Description;
-            p.ClientId = project.ClientId;
+        //[HttpPost]
+        //public IActionResult CreateProject([FromBody] ProjectInputDTO project)
+        //{
+        //    Project p = new Project();
+        //    p.Title = project.Title;
+        //    p.Description = project.Description;
+        //    p.ClientId = project.ClientId;
 
-            _mainAppContext.Projects.Add(p);
-            _mainAppContext.SaveChanges();
-            return Ok(p);
-        }
+        //    _mainAppContext.Projects.Add(p);
+        //    _mainAppContext.SaveChanges();
+        //    return Ok(CreateSuccessResponse(p));
+        //}
 
 
-        [HttpGet("{id}")]
-        public IActionResult GetProject(int id)
-        {
-            var project = _mainAppContext.Projects
-                .Include(p => p.Client)
-                .FirstOrDefault(p => p.Id == id);
+        //[HttpGet("{id}")]
+        //public IActionResult GetProject(int id)
+        //{
+        //    var project = _mainAppContext.Projects
+        //        .Include(p => p.Client)
+        //        .FirstOrDefault(p => p.Id == id);
 
-            return Ok(project);
+        //    return Ok(CreateSuccessResponse(project));
 
-        }
+        //}
 
 
     }
