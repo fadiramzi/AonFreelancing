@@ -1,25 +1,12 @@
-﻿using AonFreelancing.Contexts;
-using AonFreelancing.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Twilio.Types;
-
-namespace AonFreelancing.Utilities
+﻿namespace AonFreelancing.Utilities
 {
     public class OTPManager
     {
         private static Random _random = new Random();
-        private readonly MainAppContext _mainAppContext;
 
-        public OTPManager(MainAppContext mainAppContext)
+        public static string GenerateOtp()
         {
-            _mainAppContext = mainAppContext;
-        }
-        public async Task<OTP> GenerateOtpAsync(string phoneNumber)
-        {
-            OTP otp = new OTP();
-            int ExpireTimeInMinutes = 5;
+           
             // Generate a random number between 0 and 999999
             // and Format the number to ensure it's always 6 digits
             otp.Code = _random.Next(0, (int)Math.Pow(10, 6)).ToString("D6");
