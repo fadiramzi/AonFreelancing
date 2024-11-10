@@ -2,7 +2,7 @@
 
 namespace AonFreelancing.Models.Requests
 {
-    public record RegRequest(
+    public record RegisterRequest(
         [Required, MinLength(2)] 
         string Name,
         [Required, MinLength(4)]

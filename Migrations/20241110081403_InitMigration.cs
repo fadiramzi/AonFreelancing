@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AonFreelancing.Migrations
 {
     /// <inheritdoc />
-    public partial class ProjectMiration : Migration
+    public partial class InitMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -252,7 +252,9 @@ namespace AonFreelancing.Migrations
                     PriceType = table.Column<string>(type: "TEXT", nullable: false),
                     Budget = table.Column<decimal>(type: "TEXT", nullable: false),
                     Qualification = table.Column<string>(type: "TEXT", nullable: false),
-                    FreelancerId = table.Column<long>(type: "INTEGER", nullable: true)
+                    FreelancerId = table.Column<long>(type: "INTEGER", nullable: true),
+                    Status = table.Column<string>(type: "TEXT", nullable: false),
+                    ProgressStatus = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
