@@ -8,7 +8,7 @@ namespace AonFreelancing.Models.Requests
         [MinLength(4, ErrorMessage ="Invalid Username")]
         public string UserName { get; set; }
         [Required]
-        [MinLength(4, ErrorMessage = "Invalid Password")]
+        [MinLength(6, ErrorMessage = "Invalid Password")]
         public string Password { get; set; }
     }
 }
