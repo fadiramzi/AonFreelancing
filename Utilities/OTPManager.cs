@@ -1,47 +1,61 @@
-﻿namespace AonFreelancing.Utilities
+﻿using Twilio.Types;
+using Twilio;
+using Twilio.Rest.Api.V2010.Account;
+using AonFreelancing.Models;
+
+namespace AonFreelancing.Utilities
 {
     public class OTPManager
     {
-        private static Random _random = new Random();
+      
 
-        public static string GenerateOtp()
+        readonly IConfiguration _configuration;
+
+        public OTPManager(IConfiguration configuration)
         {
-           
+            _configuration = configuration;
+        }
+        //TODO: make this method void
+        public async Task SendOTPAsync(string otp,string receiverPhoneNumber)
+        {
+            var accountSid = _configuration["Twilio:Sid"];
+            var authToken = _configuration["Twilio:Token"];
+            TwilioClient.Init(accountSid, authToken);
+
+            var messageOptions = new CreateMessageOptions(new PhoneNumber($"whatsapp:{receiverPhoneNumber}")); //To
+            messageOptions.From = new PhoneNumber(_configuration["Twilio:From"]);//TODO use appsetting.json
+            messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
+            messageOptions.ContentVariables = "{\"1\":\"" + otp + "\"}";
+
+
+            var message =await MessageResource.CreateAsync(messageOptions);
+        }
+        public async Task sendForgotPasswordMessageAsync(string message,string receiverPhoneNumber)
+        {
+            var accountSid = _configuration["Twilio:Sid"];
+            var authToken = _configuration["Twilio:Token"];
+            TwilioClient.Init(accountSid, authToken);
+
+            var messageOptions = new CreateMessageOptions(new PhoneNumber($"whatsapp:{receiverPhoneNumber}")); 
+            messageOptions.From = new PhoneNumber(_configuration["Twilio:From"]);
+            messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
+            messageOptions.ContentVariables = "{\"1\":\"" + message + "\"}";
+
+            var finalMessage = await MessageResource.CreateAsync(messageOptions);
+        }
+        public string GenerateOtp()
+        {
+            int otp = 123456;
+            Random _random = new Random();
+            if (_configuration["Env"] == Constants.ENV_SIT)
+            {
+                return otp.ToString("D6");
+            }
             // Generate a random number between 0 and 999999
-            // and Format the number to ensure it's always 6 digits
-            otp.Code = _random.Next(0, (int)Math.Pow(10, 6)).ToString("D6");
-            otp.PhoneNumber = phoneNumber;
-            otp.CreatedAt = DateTime.Now;
-            otp.ExpireAt = DateTime.Now.AddMinutes(ExpireTimeInMinutes);
-            otp.IsUsed = false;
+            otp = _random.Next(0, (int)Math.Pow(10, 6));
 
-            await _mainAppContext.OTPs.AddAsync(otp);
-            await _mainAppContext.SaveChangesAsync();
-            return otp;
-        }
-
-        public async Task<bool> ExpiredAsync(string code)
-        {
-            var otp = await _mainAppContext.OTPs.FirstOrDefaultAsync(o => o.Code.Equals(code));
-            if (otp is null)
-                throw new Exception($"{code} Otp is not found");
-            return DateTime.Now >= otp.ExpireAt;
-        }
-
-        public async Task <bool> VerifyAsync(string code)
-        {
-            var otp = await _mainAppContext.OTPs.FirstOrDefaultAsync(o => o.Code.Equals(code));
-            if (otp is null)
-                throw new Exception($"{code} Otp is not found");
-            return otp.Code.Equals(code);
-        }
-        public async Task DisabledAsync(string code)
-        {
-            var otp = await _mainAppContext.OTPs.FirstOrDefaultAsync(o => o.Code.Equals(code));
-            if (otp is null)
-                throw new Exception($"{code} Otp is not found");
-            otp.IsUsed = true;
-            await _mainAppContext.SaveChangesAsync();
+            // Format the number to ensure it's always 6 digits
+            return otp.ToString("D6");
         }
     }
 }

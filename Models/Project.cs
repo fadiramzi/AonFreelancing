@@ -22,7 +22,24 @@ namespace AonFreelancing.Models
         [ForeignKey("ClientId")]
         public Client Client { get; set; }
 
-        DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; }
+
+        public string PriceType { get; set; }
+
+        public int Duration { get; set; }
+
+        public string QualificationName { get; set; }
+
+        public decimal Budget {  get; set; }
+
+
+
+        [AllowNull]
+        public long FreelancerId { get; set; }
+
+        [AllowNull]
+        [ForeignKey("FreelancerId")]
+        public Freelancer Freelancer { get; set; }
 
 
 
