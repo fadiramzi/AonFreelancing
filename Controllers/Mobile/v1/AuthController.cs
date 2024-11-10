@@ -48,7 +48,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     Name = Req.Name,
                     UserName = Req.Username,
                     PhoneNumber = Req.PhoneNumber,
-                    Skills = Req.Skills
+                    Skills = "Programming, Net core 8, Communication"
                 };
             }
             if (Req.UserType == "Client")
