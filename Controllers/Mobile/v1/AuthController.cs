@@ -106,8 +106,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
             {
                 Code = otpCode,
                 PhoneNumber = regRequest.PhoneNumber,
-                CreatedDate = DateTime.Now,
-                ExpiresAt = DateTime.Now.AddMinutes(1),
+                CreatedAt = DateTime.Now,
+                ExpireAt = DateTime.Now.AddMinutes(1),
             };
             await _mainAppContext.OTPs.AddAsync(otp);
             await _mainAppContext.SaveChangesAsync();
@@ -185,7 +185,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 OTP? otp = await _mainAppContext.OTPs.Where(o => o.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
 
                 // verify OTP
-                if (otp != null && verifyReq.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpiresAt)
+                if (otp != null && verifyReq.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpireAt)
                 {
                     user.PhoneNumberConfirmed = true;
                     await _userManager.UpdateAsync(user);
