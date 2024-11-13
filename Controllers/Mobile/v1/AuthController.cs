@@ -127,16 +127,16 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 {
                     Name = registerReq.Name,
                     UserName = registerReq.Username,
-                    PhoneNumber = tempUser?.PhoneNumber,
-                    PhoneNumberConfirmed = (bool)tempUser?.PhoneNumberConfirmed,
+                    PhoneNumber = tempUser.PhoneNumber,
+                    PhoneNumberConfirmed = tempUser.PhoneNumberConfirmed,
                     Skills = registerReq.Skills ?? string.Empty
                 },
                 Constants.USER_TYPE_CLIENT => new Client()
                 {
                     Name = registerReq.Name,
                     UserName = registerReq.Username,
-                    PhoneNumber = tempUser?.PhoneNumber,
-                    PhoneNumberConfirmed = (bool)tempUser?.PhoneNumberConfirmed,
+                    PhoneNumber = tempUser.PhoneNumber,
+                    PhoneNumberConfirmed = tempUser.PhoneNumberConfirmed,
                     CompanyName = registerReq.CompanyName ?? string.Empty
                 },
                 _ => null
