@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    [Migration("20241110081403_InitMigration")]
-    partial class InitMigration
+    [Migration("20241113064604_otpToTempUser")]
+    partial class otpToTempUser
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -124,6 +124,27 @@ namespace AonFreelancing.Migrations
                     b.ToTable("Projects");
                 });
 
+            modelBuilder.Entity("AonFreelancing.Models.TempUser", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique();
+
+                    b.ToTable("TempUser", (string)null);
+                });
+
             modelBuilder.Entity("AonFreelancing.Models.User", b =>
                 {
                     b.Property<long>("Id")
@@ -166,7 +187,6 @@ namespace AonFreelancing.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("PhoneNumberConfirmed")
@@ -333,10 +353,10 @@ namespace AonFreelancing.Migrations
 
             modelBuilder.Entity("AonFreelancing.Models.OTP", b =>
                 {
-                    b.HasOne("AonFreelancing.Models.User", null)
+                    b.HasOne("AonFreelancing.Models.TempUser", null)
                         .WithOne()
                         .HasForeignKey("AonFreelancing.Models.OTP", "PhoneNumber")
-                        .HasPrincipalKey("AonFreelancing.Models.User", "PhoneNumber")
+                        .HasPrincipalKey("AonFreelancing.Models.TempUser", "PhoneNumber")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

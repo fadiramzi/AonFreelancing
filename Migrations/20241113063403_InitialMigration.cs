@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AonFreelancing.Migrations
 {
     /// <inheritdoc />
-    public partial class InitMigration : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -52,6 +52,20 @@ namespace AonFreelancing.Migrations
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
                     table.UniqueConstraint("AK_AspNetUsers_PhoneNumber", x => x.PhoneNumber);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TempUser",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    PhoneNumber = table.Column<string>(type: "TEXT", nullable: false),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TempUser", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -324,6 +338,12 @@ namespace AonFreelancing.Migrations
                 name: "IX_Projects_FreelancerId",
                 table: "Projects",
                 column: "FreelancerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TempUser_PhoneNumber",
+                table: "TempUser",
+                column: "PhoneNumber",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -352,6 +372,9 @@ namespace AonFreelancing.Migrations
 
             migrationBuilder.DropTable(
                 name: "SystemUsers");
+
+            migrationBuilder.DropTable(
+                name: "TempUser");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
