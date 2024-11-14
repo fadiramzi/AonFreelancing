@@ -151,6 +151,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             
             var role = new ApplicationRole { Name = registerReq.UserType };
             await _roleManager.CreateAsync(role);
+            await _userManager.AddToRoleAsync(user, role.Name);
             _mainAppContext.TempUsers.Remove(tempUser);
 
             await _mainAppContext.SaveChangesAsync();

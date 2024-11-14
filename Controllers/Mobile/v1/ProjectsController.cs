@@ -44,35 +44,63 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
         [Authorize(Roles = "CLIENT")]
         [HttpGet("clientFeed")]
-        public async Task<IActionResult> GetClientFeedAsync([FromQuery] string? qur,
-            [FromQuery] List<string>? qualificationNames, [FromQuery] int page = 0, [FromQuery] int pageSize = 8
+        public async Task<IActionResult> GetClientFeedAsync(
+            [FromQuery] List<string>? qualificationNames, [FromQuery] int page = 0,
+            [FromQuery] int pageSize = 8, [FromQuery] string? qur = default
         )
         {
             var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
-
-            var projectsQuery = mainAppContext.Projects
-                .OrderByDescending(p => p.CreatedAt)
-                .Where(p => qualificationNames != null && qualificationNames.Contains(p.QualificationName))
-                .Where(p => trimmedQuery != null && p.Title.ToLower().Contains(trimmedQuery))
-                .Skip(page * pageSize)
-                .Take(pageSize);
-
-            var projects = await projectsQuery.Select(p => new ProjectOutDTO
+            List<ProjectOutDTO>? projects;
+            
+            if (qur != null)
             {
-                Title = p.Title,
-                Description = p.Description,
-                Status = p.Status,
-                Budget = p.Budget,
-                Duration = p.Duration,
-                PriceType = p.PriceType,
-                Qualifications = p.QualificationName,
-                StartDate = p.StartDate,
-                EndDate = p.EndDate,
-                CreatedAt = p.CreatedAt,
-                CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
-            }).ToListAsync();
+                projects = await mainAppContext.Projects
+                .OrderByDescending(p => p.CreatedAt)
+                .Where(p => qualificationNames.Contains(p.QualificationName))
+                .Where(p => p.Title.ToLower().Contains(trimmedQuery))
+                .Skip(page * pageSize)
+                .Take(pageSize).Select(p => new ProjectOutDTO
+                {
+                    Title = p.Title,
+                    Description = p.Description,
+                    Status = p.Status,
+                    Budget = p.Budget,
+                    Duration = p.Duration,
+                    PriceType = p.PriceType,
+                    Qualifications = p.QualificationName,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    CreatedAt = p.CreatedAt,
+                    CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+                }).ToListAsync();
+            }
+            else
+            {
+                projects = await mainAppContext.Projects
+                .OrderByDescending(p => p.CreatedAt)
+                .Where(p => qualificationNames.Contains(p.QualificationName))
+                .Where(p => p.Title.ToLower().Contains(trimmedQuery))
+                .Skip(page * pageSize)
+                .Take(pageSize).Select(p => new ProjectOutDTO
+                {
+                    Title = p.Title,
+                    Description = p.Description,
+                    Status = p.Status,
+                    Budget = p.Budget,
+                    Duration = p.Duration,
+                    PriceType = p.PriceType,
+                    Qualifications = p.QualificationName,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    CreatedAt = p.CreatedAt,
+                    CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+                }).ToListAsync();
+            }
 
-            return Ok(projects);
+            if (projects == null)
+                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "Project not loaded."));
+
+            return Ok(CreateSuccessResponse(projects));
         }
 
         //[HttpGet("{id}")]

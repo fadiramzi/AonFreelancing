@@ -13,7 +13,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Route("api/mobile/v1/users")]
     [ApiController]
     public class UsersController(MainAppContext mainAppContext, RoleManager<ApplicationRole> roleManager)
-        : ControllerBase
+        : BaseController
     {
         [HttpGet("{id}/profile")]
         public async Task<IActionResult> GetProfileByIdAsync([FromRoute]long id)
@@ -55,7 +55,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                      UserType = Constants.USER_TYPE_CLIENT,
                      IsPhoneNumberVerified = c.PhoneNumberConfirmed,
                      Role = new RoleResponseDTO { Name = Constants.USER_TYPE_CLIENT },
-                     Projects = (c.Projects ?? new List<Project>()).Select(p =>  new ProjectDetailsDTO
+                     Projects = c.Projects.Select(p =>  new ProjectDetailsDTO
                      {
                          Id = p.Id,
                          Description = p.Description,
@@ -69,25 +69,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
 
             if (client != null)
-                return Ok(new ApiResponse<ClientResponseDTO>
-                {
-                    IsSuccess = true,
-                    Results = client,
-                    Errors = null
-                });
+                return Ok(CreateSuccessResponse(client));
 
-            return NotFound(new ApiResponse<string>
-            {
-                IsSuccess = false,
-                Results = null,
-                Errors = new List<Error> {
-                        new()
-                        {
-                            Code = StatusCodes.Status404NotFound.ToString(),
-                            Message = "User not found"
-                        }
-                    }
-            });
+            return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "NotFound"));
 
         }
     }
