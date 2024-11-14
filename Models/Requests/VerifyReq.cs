@@ -6,11 +6,11 @@ namespace AonFreelancing.Models.Requests
     {
 
         [Required]
-        [Length(14,14)]
-        public string Phone {  get; set; }
+        [Length(14, 14)]
+        public string Phone { get; set; }
 
         [Required]
-        [Length(6,6)]
-        public string Otp {  get; set; }
+        [Length(6, 6)]
+        public string Otp { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using AonFreelancing.Models.DTOs;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
@@ -6,7 +7,7 @@ namespace AonFreelancing.Models
 {
     //Entity
     [Table("Projects")]
-    public class Project
+    public class Project 
     {
 
         public int Id { get; set; }
@@ -30,17 +31,15 @@ namespace AonFreelancing.Models
 
         public string QualificationName { get; set; }
 
-        public decimal Budget {  get; set; }
+        public decimal Budget { get; set; }
 
+        public string Status { get; set; }
 
+        public long? FreelancerId { get; set; }//FK
 
-        [AllowNull]
-        public long FreelancerId { get; set; }
-
-        [AllowNull]
+        // Belongs to a Freelancers
         [ForeignKey("FreelancerId")]
         public Freelancer Freelancer { get; set; }
-
 
 
     }

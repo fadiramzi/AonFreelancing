@@ -13,10 +13,13 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Linq;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.TwiML.Messaging;
 using Twilio.Types;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using Error = AonFreelancing.Models.Error;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -46,78 +49,171 @@ namespace AonFreelancing.Controllers.Mobile.v1
             _otpManager = otpManager;
             _jwtService = jwtService;
         }
+        [HttpPut("register/resend")]
+        public async Task<IActionResult> ResendOtpAsync(RegisterPhoneRequest registerPhoneRequest)
+        {
+            string otpCode = _otpManager.GenerateOtp();
 
-        [HttpPost("register")]
-        public async Task<IActionResult> RegisterAsync([FromBody] RegRequest regRequest)
+            TempOTP checkOtp = await _mainAppContext.TempOTPs
+                .Where(o => o.PhoneNumber == registerPhoneRequest.PhoneNumber)
+                .FirstOrDefaultAsync();
+
+            if (checkOtp == null)
+            {
+                return NotFound(new { Message = "No OTP entry found for the specified phone number." });
+            }
+
+            checkOtp.Code = otpCode;
+            checkOtp.CreatedDate = DateTime.Now;
+            checkOtp.ExpiresAt = DateTime.Now.AddMinutes(1);
+
+            _mainAppContext.TempOTPs.Update(checkOtp);
+            await _mainAppContext.SaveChangesAsync();
+
+            await _otpManager.SendOTPAsync(checkOtp.Code, checkOtp.PhoneNumber);
+
+            return Ok(new { Message = "OTP resent successfully", OTP = otpCode });
+        }
+
+        [HttpPost("register/phonenumber")]
+        public async Task<IActionResult> RegisterPhoneNumberAsync([FromBody] RegisterPhoneRequest registerPhoneRequest)
+        {
+
+            if (await _userManager.Users.Where(u => u.PhoneNumber == registerPhoneRequest.PhoneNumber).FirstOrDefaultAsync() != null)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "Phone number is already used by an account"));
+
+            if (await _mainAppContext.UsersTemps.Where(u => u.PhoneNumber == registerPhoneRequest.PhoneNumber && u.IsVerfied == false).FirstOrDefaultAsync() != null)
+            {
+                if (await _mainAppContext.TempOTPs.Where(u => u.ExpiresAt.HasValue && u.ExpiresAt < DateTime.Now).FirstOrDefaultAsync() != null)
+                {
+                    return Conflict(new ApiResponse<object>
+                    {
+                        IsSuccess = false,
+                        Results = registerPhoneRequest.PhoneNumber,
+                        Message = "OTP already sent. Check your messages and verify your account."
+                    });
+                }
+                else
+                {
+                    await ResendOtpAsync(registerPhoneRequest);
+                }
+            }
+
+            if (await _mainAppContext.UsersTemps.Where(u => u.PhoneNumber == registerPhoneRequest.PhoneNumber && u.IsVerfied == true).FirstOrDefaultAsync() != null)
+                return Conflict(new ApiResponse<object>
+                {
+                    IsSuccess = false,
+                    Results = registerPhoneRequest.PhoneNumber,
+                    Message = "Phone number is verified. Complete your registration."
+                });
+
+            UsersTemp usersTemp = new UsersTemp
+            {
+                PhoneNumber = registerPhoneRequest.PhoneNumber
+            };
+
+            string otpCode = _otpManager.GenerateOtp();
+
+            TempOTP tempOTP = new TempOTP()
+            {
+                Code = otpCode,
+                PhoneNumber = registerPhoneRequest.PhoneNumber,
+                CreatedDate = DateTime.Now,
+                ExpiresAt = DateTime.Now.AddMinutes(1),
+            };
+
+            await _mainAppContext.TempOTPs.AddAsync(tempOTP);
+            await _mainAppContext.UsersTemps.AddAsync(usersTemp);
+            await _mainAppContext.SaveChangesAsync();
+
+            await _otpManager.SendOTPAsync(tempOTP.Code, tempOTP.PhoneNumber);
+
+            return Ok(new ApiResponse<object>
+            {
+                IsSuccess = true,
+                Results = registerPhoneRequest.PhoneNumber,
+                Errors = null,
+            });
+
+
+        }
+
+        [HttpPost("register/userInfo")]
+        public async Task<IActionResult> RegisterUserInfoAsync([FromBody] RegisterInfoRequest registerInfoRequest)
         {
 
             User user = new User();
-            if (regRequest.UserType == Constants.USER_TYPE_FREELANCER)
+            if (registerInfoRequest.UserType == Constants.USER_TYPE_FREELANCER)
             {
                 // Register User
                 user = new Freelancer
                 {
-                    Name = regRequest.Name,
-                    UserName = regRequest.Username,
-                    PhoneNumber = regRequest.PhoneNumber,
-                    Skills = regRequest.Skills
+                    Name = registerInfoRequest.Name,
+                    UserName = registerInfoRequest.Username,
+                    Email = registerInfoRequest.Email,
+                    PhoneNumber = registerInfoRequest.PhoneNumber,
+                    Skills = registerInfoRequest.Skills,
+                    PhoneNumberConfirmed = true,
+                    About = registerInfoRequest.About
+
                 };
             }
-            else if (regRequest.UserType == Constants.USER_TYPE_CLIENT)
+            else if (registerInfoRequest.UserType == Constants.USER_TYPE_CLIENT)
             {
                 user = new Models.Client
                 {
-                    Name = regRequest.Name,
-                    UserName = regRequest.Username,
-                    PhoneNumber = regRequest.PhoneNumber,
-                    CompanyName = regRequest.CompanyName
+                    Name = registerInfoRequest.Name,
+                    UserName = registerInfoRequest.Username,
+                    Email = registerInfoRequest.Email,
+                    PhoneNumber = registerInfoRequest.PhoneNumber,
+                    CompanyName = registerInfoRequest.CompanyName,
+                    PhoneNumberConfirmed = true,
+                    About = registerInfoRequest.About
+
                 };
             }
-            //check if username or phoneNumber is taken
-            if (await _userManager.Users.Where(u => u.UserName == regRequest.Username || u.PhoneNumber == regRequest.PhoneNumber).FirstOrDefaultAsync() != null)
-                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "username or phone number is already used by an account"));
-            
-            //create new User with hashed passworrd in the database
-            var userCreationResult = await _userManager.CreateAsync(user, regRequest.Password);
+            await _userManager.IsPhoneNumberConfirmedAsync(user);
+            if (await _userManager.Users.Where(u => u.UserName == registerInfoRequest.Username && u.Email == registerInfoRequest.Email).FirstOrDefaultAsync() != null)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "username or email is already used by an account"));
+
+            var userCreationResult = await _userManager.CreateAsync(user, registerInfoRequest.Password);
             if (!userCreationResult.Succeeded)
                 return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>()
                 {
-                    Errors = userCreationResult.Errors
-                    .Select(e => new Error()
+                    Errors = userCreationResult.Errors.Select(e => new Error()
                     {
                         Code = e.Code,
                         Message = e.Description
                     })
                     .ToList()
                 });
+            TempOTP setOTP = await _mainAppContext.TempOTPs.Where(x => x.PhoneNumber == registerInfoRequest.PhoneNumber).FirstOrDefaultAsync();
+            OTP oTP = new OTP
+            {
+                PhoneNumber = setOTP.PhoneNumber,
+                Code = setOTP.Code,
+                CreatedDate = setOTP.CreatedDate,
+                IsUsed = setOTP.IsUsed,
+                ExpiresAt = setOTP.ExpiresAt
 
-            // To be fixed
-            //assign a role to the newly created User
-            //var role = new ApplicationRole { Name = regRequest.UserType };
-            //await _roleManager.CreateAsync(role);
-            var role = await _roleManager.FindByNameAsync(regRequest.UserType);
+            };
+            await _mainAppContext.OTPs.AddAsync(oTP);
+            _mainAppContext.TempOTPs.Remove(setOTP);
+            await _mainAppContext.SaveChangesAsync();
+            
+            var role = new ApplicationRole { Name = registerInfoRequest.UserType };
+            await _roleManager.CreateAsync(role);
             await _userManager.AddToRoleAsync(user, role.Name);
 
-            string otpCode = _otpManager.GenerateOtp();
-            //persist the otp to the otps table
-            OTP otp = new OTP()
-            {
-                Code = otpCode,
-                PhoneNumber = regRequest.PhoneNumber,
-                CreatedDate = DateTime.Now,
-                ExpiresAt = DateTime.Now.AddMinutes(1),
-            };
-            await _mainAppContext.OTPs.AddAsync(otp);
+
+            var tempuser = await _mainAppContext.UsersTemps.Where(t => t.PhoneNumber == registerInfoRequest.PhoneNumber).FirstOrDefaultAsync();
+            _mainAppContext.Remove(tempuser);
             await _mainAppContext.SaveChangesAsync();
 
-            //send the otp to the specified phone number
-            await _otpManager.SendOTPAsync(otp.Code, otp.PhoneNumber);
-
-            // Get created User (if it is a freelancer)
-            if (regRequest.UserType == Constants.USER_TYPE_FREELANCER)
+            if (registerInfoRequest.UserType == Constants.USER_TYPE_FREELANCER)
             {
                 var createdUser = await _mainAppContext.Users.OfType<Freelancer>()
-                        .Where(u => u.UserName == regRequest.Username)
+                        .Where(u => u.UserName == registerInfoRequest.Username)
                         .Select(u => new FreelancerResponseDTO()
                         {
                             Id = u.Id,
@@ -126,16 +222,17 @@ namespace AonFreelancing.Controllers.Mobile.v1
                             PhoneNumber = u.PhoneNumber,
                             Skills = u.Skills,
                             UserType = Constants.USER_TYPE_FREELANCER,
+                            IsPhoneNumberVerified = u.PhoneNumberConfirmed,
+                            About = u.About,
                             Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
                         })
                         .FirstOrDefaultAsync();
                 return Ok(CreateSuccessResponse(createdUser));
             }
-            // Get created User (if it is a client)
-            else if (regRequest.UserType == Constants.USER_TYPE_CLIENT)
+            else if (registerInfoRequest.UserType == Constants.USER_TYPE_CLIENT)
             {
                 var createdUser = await _mainAppContext.Users.OfType<Models.Client>()
-                          .Where(c => c.UserName == regRequest.Username)
+                          .Where(c => c.UserName == registerInfoRequest.Username)
                           .Select(c => new ClientResponseDTO
                           {
                               Id = c.Id,
@@ -144,12 +241,14 @@ namespace AonFreelancing.Controllers.Mobile.v1
                               PhoneNumber = c.PhoneNumber,
                               CompanyName = c.CompanyName,
                               UserType = Constants.USER_TYPE_CLIENT,
+                              IsPhoneNumberVerified = c.PhoneNumberConfirmed,
+                              About = c.About,
                               Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
                           })
                           .FirstOrDefaultAsync();
                 return Ok(CreateSuccessResponse(createdUser));
             }
-            //this fallback return value will not be returned due to model validation.
+
             return Ok();
         }
 
@@ -163,6 +262,12 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "Verify Your Account First"));
 
                 var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+
+                if (role == null)
+                {
+                    return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "User role is missing"));
+                }
+
                 var token = _jwtService.GenerateJWT(user, role);
                 return Ok(CreateSuccessResponse(new LoginResponse()
                 {
@@ -177,19 +282,18 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyAsync([FromBody] VerifyReq verifyReq)
         {
-            var user = await _userManager.Users.Where(x => x.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
-            if (user != null && !await _userManager.IsPhoneNumberConfirmedAsync(user))
+            var usertemp = await _mainAppContext.UsersTemps.Where(x => x.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
+            if (usertemp != null)
             {
-                OTP? otp = await _mainAppContext.OTPs.Where(o => o.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
+                TempOTP? tempOTP = await _mainAppContext.TempOTPs.Where(o => o.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
 
-                // verify OTP
-                if (otp != null && verifyReq.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpiresAt)
+                if (tempOTP != null && verifyReq.Otp.Equals(tempOTP.Code) && DateTime.Now < tempOTP.ExpiresAt)
                 {
-                    user.PhoneNumberConfirmed = true;
-                    await _userManager.UpdateAsync(user);
+                    usertemp.IsVerfied = true;
+                    _mainAppContext.UsersTemps.Update(usertemp);
 
-                    // disable sent OTP
-                    otp.IsUsed = true;
+                    tempOTP.IsUsed = true;
+                    _mainAppContext.Update(tempOTP);
                     await _mainAppContext.SaveChangesAsync();
 
                     return Ok(CreateSuccessResponse("Activated"));

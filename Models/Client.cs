@@ -16,7 +16,7 @@ namespace AonFreelancing.Models
 
         // Has many projects, 1-m
         public List<Project>? Projects { get; set; }
-  
+
 
         //public override void DisplayProfile()
         //{

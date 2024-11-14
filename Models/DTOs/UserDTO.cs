@@ -14,7 +14,7 @@ namespace AonFreelancing.Models.DTOs
         [StringLength(32)]
         public string PhoneNumber { get; set; }
 
-        [MinLength(4,ErrorMessage ="Too short password")]
+        [MinLength(4, ErrorMessage = "Too short password")]
         public string Password { get; set; }
 
 
@@ -39,6 +39,7 @@ namespace AonFreelancing.Models.DTOs
 
         public bool IsPhoneNumberVerified { get; set; }
         public string UserType { get; set; }
+        public string About { get; set; }
         public RoleResponseDTO Role { get; set; }
     }
 }

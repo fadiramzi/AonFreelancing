@@ -6,12 +6,16 @@ namespace AonFreelancing.Models.DTOs
 {
     public class ProjectOutDTO
     {
-        public int Id { get; set; }
+        
         public string Title { get; set; }
         public string Description { get; set; }
-
-        public int ClientId { get; set; }//FK
-
+        public string Status { get; set; }
+        public decimal Budget { get; set; }
+        public int Duration { get; set; }
+        public string PriceType { get; set; }
+        public string QualificationName { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string CreationTimeAgo { get; set; }
+
     }
 }

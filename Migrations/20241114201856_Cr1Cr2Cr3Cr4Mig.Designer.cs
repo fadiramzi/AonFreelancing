@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    [Migration("20241109125128_ProjectModifications")]
-    partial class ProjectModifications
+    [Migration("20241114201856_Cr1Cr2Cr3Cr4Mig")]
+    partial class Cr1Cr2Cr3Cr4Mig
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -53,16 +53,15 @@ namespace AonFreelancing.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Code")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ExpiresAt")
+                    b.Property<DateTime?>("ExpiresAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsUsed")
+                    b.Property<bool?>("IsUsed")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("PhoneNumber");
@@ -95,7 +94,7 @@ namespace AonFreelancing.Migrations
                     b.Property<int>("Duration")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("FreelancerId")
+                    b.Property<long?>("FreelancerId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("PriceType")
@@ -103,6 +102,10 @@ namespace AonFreelancing.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("QualificationName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -119,11 +122,42 @@ namespace AonFreelancing.Migrations
                     b.ToTable("Projects");
                 });
 
+            modelBuilder.Entity("AonFreelancing.Models.TempOTP", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Code")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool?>("IsUsed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("TempOtps");
+                });
+
             modelBuilder.Entity("AonFreelancing.Models.User", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("About")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("INTEGER");
@@ -192,6 +226,22 @@ namespace AonFreelancing.Migrations
                     b.ToTable("AspNetUsers", (string)null);
 
                     b.UseTptMappingStrategy();
+                });
+
+            modelBuilder.Entity("AonFreelancing.Models.UsersTemp", b =>
+                {
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool?>("IsVerfied")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("VerifyTime")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("PhoneNumber");
+
+                    b.ToTable("UsersTemps", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
@@ -346,9 +396,7 @@ namespace AonFreelancing.Migrations
 
                     b.HasOne("AonFreelancing.Models.Freelancer", "Freelancer")
                         .WithMany()
-                        .HasForeignKey("FreelancerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("FreelancerId");
 
                     b.Navigation("Client");
 

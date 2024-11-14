@@ -2,7 +2,8 @@
 
 namespace AonFreelancing.Models.Requests
 {
-    public class RegRequest
+
+    public class RegisterInfoRequest
     {
         [Required]
         [MinLength(2)]
@@ -11,6 +12,10 @@ namespace AonFreelancing.Models.Requests
         [Required]
         [MinLength(4)]
         public string Username { get; set; }
+
+        [Required]
+        [EmailAddress]
+       public string Email { get; set; }
 
         [Required]
         [Phone]
@@ -25,13 +30,11 @@ namespace AonFreelancing.Models.Requests
         [AllowedValues("Freelancer","Client")]
         public string UserType { get; set; }
 
-        // For freelancer type only
         public string? Skills { get; set; }
 
-        // For Client user type only
-
-
         public string? CompanyName { get; set; }
+
+        public string? About { get; set; }
 
     }
 }

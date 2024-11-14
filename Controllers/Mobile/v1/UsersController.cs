@@ -25,6 +25,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             _roleManager = roleManager;
         }
 
+        [Authorize]
         [HttpGet("{id}/profile")]
         public async Task<IActionResult> GetProfileById([FromRoute] long id)
         {
@@ -38,7 +39,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                                                                     PhoneNumber = f.PhoneNumber,
                                                                     UserType = Constants.USER_TYPE_FREELANCER,
                                                                     IsPhoneNumberVerified = f.PhoneNumberConfirmed,
-                                                                    Role = new RoleResponseDTO { Name = Constants.USER_TYPE_FREELANCER },
+                                                                    Role = new RoleResponseDTO { Id = f.Id, Name = Constants.USER_TYPE_FREELANCER },
+                                                                    About = f.About,
                                                                     Skills = f.Skills,
                                                                 }).FirstOrDefaultAsync();
             if (freelancerResponseDTO != null)
@@ -56,7 +58,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                                                                     PhoneNumber = c.PhoneNumber,
                                                                     UserType = Constants.USER_TYPE_CLIENT,
                                                                     IsPhoneNumberVerified = c.PhoneNumberConfirmed,
-                                                                    Role = new RoleResponseDTO { Name = Constants.USER_TYPE_CLIENT },
+                                                                    Role = new RoleResponseDTO { Id = c.Id, Name = Constants.USER_TYPE_CLIENT },
+                                                                    About = c.About,
                                                                     CompanyName = c.CompanyName,
                                                                     Projects = c.Projects
                                                                 }).FirstOrDefaultAsync();
