@@ -1,9 +1,9 @@
-﻿using System.Security.Claims;
-using AonFreelancing.Contexts;
+﻿using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
+using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,25 +12,73 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Authorize]
     [Route("api/mobile/v1/projects")]
     [ApiController]
-    public class ProjectsController(MainAppContext mainAppContext) : BaseController
+    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager) : BaseController
     {
-        [Authorize]
+        [Authorize(Roles = "CLIENT")]
         [HttpPost]
-        public async Task<IActionResult> CreateProject([FromBody] ProjectInputDto project)
+        public async Task<IActionResult> PostProjectAsync([FromBody] ProjectInputDto projectInputDto)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var p = new Project
+            var user = await userManager.GetUserAsync(HttpContext.User);
+            if (user == null)
+                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), 
+                    "Unable to load user."));
+
+            var userId = user.Id;
+            var project = new Project
             {
-                Title = project.Title,
-                Description = project.Description,
+                ClientId = userId,
+                Title = projectInputDto.Title,
+                Description = projectInputDto.Description,
+                QualificationName = projectInputDto.QualificationName,
+                Duration = projectInputDto.Duration,
+                Budget = projectInputDto.Budget,
+                PriceType = projectInputDto.PriceType,
+                CreatedAt = DateTime.Now,
             };
 
-            await mainAppContext.Projects.AddAsync(p);
+            await mainAppContext.Projects.AddAsync(project);
             await mainAppContext.SaveChangesAsync();
-            
-            return Ok(CreateSuccessResponse(p));
+
+            return Ok(CreateSuccessResponse("Project added."));
         }
 
+        [Authorize(Roles = "CLIENT")]
+        [HttpGet("clientFeed")]
+        public async Task<IActionResult> GetClientFeedAsync([FromQuery] List<string>? qualificationNames,
+            [FromQuery] string? qur, [FromQuery] int page = 0, [FromQuery] int pageSize = 8
+        )
+        {
+            if (qualificationNames != null)
+            {
+                var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
+
+                var projectsQuery = mainAppContext.Projects
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Where(p => qualificationNames.Contains(p.QualificationName))
+                    .Where(p => trimmedQuery != null && p.Title.ToLower().Contains(trimmedQuery))
+                    .Skip(page * pageSize)
+                    .Take(pageSize);
+
+                var projects = await projectsQuery.Select(p => new ProjectOutDTO
+                {
+                    Title = p.Title,
+                    Description = p.Description,
+                    Status = p.Status,
+                    Budget = p.Budget,
+                    Duration = p.Duration,
+                    PriceType = p.PriceType,
+                    Qualifications = p.QualificationName,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    CreatedAt = p.CreatedAt,
+                    CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+                }).ToListAsync();
+
+                return Ok(projects);
+            }
+            return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),
+                "Unable to load projects."));
+        }
 
         //[HttpGet("{id}")]
         //public IActionResult GetProject(int id)
@@ -42,7 +90,5 @@ namespace AonFreelancing.Controllers.Mobile.v1
         //    return Ok(CreateSuccessResponse(project));
 
         //}
-
-
     }
 }

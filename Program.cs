@@ -19,7 +19,7 @@ namespace AonFreelancing
         {
             var builder = WebApplication.CreateBuilder(args);
             
-            builder.Services.AddControllers();
+            builder.Services.AddControllers(o => o.SuppressAsyncSuffixInActionNames = false);
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddSingleton<OTPManager>();

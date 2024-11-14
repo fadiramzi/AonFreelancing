@@ -11,7 +11,7 @@ namespace AonFreelancing.Models.Requests
         string PhoneNumber,
         [Required, MinLength(4, ErrorMessage = "Too short password")]
         string Password,
-        [Required, AllowedValues("Freelancer", "Client")] 
+        [Required, AllowedValues("FREELANCER", "CLIENT")] 
         string UserType,
         string? Skills = null,
         string? CompanyName = null

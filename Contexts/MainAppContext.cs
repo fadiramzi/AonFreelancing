@@ -38,7 +38,13 @@ namespace AonFreelancing.Contexts
                                     .HasForeignKey<OTP>()
                                     .HasPrincipalKey<TempUser>(nameof(TempUser.PhoneNumber));
 
-
+            builder.Entity<Project>().ToTable("Projects", tb => tb.HasCheckConstraint("CK_PRICE_TYPE", "[PriceType] IN ('Fixed', 'PerHour')"));
+            
+            builder.Entity<Project>()
+                .ToTable("Projects", tb => tb.HasCheckConstraint("CK_QUALIFICATION_NAME", "[QualificationName] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')"));
+            builder.Entity<Project>().ToTable("Projects", tb => tb.HasCheckConstraint("CK_STATUS", "[Status] IN ('Available', 'Closed')"))
+                .Property(p=>p.Status).HasDefaultValue("Available");
+            
             base.OnModelCreating(builder);
         }
     }

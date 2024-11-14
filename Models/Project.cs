@@ -20,14 +20,15 @@ namespace AonFreelancing.Models
         public Client Client { get; set; }
 
         public DateTime CreatedAt { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
         public string PriceType { get; set; }
+        public int Duration { get; set; }
         public decimal Budget { get; set; }
-        public string Qualification { get; set; }
-        public long? FreelancerId { get; set; }
+        public string QualificationName { get; set; }
         public string Status { get; set; }
-        public string ProgressStatus { get; set; }
-        [AllowNull]
+        public long? FreelancerId { get; set; }
         [ForeignKey("FreelancerId")]
-        public virtual Freelancer Freelancer { get; set; }
+        public virtual Freelancer? Freelancer { get; set; }
     }
 }

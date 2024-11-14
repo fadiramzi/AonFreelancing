@@ -12,13 +12,11 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Authorize]
     [Route("api/mobile/v1/users")]
     [ApiController]
-    public class UserController(MainAppContext mainAppContext, RoleManager<ApplicationRole> roleManager)
+    public class UsersController(MainAppContext mainAppContext, RoleManager<ApplicationRole> roleManager)
         : ControllerBase
     {
-        private readonly RoleManager<ApplicationRole> _roleManager = roleManager;
-
         [HttpGet("{id}/profile")]
-        public async Task<IActionResult> GetProfileAsync([FromRoute]long id)
+        public async Task<IActionResult> GetProfileByIdAsync([FromRoute]long id)
         {
             var freelancer = await mainAppContext.Users 
                 .OfType<Freelancer>().Where(f => f.Id == id)
@@ -47,6 +45,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             var client = await mainAppContext.Users
                 .OfType<Client>()
                 .Where(c => c.Id == id)
+                .Include(c => c.Projects)
                 .Select(c => new ClientResponseDTO
                  {
                      Id = c.Id,
@@ -56,6 +55,14 @@ namespace AonFreelancing.Controllers.Mobile.v1
                      UserType = Constants.USER_TYPE_CLIENT,
                      IsPhoneNumberVerified = c.PhoneNumberConfirmed,
                      Role = new RoleResponseDTO { Name = Constants.USER_TYPE_CLIENT },
+                     Projects = (c.Projects ?? new List<Project>()).Select(p =>  new ProjectDetailsDTO
+                     {
+                         Id = p.Id,
+                         Description = p.Description,
+                         EndDate = p.EndDate,
+                         StartDate = p.StartDate,
+                         Name = p.Title,
+                     }),
                      CompanyName = c.CompanyName,
 
                  }).FirstOrDefaultAsync();
