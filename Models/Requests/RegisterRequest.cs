@@ -16,6 +16,10 @@ namespace AonFreelancing.Models.Requests
         [Phone]
         public string PhoneNumber { get; set; }
 
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
 
         [Required]
         [MinLength(6, ErrorMessage ="Too short password")]
