@@ -44,7 +44,7 @@ namespace AonFreelancing.Utilities
                 {
                     UserType = tempUserDto.UserType,
                     PhoneNumber = tempUserDto.PhoneNumber,
-                    verified = false
+                    Verified = false
                 };
                 await _mainAppContext.TempUsers.AddAsync(TempUser);
             }

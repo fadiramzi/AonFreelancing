@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Twilio.Types;
 
 namespace AonFreelancing.Models.DTOs
 {
@@ -25,7 +26,8 @@ namespace AonFreelancing.Models.DTOs
         public long Id { get; set; }
         public string Name { get; set; }
 
-        public string Username { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Email { get; set; }
 
     }
 

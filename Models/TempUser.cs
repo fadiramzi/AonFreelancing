@@ -19,6 +19,6 @@ namespace AonFreelancing.Models
 
         public string UserType { get; set; }
         public string PhoneNumber { get; set; }
-        public bool verified { get; set; }
+        public bool Verified { get; set; }
     }
 }
