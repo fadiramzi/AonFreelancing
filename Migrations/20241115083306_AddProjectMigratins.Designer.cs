@@ -3,6 +3,7 @@ using System;
 using AonFreelancing.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    partial class MainAppContextModelSnapshot : ModelSnapshot
+    [Migration("20241115083306_AddProjectMigratins")]
+    partial class AddProjectMigratins
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
@@ -104,7 +107,7 @@ namespace AonFreelancing.Migrations
                     b.Property<int>("Duration")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long?>("FreelancerId")
+                    b.Property<long>("FreelancerId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("PriceType")
@@ -112,10 +115,6 @@ namespace AonFreelancing.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("QualificationName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -131,26 +130,6 @@ namespace AonFreelancing.Migrations
                     b.HasIndex("FreelancerId");
 
                     b.ToTable("Projects");
-                });
-
-            modelBuilder.Entity("AonFreelancing.Models.ProjectHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("ProjectId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectId")
-                        .IsUnique();
-
-                    b.ToTable("ProjectHistoys", (string)null);
                 });
 
             modelBuilder.Entity("AonFreelancing.Models.TempUser", b =>
@@ -408,22 +387,13 @@ namespace AonFreelancing.Migrations
 
                     b.HasOne("AonFreelancing.Models.Freelancer", "Freelancer")
                         .WithMany()
-                        .HasForeignKey("FreelancerId");
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Client");
 
                     b.Navigation("Freelancer");
-                });
-
-            modelBuilder.Entity("AonFreelancing.Models.ProjectHistory", b =>
-                {
-                    b.HasOne("AonFreelancing.Models.Project", "Project")
-                        .WithOne("ProjectHistory")
-                        .HasForeignKey("AonFreelancing.Models.ProjectHistory", "ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
@@ -501,12 +471,6 @@ namespace AonFreelancing.Migrations
                         .WithOne()
                         .HasForeignKey("AonFreelancing.Models.SystemUser", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("AonFreelancing.Models.Project", b =>
-                {
-                    b.Navigation("ProjectHistory")
                         .IsRequired();
                 });
 

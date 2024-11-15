@@ -16,6 +16,7 @@ namespace AonFreelancing.Contexts
         public DbSet<User> Users { get; set; } // Will access Freelancers, Clients, SystemUsers through inheritance and ofType 
         public DbSet<OTP> OTPs { get; set; }
         public DbSet<TempUser> TempUsers { get; set; }
+        public DbSet<ProjectHistory> ProjectHistories { set; get; }
         public MainAppContext(DbContextOptions<MainAppContext> contextOptions) : base(contextOptions) {
 
         }
@@ -28,6 +29,7 @@ namespace AonFreelancing.Contexts
                                         .HasIndex(u=>u.PhoneNumber).IsUnique();
             builder.Entity<Freelancer>().ToTable("Freelancers");
             builder.Entity<Client>().ToTable("Clients");
+            builder.Entity<ProjectHistory>().ToTable("ProjectHistoys");
             builder.Entity<SystemUser>().ToTable("SystemUsers");
             builder.Entity<TempUser>().ToTable("TempUsers")
                                         .HasIndex(u=>u.PhoneNumber).IsUnique();
@@ -38,6 +40,17 @@ namespace AonFreelancing.Contexts
                                     .WithOne()
                                     .HasForeignKey<OTP>()
                                     .HasPrincipalKey<User>(nameof(User.PhoneNumber));
+            builder.Entity<Client>()
+                .HasMany(c => c.Projects)
+                .WithOne(p => p.Client)
+                .HasForeignKey(p => p.ClientId)
+                .OnDelete(DeleteBehavior.Cascade); 
+
+            builder.Entity<Project>()
+                .HasOne(p => p.ProjectHistory) 
+                .WithOne(h => h.Project) 
+                .HasForeignKey<ProjectHistory>(h => h.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
 
 
             base.OnModelCreating(builder);

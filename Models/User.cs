@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
@@ -21,7 +22,8 @@ namespace AonFreelancing.Models
     {
         public string Name { get; set; }
         public string UserType { get; set; }
+        [AllowNull]
+        public string? About { get; set; }
 
-        public override string UserName { get; set; } = null; 
     }
 }

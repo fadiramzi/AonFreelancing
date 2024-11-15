@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
@@ -73,37 +74,51 @@ namespace AonFreelancing.Controllers.Mobile.v1
             // Check if tempUser exiset and it's verified
             if (tempUser == null || !tempUser.Verified)
                 return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), $"{regRequest.PhoneNumber} is't verified."));
-            // Register User
-            Console.WriteLine("Beforeeeee");
-
-            User user = new User()
-            {
-                Name = regRequest.Name,
-                Email = regRequest.Email,
-                PhoneNumber = tempUser.PhoneNumber,
-                UserType = tempUser.UserType,
-                UserName = regRequest.Email
-            };
-            Console.WriteLine("Pass");
-
+           
             // check if Email or phoneNumber isn't taken
             if (await _userManager.Users.Where(u => u.Email == regRequest.Email || u.PhoneNumber == regRequest.PhoneNumber).FirstOrDefaultAsync() != null)
                 return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "Email or Phon number is already used by an account"));
             
-            // Create new User with hashed passworrd in the database
-            var userCreationResult = await _userManager.CreateAsync(user, regRequest.Password);
-            if (!userCreationResult.Succeeded)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>()
+             // Register User
+            if (tempUser.UserType == Constants.USER_TYPE_FREELANCER)
+            {
+                Freelancer user = new Freelancer()                
                 {
-                    Errors = userCreationResult.Errors
-                    .Select(e => new Error()
-                    {
-                        Code = e.Code,
-                        Message = e.Description
-                    })
-                    .ToList()
-                });
-
+                    Name = regRequest.Name,
+                    Email = regRequest.Email,
+                    PhoneNumber = tempUser.PhoneNumber,
+                    UserType = tempUser.UserType,
+                    UserName = regRequest.Email
+                };
+                var userCreationResult = await _userManager.CreateAsync(user, regRequest.Password);
+                return Ok(CreateSuccessResponse<UserOutDTO>(new UserOutDTO()
+                {
+                    Id = user.Id,
+                    Name = user.Name,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                }));
+            }
+            else
+            {
+                Client user = new Client()
+                {
+                    Name = regRequest.Name,
+                    Email = regRequest.Email,
+                    PhoneNumber = tempUser.PhoneNumber,
+                    UserType = tempUser.UserType,
+                    UserName = regRequest.Email
+                };
+                // Create new User with hashed passworrd in the database
+                var userCreationResult = await _userManager.CreateAsync(user, regRequest.Password);
+                return Ok(CreateSuccessResponse<UserOutDTO>(new UserOutDTO()
+                {
+                    Id = user.Id,
+                    Name = user.Name,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                }));
+            }
 
             // To be fixed
             // //assign a role to the newly created User
@@ -112,13 +127,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             // var role = await _roleManager.FindByNameAsync(regRequest.UserType);
             // await _userManager.AddToRoleAsync(user, role.Name);
 
-            return Ok(CreateSuccessResponse<UserOutDTO>(new UserOutDTO()
-            {
-                Id = user.Id,
-                Name = user.Name,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-            }));
+            
         }
 
         [HttpPost("login")]
