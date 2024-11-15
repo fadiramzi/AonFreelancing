@@ -7,8 +7,6 @@ namespace AonFreelancing.Utilities
 {
     public class OTPManager
     {
-      
-
         readonly IConfiguration _configuration;
 
         public OTPManager(IConfiguration configuration)
@@ -23,7 +21,7 @@ namespace AonFreelancing.Utilities
             TwilioClient.Init(accountSid, authToken);
 
             var messageOptions = new CreateMessageOptions(new PhoneNumber($"whatsapp:{receiverPhoneNumber}")); //To
-            messageOptions.From = new PhoneNumber(_configuration["Twilio:From"]);//TODO use appsetting.json
+            messageOptions.From = new PhoneNumber($"whatsapp:{_configuration["Twilio:From"]}");//TODO use appsetting.json
             messageOptions.ContentSid = _configuration["Twilio:ContentSid"];
             messageOptions.ContentVariables = "{\"1\":\"" + otp + "\"}";
 
@@ -57,5 +55,6 @@ namespace AonFreelancing.Utilities
             // Format the number to ensure it's always 6 digits
             return otp.ToString("D6");
         }
+        
     }
 }

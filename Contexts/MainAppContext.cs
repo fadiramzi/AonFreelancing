@@ -15,6 +15,7 @@ namespace AonFreelancing.Contexts
         // instead, use User only
         public DbSet<User> Users { get; set; } // Will access Freelancers, Clients, SystemUsers through inheritance and ofType 
         public DbSet<OTP> OTPs { get; set; }
+        public DbSet<TempUser> TempUsers { get; set; }
         public MainAppContext(DbContextOptions<MainAppContext> contextOptions) : base(contextOptions) {
 
         }
@@ -28,6 +29,8 @@ namespace AonFreelancing.Contexts
             builder.Entity<Freelancer>().ToTable("Freelancers");
             builder.Entity<Client>().ToTable("Clients");
             builder.Entity<SystemUser>().ToTable("SystemUsers");
+            builder.Entity<TempUser>().ToTable("TempUsers")
+                                        .HasIndex(u=>u.PhoneNumber).IsUnique();
             builder.Entity<OTP>().ToTable("otps", o => o.HasCheckConstraint("CK_CODE","length([Code]) = 6"));
 
             //set up relationships

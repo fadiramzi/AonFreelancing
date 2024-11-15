@@ -9,8 +9,8 @@ namespace AonFreelancing.Models.Requests
         public string Name { get; set; }
 
         [Required]
-        [MinLength(4)]
-        public string Username { get; set; }
+        [EmailAddress]
+        public string Email { get; set; }
 
         [Required]
         [Phone]

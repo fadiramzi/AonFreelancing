@@ -34,7 +34,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                                                                 {
                                                                     Id = f.Id,
                                                                     Name = f.Name,
-                                                                    Username = f.UserName,
+                                                                    Email = f.Email,
                                                                     PhoneNumber = f.PhoneNumber,
                                                                     UserType = Constants.USER_TYPE_FREELANCER,
                                                                     IsPhoneNumberVerified = f.PhoneNumberConfirmed,
@@ -52,7 +52,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                                                                 {
                                                                     Id = c.Id,
                                                                     Name = c.Name,
-                                                                    Username = c.UserName,
+                                                                    Email = c.Email,
                                                                     PhoneNumber = c.PhoneNumber,
                                                                     UserType = Constants.USER_TYPE_CLIENT,
                                                                     IsPhoneNumberVerified = c.PhoneNumberConfirmed,
