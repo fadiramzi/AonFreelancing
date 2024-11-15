@@ -41,4 +41,15 @@ namespace AonFreelancing.Models.DTOs
         public string UserType { get; set; }
         public RoleResponseDTO Role { get; set; }
     }
+
+    public class UserProfileDTO
+    {
+        public long Id { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string PhoneNumber { get; set; }
+        public string About { get; set; }
+        public List<ProjectHistoryDTO> ProjectHistory { get; set; }
+    }
+
 }

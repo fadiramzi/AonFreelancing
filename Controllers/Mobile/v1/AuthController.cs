@@ -13,7 +13,9 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Net;
 using Twilio;
+using Twilio.Http;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.TwiML.Messaging;
 using Twilio.Types;
@@ -50,6 +52,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] RegRequest regRequest)
         {
+            // check if the user is not in temp user DB or the phone is not active
+            var userTemp = await _mainAppContext.UserTemps.Where(u => u.PhoneNumber == regRequest.PhoneNumber).FirstOrDefaultAsync();
+            if (userTemp == null || !userTemp.IsActive)
+                return BadRequest("Active your phone number first !");
 
             User user = new User();
             if (regRequest.UserType == Constants.USER_TYPE_FREELANCER)
@@ -74,8 +80,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 };
             }
             //check if username or phoneNumber is taken
-            if (await _userManager.Users.Where(u => u.UserName == regRequest.Username || u.PhoneNumber == regRequest.PhoneNumber).FirstOrDefaultAsync() != null)
-                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "username or phone number is already used by an account"));
+            //if (await _userManager.Users.Where(u => u.UserName == regRequest.Username || u.PhoneNumber == regRequest.PhoneNumber).FirstOrDefaultAsync() != null)
+            //    return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "username or phone number is already used by an account"));
             
             //create new User with hashed passworrd in the database
             var userCreationResult = await _userManager.CreateAsync(user, regRequest.Password);
@@ -91,6 +97,12 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     .ToList()
                 });
 
+            // After creation we need to make the phone active in user DB and delete the temp user from userTemp DB
+            user.PhoneNumberConfirmed = true;
+            await _userManager.UpdateAsync(user);
+            _mainAppContext.UserTemps.Remove(userTemp);
+            await _mainAppContext.SaveChangesAsync();
+
             // To be fixed
             //assign a role to the newly created User
             //var role = new ApplicationRole { Name = regRequest.UserType };
@@ -98,20 +110,21 @@ namespace AonFreelancing.Controllers.Mobile.v1
             var role = await _roleManager.FindByNameAsync(regRequest.UserType);
             await _userManager.AddToRoleAsync(user, role.Name);
 
-            string otpCode = _otpManager.GenerateOtp();
-            //persist the otp to the otps table
-            OTP otp = new OTP()
-            {
-                Code = otpCode,
-                PhoneNumber = regRequest.PhoneNumber,
-                CreatedDate = DateTime.Now,
-                ExpiresAt = DateTime.Now.AddMinutes(1),
-            };
-            await _mainAppContext.OTPs.AddAsync(otp);
-            await _mainAppContext.SaveChangesAsync();
+            //to be removed
+            //string otpCode = _otpManager.GenerateOtp();
+            ////persist the otp to the otps table
+            //OTP otp = new OTP()
+            //{
+            //    Code = otpCode,
+            //    PhoneNumber = regRequest.PhoneNumber,
+            //    CreatedDate = DateTime.Now,
+            //    ExpiresAt = DateTime.Now.AddMinutes(5),
+            //};
+            //await _mainAppContext.OTPs.AddAsync(otp);
+            //await _mainAppContext.SaveChangesAsync();
 
-            //send the otp to the specified phone number
-            await _otpManager.SendOTPAsync(otp.Code, otp.PhoneNumber);
+            ////send the otp to the specified phone number
+            //await _otpManager.SendOTPAsync(otp.Code, otp.PhoneNumber);
 
             // Get created User (if it is a freelancer)
             if (regRequest.UserType == Constants.USER_TYPE_FREELANCER)
@@ -153,6 +166,41 @@ namespace AonFreelancing.Controllers.Mobile.v1
             return Ok();
         }
 
+        [HttpPost("send-otp")]
+        public async Task<IActionResult> SendOTPAsync([FromBody] string reqPhoneNumber)
+        {
+            // Check if the phoneNumber already used 
+            if(await _userManager.Users.Where(u => u.PhoneNumber == reqPhoneNumber).FirstOrDefaultAsync() != null)
+                return BadRequest("This Number is already used !");
+
+            // Check if the PhoneNumber in Temp Users DB to create record else it will just sent OTP
+            if (await _mainAppContext.UserTemps.Where(u => u.PhoneNumber == reqPhoneNumber).FirstOrDefaultAsync() == null)
+            {
+                await _mainAppContext.UserTemps.AddAsync(new UserTemp { PhoneNumber = reqPhoneNumber , IsActive = false});
+            }
+
+            string otpCode = _otpManager.GenerateOtp();
+            //persist the otp to the otps table
+            OTP otp = new OTP()
+            {
+                Code = otpCode,
+                PhoneNumber = reqPhoneNumber,
+                CreatedDate = DateTime.Now,
+                ExpiresAt = DateTime.Now.AddMinutes(5),
+            };
+            await _mainAppContext.OTPs.AddAsync(otp);
+            await _mainAppContext.SaveChangesAsync();
+
+            //send the otp to the specified phone number
+            await _otpManager.SendOTPAsync(otp.Code, otp.PhoneNumber);
+
+            return Ok("OTP is sent !");
+        }
+
+
+
+
+
         [HttpPost("login")]
         public async Task<IActionResult> LoginAsync([FromBody] AuthRequest Req)
         {
@@ -177,16 +225,18 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyAsync([FromBody] VerifyReq verifyReq)
         {
-            var user = await _userManager.Users.Where(x => x.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
-            if (user != null && !await _userManager.IsPhoneNumberConfirmedAsync(user))
+            var userTemp = await _mainAppContext.UserTemps.Where(u => u.PhoneNumber == verifyReq.PhoneNumber).FirstOrDefaultAsync();
+            if (userTemp != null && !userTemp.IsActive)
             {
-                OTP? otp = await _mainAppContext.OTPs.Where(o => o.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
+                OTP? otp = await _mainAppContext.OTPs.Where(o => o.PhoneNumber == verifyReq.PhoneNumber).FirstOrDefaultAsync();
 
                 // verify OTP
                 if (otp != null && verifyReq.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpiresAt)
                 {
-                    user.PhoneNumberConfirmed = true;
-                    await _userManager.UpdateAsync(user);
+                    //user.PhoneNumberConfirmed = true; to be switched
+                    //await _userManager.UpdateAsync(user);
+                    // Make temp user active to craete new user
+                    userTemp.IsActive = true;
 
                     // disable sent OTP
                     otp.IsUsed = true;

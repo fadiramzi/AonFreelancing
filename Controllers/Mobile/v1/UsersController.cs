@@ -30,16 +30,22 @@ namespace AonFreelancing.Controllers.Mobile.v1
         {
             var freelancerResponseDTO = await _mainAppContext.Users.OfType<Freelancer>()
                                                                 .Where(f => f.Id == id)
-                                                                .Select(f => new FreelancerResponseDTO
+                                                                .Select(f => new FreelancerProfileDTO
                                                                 {
                                                                     Id = f.Id,
                                                                     Name = f.Name,
-                                                                    Username = f.UserName,
-                                                                    PhoneNumber = f.PhoneNumber,
-                                                                    UserType = Constants.USER_TYPE_FREELANCER,
-                                                                    IsPhoneNumberVerified = f.PhoneNumberConfirmed,
-                                                                    Role = new RoleResponseDTO { Name = Constants.USER_TYPE_FREELANCER },
                                                                     Skills = f.Skills,
+                                                                    PhoneNumber = f.PhoneNumber,
+                                                                    Email = f.Email,
+                                                                    About = f.About,
+                                                                    ProjectHistory = f.Projects.Select(p => new ProjectHistoryDTO
+                                                                    {
+                                                                        Id = p.Id,
+                                                                        Title = p.Title,
+                                                                        StartDate = p.StartDate,
+                                                                        EndDate = p.EndDate,
+                                                                        Description = p.Description
+                                                                    }).ToList()
                                                                 }).FirstOrDefaultAsync();
             if (freelancerResponseDTO != null)
                 return Ok(CreateSuccessResponse(freelancerResponseDTO));
@@ -48,17 +54,22 @@ namespace AonFreelancing.Controllers.Mobile.v1
             var clientResponseDTO = await _mainAppContext.Users.OfType<Client>()
                                                                 .Where(c => c.Id == id)
                                                                 .Include(c => c.Projects)
-                                                                .Select(c => new ClientResponseDTO
+                                                                .Select(c => new ClientProfileDTO
                                                                 {
                                                                     Id = c.Id,
                                                                     Name = c.Name,
-                                                                    Username = c.UserName,
-                                                                    PhoneNumber = c.PhoneNumber,
-                                                                    UserType = Constants.USER_TYPE_CLIENT,
-                                                                    IsPhoneNumberVerified = c.PhoneNumberConfirmed,
-                                                                    Role = new RoleResponseDTO { Name = Constants.USER_TYPE_CLIENT },
                                                                     CompanyName = c.CompanyName,
-                                                                    Projects = c.Projects
+                                                                    PhoneNumber = c.PhoneNumber,
+                                                                    Email = c.Email,
+                                                                    About = c.About,
+                                                                    ProjectHistory = c.Projects.Select(p => new ProjectHistoryDTO
+                                                                    {
+                                                                        Id = p.Id,
+                                                                        Title = p.Title,
+                                                                        StartDate = p.StartDate,
+                                                                        EndDate = p.EndDate,
+                                                                        Description = p.Description
+                                                                    }).ToList()
                                                                 }).FirstOrDefaultAsync();
 
             if (clientResponseDTO != null)

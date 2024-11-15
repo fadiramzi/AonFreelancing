@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace AonFreelancing.Models
@@ -15,6 +16,7 @@ namespace AonFreelancing.Models
 
 
         // Has many projects, 1-m
+        [JsonIgnore]
         public List<Project>? Projects { get; set; }
   
 

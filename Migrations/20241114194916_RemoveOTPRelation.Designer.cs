@@ -3,6 +3,7 @@ using System;
 using AonFreelancing.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    partial class MainAppContextModelSnapshot : ModelSnapshot
+    [Migration("20241114194916_RemoveOTPRelation")]
+    partial class RemoveOTPRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
@@ -82,7 +85,7 @@ namespace AonFreelancing.Migrations
                     b.Property<long>("ClientId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
@@ -93,10 +96,10 @@ namespace AonFreelancing.Migrations
                     b.Property<int>("Duration")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("EndDate")
+                    b.Property<DateTime>("EndDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<long?>("FreelancerId")
+                    b.Property<long>("FreelancerId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("PriceType")
@@ -107,7 +110,7 @@ namespace AonFreelancing.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("StartDate")
+                    b.Property<DateTime>("StartDate")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Status")
@@ -135,6 +138,7 @@ namespace AonFreelancing.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("About")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("AccessFailedCount")
@@ -363,7 +367,9 @@ namespace AonFreelancing.Migrations
 
                     b.HasOne("AonFreelancing.Models.Freelancer", "Freelancer")
                         .WithMany("Projects")
-                        .HasForeignKey("FreelancerId");
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Client");
 

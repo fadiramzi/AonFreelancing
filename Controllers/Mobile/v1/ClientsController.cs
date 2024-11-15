@@ -65,6 +65,5 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
         //    return Ok(CreateSuccessResponse(ClientList));
         //}
-
     }
 }

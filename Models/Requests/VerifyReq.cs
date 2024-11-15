@@ -7,7 +7,7 @@ namespace AonFreelancing.Models.Requests
 
         [Required]
         [Length(14,14)]
-        public string Phone {  get; set; }
+        public string PhoneNumber {  get; set; }
 
         [Required]
         [Length(6,6)]

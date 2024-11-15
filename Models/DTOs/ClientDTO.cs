@@ -22,4 +22,9 @@ namespace AonFreelancing.Models.DTOs
         public string CompanyName { get; set; }
         public List<Project>? Projects { get; set; }
     }
+
+    public class ClientProfileDTO : UserProfileDTO
+    {
+        public string CompanyName { get; set; }
+    }
 }
