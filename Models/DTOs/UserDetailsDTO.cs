@@ -1,10 +1,11 @@
-﻿namespace AonFreelancing.Models.DTOs
+
+namespace AonFreelancing.Models.DTOs
 {
     public class UserDetailsDTO
     {
         public long Id { get; set; }
         public string Name { get; set; }
-        public string Username { get; set; }
+        public string Email { get; set; }
         public string PhoneNumber { get; set; }
         public string Role { get; set; }
 
@@ -12,7 +13,7 @@
         {
             Id = user.Id;
             Name = user.Name;
-            Username = user.UserName;
+            Email = user.Email;
             PhoneNumber = user.PhoneNumber;
             Role = role;
         }

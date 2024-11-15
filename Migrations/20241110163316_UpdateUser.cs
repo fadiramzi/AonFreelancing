@@ -5,23 +5,24 @@
 namespace AonFreelancing.Migrations
 {
     /// <inheritdoc />
-    public partial class uniquephoneNumberaspnetusersmig : Migration
+    public partial class UpdateUser : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateIndex(
-                name: "IX_AspNetUsers_PhoneNumber",
+            migrationBuilder.AddColumn<bool>(
+                name: "TemporaryUser",
                 table: "AspNetUsers",
-                column: "PhoneNumber",
-                unique: true);
+                type: "INTEGER",
+                nullable: false,
+                defaultValue: false);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_AspNetUsers_PhoneNumber",
+            migrationBuilder.DropColumn(
+                name: "TemporaryUser",
                 table: "AspNetUsers");
         }
     }

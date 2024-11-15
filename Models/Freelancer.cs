@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,7 +12,8 @@ namespace AonFreelancing.Models
     public class Freelancer : User
     {
 
-        public string Skills { get; set; }
+        [AllowNull]
+        public string? Skills { get; set; }
 
 
         //public override void DisplayProfile()

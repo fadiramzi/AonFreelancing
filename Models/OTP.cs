@@ -1,19 +1,25 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using static System.Runtime.InteropServices.JavaScript.JSType;
+using Twilio.Types;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AonFreelancing.Models
 {
-    [Table("otps")]
     public class OTP
     {
         [Key]
+        public int Id { get; set; }
         public string PhoneNumber { get; set; }
-
+        
+        // Code 6 digits
         public string Code { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public DateTime ExpiresAt { get; set; }
-        public bool IsUsed { get; set; }
+        
+        // date of record insertion
+        public DateTime CreatedAt { get; set; }
+        
+        // date of expiration, 5 - 10 minutes
+        public DateTime ExpireAt { get; set; }
 
+        // Boolean to indicate if this sent OTP used or not
+        public bool IsUsed { get; set; }
     }
 }

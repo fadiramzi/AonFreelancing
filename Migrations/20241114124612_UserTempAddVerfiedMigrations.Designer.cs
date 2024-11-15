@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    [Migration("20241109125128_ProjectModifications")]
-    partial class ProjectModifications
+    [Migration("20241114124612_UserTempAddVerfiedMigrations")]
+    partial class UserTempAddVerfiedMigrations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,23 +49,34 @@ namespace AonFreelancing.Migrations
 
             modelBuilder.Entity("AonFreelancing.Models.OTP", b =>
                 {
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ExpiresAt")
+                    b.Property<DateTime>("ExpireAt")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsUsed")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("PhoneNumber");
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserPhoneNumber")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserPhoneNumber")
+                        .IsUnique();
 
                     b.ToTable("otps", null, t =>
                         {
@@ -117,6 +128,31 @@ namespace AonFreelancing.Migrations
                     b.HasIndex("FreelancerId");
 
                     b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("AonFreelancing.Models.TempUser", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("verified")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique();
+
+                    b.ToTable("TempUsers", (string)null);
                 });
 
             modelBuilder.Entity("AonFreelancing.Models.User", b =>
@@ -330,10 +366,8 @@ namespace AonFreelancing.Migrations
                 {
                     b.HasOne("AonFreelancing.Models.User", null)
                         .WithOne()
-                        .HasForeignKey("AonFreelancing.Models.OTP", "PhoneNumber")
-                        .HasPrincipalKey("AonFreelancing.Models.User", "PhoneNumber")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AonFreelancing.Models.OTP", "UserPhoneNumber")
+                        .HasPrincipalKey("AonFreelancing.Models.User", "PhoneNumber");
                 });
 
             modelBuilder.Entity("AonFreelancing.Models.Project", b =>

@@ -29,11 +29,12 @@ namespace AonFreelancing
             builder.Services.AddSingleton<OTPManager>();
             builder.Services.AddSingleton<JwtService>();
             builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlite("Data Source=aon.db"));
-            builder.Services.AddIdentity<User,ApplicationRole>()
-                .AddEntityFrameworkStores<MainAppContext>()
-                .AddDefaultTokenProviders();
-            builder.Configuration.AddJsonFile("appsettings.json");
-
+            builder.Services.AddIdentity<User, ApplicationRole>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+            })
+            .AddEntityFrameworkStores<MainAppContext>()
+            .AddDefaultTokenProviders();
 
             // JWT Authentication configuration
             var jwtSettings = builder.Configuration.GetSection("Jwt");

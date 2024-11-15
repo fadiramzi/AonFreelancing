@@ -9,10 +9,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using Twilio.Rest.Serverless.V1.Service.Environment;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
-    [Authorize]
+    // [Authorize]
     [Route("api/mobile/v1/users")]
     [ApiController]
     public class UsersController : BaseController
@@ -34,17 +35,16 @@ namespace AonFreelancing.Controllers.Mobile.v1
                                                                 {
                                                                     Id = f.Id,
                                                                     Name = f.Name,
-                                                                    Username = f.UserName,
+                                                                    Email = f.Email,
                                                                     PhoneNumber = f.PhoneNumber,
                                                                     UserType = Constants.USER_TYPE_FREELANCER,
-                                                                    IsPhoneNumberVerified = f.PhoneNumberConfirmed,
-                                                                    Role = new RoleResponseDTO { Name = Constants.USER_TYPE_FREELANCER },
                                                                     Skills = f.Skills,
+                                                                    About = f.About
                                                                 }).FirstOrDefaultAsync();
             if (freelancerResponseDTO != null)
                 return Ok(CreateSuccessResponse(freelancerResponseDTO));
 
-
+            
             var clientResponseDTO = await _mainAppContext.Users.OfType<Client>()
                                                                 .Where(c => c.Id == id)
                                                                 .Include(c => c.Projects)
@@ -52,20 +52,24 @@ namespace AonFreelancing.Controllers.Mobile.v1
                                                                 {
                                                                     Id = c.Id,
                                                                     Name = c.Name,
-                                                                    Username = c.UserName,
+                                                                    Email = c.Email,
                                                                     PhoneNumber = c.PhoneNumber,
                                                                     UserType = Constants.USER_TYPE_CLIENT,
-                                                                    IsPhoneNumberVerified = c.PhoneNumberConfirmed,
-                                                                    Role = new RoleResponseDTO { Name = Constants.USER_TYPE_CLIENT },
                                                                     CompanyName = c.CompanyName,
-                                                                    Projects = c.Projects
+                                                                    Projects = c.Projects.Where(p => p.Status == "Closed")
+                                                                                        .Select(p => new ProjectHistoryOutDTO
+                                                                                        {
+                                                                                            Id = p.Id,
+                                                                                            Title = p.Title,
+                                                                                            CreatedAt = p.CreatedAt,
+                                                                                            EndDate = p.ProjectHistory.EndDate,
+                                                                                            Description = p.Description
+                                                                                        }).ToList()
                                                                 }).FirstOrDefaultAsync();
-
             if (clientResponseDTO != null)
                 return Ok(CreateSuccessResponse(clientResponseDTO));
 
             return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "User not found"));
         }
-
     }
 }

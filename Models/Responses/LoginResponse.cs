@@ -1,4 +1,4 @@
-﻿using AonFreelancing.Models.DTOs;
+using AonFreelancing.Models.DTOs;
 
 namespace AonFreelancing.Models.Responses
 {

@@ -1,4 +1,7 @@
-﻿using AonFreelancing.Contexts;
+﻿using System.Data;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
+using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.Requests;
@@ -12,11 +15,8 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.IdentityModel.Tokens;
-using Twilio;
-using Twilio.Rest.Api.V2010.Account;
-using Twilio.TwiML.Messaging;
-using Twilio.Types;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -47,110 +47,87 @@ namespace AonFreelancing.Controllers.Mobile.v1
             _jwtService = jwtService;
         }
 
+        [Route("SendVerificationCode")]
+        [HttpPost]
+        public async Task<IActionResult> SendVerificationCodeAsync([FromBody] TempUserDTO tempUserDTO)
+        {
+            var tempUserManger = new TempUserManger(_userManager, _mainAppContext);
+            var tempUser = await tempUserManger.CreateOrUpdateTempUserAsync(tempUserDTO);
+            var verificationManger = new VerificationManger(_userManager, _mainAppContext, _otpManager);
+
+            try
+            {
+                OTP otp = await verificationManger.SendCodeAsync(tempUser.PhoneNumber);
+            }
+            catch(Exception error)
+            {
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), error.Message));
+            }
+            
+            return Ok();
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] RegRequest regRequest)
         {
-
-            User user = new User();
-            if (regRequest.UserType == Constants.USER_TYPE_FREELANCER)
-            {
-                // Register User
-                user = new Freelancer
-                {
-                    Name = regRequest.Name,
-                    UserName = regRequest.Username,
-                    PhoneNumber = regRequest.PhoneNumber,
-                    Skills = regRequest.Skills
-                };
-            }
-            else if (regRequest.UserType == Constants.USER_TYPE_CLIENT)
-            {
-                user = new Models.Client
-                {
-                    Name = regRequest.Name,
-                    UserName = regRequest.Username,
-                    PhoneNumber = regRequest.PhoneNumber,
-                    CompanyName = regRequest.CompanyName
-                };
-            }
-            //check if username or phoneNumber is taken
-            if (await _userManager.Users.Where(u => u.UserName == regRequest.Username || u.PhoneNumber == regRequest.PhoneNumber).FirstOrDefaultAsync() != null)
-                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "username or phone number is already used by an account"));
+            var tempUser = await _mainAppContext.TempUsers.FirstOrDefaultAsync(ut => ut.PhoneNumber == regRequest.PhoneNumber && ut.Verified == true);
+            // Check if tempUser exiset and it's verified
+            if (tempUser == null || !tempUser.Verified)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), $"{regRequest.PhoneNumber} is't verified."));
+           
+            // check if Email or phoneNumber isn't taken
+            if (await _userManager.Users.Where(u => u.Email == regRequest.Email || u.PhoneNumber == regRequest.PhoneNumber).FirstOrDefaultAsync() != null)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "Email or Phon number is already used by an account"));
             
-            //create new User with hashed passworrd in the database
-            var userCreationResult = await _userManager.CreateAsync(user, regRequest.Password);
-            if (!userCreationResult.Succeeded)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>()
+             // Register User
+            if (tempUser.UserType == Constants.USER_TYPE_FREELANCER)
+            {
+                Freelancer user = new Freelancer()                
                 {
-                    Errors = userCreationResult.Errors
-                    .Select(e => new Error()
-                    {
-                        Code = e.Code,
-                        Message = e.Description
-                    })
-                    .ToList()
-                });
+                    Name = regRequest.Name,
+                    Email = regRequest.Email,
+                    PhoneNumber = tempUser.PhoneNumber,
+                    UserType = tempUser.UserType,
+                    UserName = regRequest.Email
+                };
+                var userCreationResult = await _userManager.CreateAsync(user, regRequest.Password);
+                return Ok(CreateSuccessResponse<UserOutDTO>(new UserOutDTO()
+                {
+                    Id = user.Id,
+                    Name = user.Name,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                }));
+            }
+            else
+            {
+                Client user = new Client()
+                {
+                    Name = regRequest.Name,
+                    Email = regRequest.Email,
+                    PhoneNumber = tempUser.PhoneNumber,
+                    UserType = tempUser.UserType,
+                    UserName = regRequest.Email
+                };
+                // Create new User with hashed passworrd in the database
+                var userCreationResult = await _userManager.CreateAsync(user, regRequest.Password);
+                return Ok(CreateSuccessResponse<UserOutDTO>(new UserOutDTO()
+                {
+                    Id = user.Id,
+                    Name = user.Name,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                }));
+            }
 
             // To be fixed
-            //assign a role to the newly created User
-            //var role = new ApplicationRole { Name = regRequest.UserType };
-            //await _roleManager.CreateAsync(role);
-            var role = await _roleManager.FindByNameAsync(regRequest.UserType);
-            await _userManager.AddToRoleAsync(user, role.Name);
+            // //assign a role to the newly created User
+            // var role = new ApplicationRole { Name = regRequest.UserType };
+            // await _roleManager.CreateAsync(role);
+            // var role = await _roleManager.FindByNameAsync(regRequest.UserType);
+            // await _userManager.AddToRoleAsync(user, role.Name);
 
-            string otpCode = _otpManager.GenerateOtp();
-            //persist the otp to the otps table
-            OTP otp = new OTP()
-            {
-                Code = otpCode,
-                PhoneNumber = regRequest.PhoneNumber,
-                CreatedDate = DateTime.Now,
-                ExpiresAt = DateTime.Now.AddMinutes(1),
-            };
-            await _mainAppContext.OTPs.AddAsync(otp);
-            await _mainAppContext.SaveChangesAsync();
-
-            //send the otp to the specified phone number
-            await _otpManager.SendOTPAsync(otp.Code, otp.PhoneNumber);
-
-            // Get created User (if it is a freelancer)
-            if (regRequest.UserType == Constants.USER_TYPE_FREELANCER)
-            {
-                var createdUser = await _mainAppContext.Users.OfType<Freelancer>()
-                        .Where(u => u.UserName == regRequest.Username)
-                        .Select(u => new FreelancerResponseDTO()
-                        {
-                            Id = u.Id,
-                            Name = u.Name,
-                            Username = u.UserName,
-                            PhoneNumber = u.PhoneNumber,
-                            Skills = u.Skills,
-                            UserType = Constants.USER_TYPE_FREELANCER,
-                            Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
-                        })
-                        .FirstOrDefaultAsync();
-                return Ok(CreateSuccessResponse(createdUser));
-            }
-            // Get created User (if it is a client)
-            else if (regRequest.UserType == Constants.USER_TYPE_CLIENT)
-            {
-                var createdUser = await _mainAppContext.Users.OfType<Models.Client>()
-                          .Where(c => c.UserName == regRequest.Username)
-                          .Select(c => new ClientResponseDTO
-                          {
-                              Id = c.Id,
-                              Name = c.Name,
-                              Username = c.UserName,
-                              PhoneNumber = c.PhoneNumber,
-                              CompanyName = c.CompanyName,
-                              UserType = Constants.USER_TYPE_CLIENT,
-                              Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
-                          })
-                          .FirstOrDefaultAsync();
-                return Ok(CreateSuccessResponse(createdUser));
-            }
-            //this fallback return value will not be returned due to model validation.
-            return Ok();
+            
         }
 
         [HttpPost("login")]
@@ -174,28 +151,30 @@ namespace AonFreelancing.Controllers.Mobile.v1
             return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "UnAuthorized"));
         }
 
-        [HttpPost("verify")]
-        public async Task<IActionResult> VerifyAsync([FromBody] VerifyReq verifyReq)
+        [HttpPost("VerifyPhoneNumber")]
+        public async Task<IActionResult> VerifyPhoneNumberAsync([FromBody] VerifyReq verifyReq)
         {
-            var user = await _userManager.Users.Where(x => x.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
-            if (user != null && !await _userManager.IsPhoneNumberConfirmedAsync(user))
-            {
-                OTP? otp = await _mainAppContext.OTPs.Where(o => o.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
+            var tempUser = await _mainAppContext.TempUsers.FirstOrDefaultAsync(tu => tu.PhoneNumber == verifyReq.PhoneNumber);
+            // if user exist 
+            if (tempUser == null)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), $"{verifyReq.PhoneNumber} isn't associated with any user."));
 
-                // verify OTP
-                if (otp != null && verifyReq.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpiresAt)
-                {
-                    user.PhoneNumberConfirmed = true;
-                    await _userManager.UpdateAsync(user);
+            OTP? otp = await _mainAppContext.OTPs.Where(o => o.PhoneNumber == verifyReq.PhoneNumber).FirstOrDefaultAsync();
 
-                    // disable sent OTP
-                    otp.IsUsed = true;
-                    await _mainAppContext.SaveChangesAsync();
+            // verify OTP
+            if (otp == null || !verifyReq.Otp.Equals(otp.Code))
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), $"Invalid OTP."));
+            if (DateTime.Now > otp.ExpireAt)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), $"OTP is expired."));
 
-                    return Ok(CreateSuccessResponse("Activated"));
-                }
-            }
-            return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "UnAuthorized"));
+            // else verify otp
+            tempUser.Verified = true;
+            otp.IsUsed = true;
+            
+            _mainAppContext.OTPs.Remove(otp);
+            await _mainAppContext.SaveChangesAsync();
+
+            return Ok(CreateSuccessResponse("Verified"));
         }
 
         //[HttpPost("forgotpassword")]

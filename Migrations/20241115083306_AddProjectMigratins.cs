@@ -5,7 +5,7 @@
 namespace AonFreelancing.Migrations
 {
     /// <inheritdoc />
-    public partial class ProjectModifications2 : Migration
+    public partial class AddProjectMigratins : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
