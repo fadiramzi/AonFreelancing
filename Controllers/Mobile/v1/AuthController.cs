@@ -163,7 +163,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("login")]
         public async Task<IActionResult> LoginAsync([FromBody] AuthRequest req)
         {
-            var user = await _userManager.FindByNameAsync(req.UserName);
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
             if (user != null && await _userManager.CheckPasswordAsync(user, req.Password))
             {
                 if (!await _userManager.IsPhoneNumberConfirmedAsync(user))
