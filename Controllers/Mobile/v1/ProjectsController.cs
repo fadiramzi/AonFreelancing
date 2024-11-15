@@ -1,8 +1,8 @@
 ﻿using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
+using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,42 +13,96 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Authorize]
     [Route("api/mobile/v1/projects")]
     [ApiController]
-    public class ProjectsController : BaseController
+    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager) : BaseController
     {
-        private readonly MainAppContext _mainAppContext;
-        private readonly UserManager<User> _userManager;
-        public ProjectsController(
-            MainAppContext mainAppContext,
-            UserManager<User> userManager
-            )
-        {
-            _mainAppContext = mainAppContext;
-            _userManager = userManager;
-        }
-
-
-
-        [Authorize]
+        [Authorize(Roles = "CLIENT")]
         [HttpPost]
-        public async Task<IActionResult> CreateProject([FromBody] ProjectInputDTO project)
+        public async Task<IActionResult> PostProjectAsync([FromBody] ProjectInputDto projectInputDto)
         {
-            var Username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var UserClient = await _userManager.FindByNameAsync(Username);
+            var user = await userManager.GetUserAsync(HttpContext.User);
+            if (user == null)
+                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),
+                    "Unable to load user."));
 
-            Project p = new Project();
-            p.Title = project.Title;
-            p.Description = project.Description;
-            p.ClientId = UserClient.Id;
-            p.QualificationName = project.QualificationName;
-            p.Budget = project.Budget;
-            p.PriceType = project.PriceType;
-            p.Duration = project.Duration;
+            var userId = user.Id;
+            var project = new Project
+            {
+                ClientId = userId,
+                Title = projectInputDto.Title,
+                Description = projectInputDto.Description,
+                QualificationName = projectInputDto.QualificationName,
+                Duration = projectInputDto.Duration,
+                Budget = projectInputDto.Budget,
+                PriceType = projectInputDto.PriceType,
+                CreatedAt = DateTime.Now,
+            };
 
-            _mainAppContext.Projects.Add(p);
-            _mainAppContext.SaveChanges();
-            return Ok(CreateSuccessResponse(p));
+            await mainAppContext.Projects.AddAsync(project);
+            await mainAppContext.SaveChangesAsync();
+
+            return Ok(CreateSuccessResponse("Project added."));
         }
 
+        [Authorize(Roles = "CLIENT")]
+        [HttpGet("clientFeed")]
+        public async Task<IActionResult> GetClientFeedAsync(
+            [FromQuery] List<string>? qualificationNames, [FromQuery] int page = 0,
+            [FromQuery] int pageSize = 8, [FromQuery] string? qur = default
+        )
+        {
+            var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
+            List<ProjectOutDTO>? projects;
+            
+            if (qur != null)
+            {
+                projects = await mainAppContext.Projects
+                .OrderByDescending(p => p.CreatedAt)
+                .Where(p => qualificationNames.Contains(p.QualificationName))
+                .Where(p => p.Title.ToLower().Contains(trimmedQuery))
+                .Skip(page * pageSize)
+                .Take(pageSize).Select(p => new ProjectOutDTO
+                {
+                    Title = p.Title,
+                    Description = p.Description,
+                    Status = p.Status,
+                    Budget = p.Budget,
+                    Duration = p.Duration,
+                    PriceType = p.PriceType,
+                    Qualifications = p.QualificationName,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    CreatedAt = p.CreatedAt,
+                    CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+                }).ToListAsync();
+            }
+            else
+            {
+                projects = await mainAppContext.Projects
+                .OrderByDescending(p => p.CreatedAt)
+                .Where(p => qualificationNames.Contains(p.QualificationName))
+                .Where(p => p.Title.ToLower().Contains(trimmedQuery))
+                .Skip(page * pageSize)
+                .Take(pageSize).Select(p => new ProjectOutDTO
+                {
+                    Title = p.Title,
+                    Description = p.Description,
+                    Status = p.Status,
+                    Budget = p.Budget,
+                    Duration = p.Duration,
+                    PriceType = p.PriceType,
+                    Qualifications = p.QualificationName,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    CreatedAt = p.CreatedAt,
+                    CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+                }).ToListAsync();
+            }
+
+            if (projects == null)
+                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "Project not loaded."));
+
+            return Ok(CreateSuccessResponse(projects));
+        }
 
         //[HttpGet("{id}")]
         //public IActionResult GetProject(int id)
@@ -60,7 +114,5 @@ namespace AonFreelancing.Controllers.Mobile.v1
         //    return Ok(CreateSuccessResponse(project));
 
         //}
-
-
     }
 }

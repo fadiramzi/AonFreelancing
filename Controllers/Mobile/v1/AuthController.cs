@@ -5,18 +5,10 @@ using AonFreelancing.Models.Requests;
 using AonFreelancing.Models.Responses;
 using AonFreelancing.Services;
 using AonFreelancing.Utilities;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Twilio;
-using Twilio.Rest.Api.V2010.Account;
-using Twilio.TwiML.Messaging;
-using Twilio.Types;
+using Client = AonFreelancing.Models.Client;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -27,201 +19,280 @@ namespace AonFreelancing.Controllers.Mobile.v1
         private readonly MainAppContext _mainAppContext;
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
-        private readonly IConfiguration _configuration;
         private readonly OTPManager _otpManager;
         private readonly JwtService _jwtService;
+
         public AuthController(
             UserManager<User> userManager,
             MainAppContext mainAppContext,
             RoleManager<ApplicationRole> roleManager,
-            IConfiguration configuration,
             OTPManager otpManager,
             JwtService jwtService
-            )
+        )
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _mainAppContext = mainAppContext;
-            _configuration = configuration;
             _otpManager = otpManager;
             _jwtService = jwtService;
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> RegisterAsync([FromBody] RegRequest regRequest)
+        [HttpPost("sendVerificationCode")]
+        public async Task<IActionResult> SendVerificationCodeAsync([FromBody] PhoneNumberReq phoneNumberReq)
         {
+            var isUserExists = await _mainAppContext.TempUsers
+                .Where(u => u.PhoneNumber == phoneNumberReq.PhoneNumber)
+                .FirstOrDefaultAsync();
 
-            User user = new User();
-            if (regRequest.UserType == Constants.USER_TYPE_FREELANCER)
+            if (isUserExists != null)
             {
-                // Register User
-                user = new Freelancer
-                {
-                    Name = regRequest.Name,
-                    UserName = regRequest.Username,
-                    PhoneNumber = regRequest.PhoneNumber,
-                    Skills = regRequest.Skills
-                };
+                return Conflict(CreateErrorResponse(
+                    StatusCodes.Status409Conflict.ToString(), "User already exists."));
             }
-            else if (regRequest.UserType == Constants.USER_TYPE_CLIENT)
-            {
-                user = new Models.Client
-                {
-                    Name = regRequest.Name,
-                    UserName = regRequest.Username,
-                    PhoneNumber = regRequest.PhoneNumber,
-                    CompanyName = regRequest.CompanyName
-                };
-            }
-            //check if username or phoneNumber is taken
-            if (await _userManager.Users.Where(u => u.UserName == regRequest.Username || u.PhoneNumber == regRequest.PhoneNumber).FirstOrDefaultAsync() != null)
-                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "username or phone number is already used by an account"));
-            
-            //create new User with hashed passworrd in the database
-            var userCreationResult = await _userManager.CreateAsync(user, regRequest.Password);
-            if (!userCreationResult.Succeeded)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>()
-                {
-                    Errors = userCreationResult.Errors
-                    .Select(e => new Error()
-                    {
-                        Code = e.Code,
-                        Message = e.Description
-                    })
-                    .ToList()
-                });
 
-            // To be fixed
-            //assign a role to the newly created User
-            //var role = new ApplicationRole { Name = regRequest.UserType };
-            //await _roleManager.CreateAsync(role);
-            var role = await _roleManager.FindByNameAsync(regRequest.UserType);
-            await _userManager.AddToRoleAsync(user, role.Name);
-
-            string otpCode = _otpManager.GenerateOtp();
-            //persist the otp to the otps table
-            OTP otp = new OTP()
+            var tempUser = new TempUser()
             {
-                Code = otpCode,
-                PhoneNumber = regRequest.PhoneNumber,
-                CreatedDate = DateTime.Now,
-                ExpiresAt = DateTime.Now.AddMinutes(1),
+                PhoneNumber = phoneNumberReq.PhoneNumber,
+                PhoneNumberConfirmed = false
             };
-            await _mainAppContext.OTPs.AddAsync(otp);
+
+            _mainAppContext.TempUsers.Add(tempUser);
             await _mainAppContext.SaveChangesAsync();
 
-            //send the otp to the specified phone number
+            var otp = new OTP()
+            {
+                PhoneNumber = phoneNumberReq.PhoneNumber,
+                Code = _otpManager.GenerateOtp(),
+                CreatedDate = DateTime.Now,
+                ExpiresAt = DateTime.Now.AddMinutes(1),
+                IsUsed = false,
+            };
+
+            _mainAppContext.OTPs.Add(otp);
+            await _mainAppContext.SaveChangesAsync();
+
             await _otpManager.SendOTPAsync(otp.Code, otp.PhoneNumber);
 
-            // Get created User (if it is a freelancer)
-            if (regRequest.UserType == Constants.USER_TYPE_FREELANCER)
-            {
-                var createdUser = await _mainAppContext.Users.OfType<Freelancer>()
-                        .Where(u => u.UserName == regRequest.Username)
-                        .Select(u => new FreelancerResponseDTO()
-                        {
-                            Id = u.Id,
-                            Name = u.Name,
-                            Username = u.UserName,
-                            PhoneNumber = u.PhoneNumber,
-                            Skills = u.Skills,
-                            UserType = Constants.USER_TYPE_FREELANCER,
-                            Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
-                        })
-                        .FirstOrDefaultAsync();
-                return Ok(CreateSuccessResponse(createdUser));
-            }
-            // Get created User (if it is a client)
-            else if (regRequest.UserType == Constants.USER_TYPE_CLIENT)
-            {
-                var createdUser = await _mainAppContext.Users.OfType<Models.Client>()
-                          .Where(c => c.UserName == regRequest.Username)
-                          .Select(c => new ClientResponseDTO
-                          {
-                              Id = c.Id,
-                              Name = c.Name,
-                              Username = c.UserName,
-                              PhoneNumber = c.PhoneNumber,
-                              CompanyName = c.CompanyName,
-                              UserType = Constants.USER_TYPE_CLIENT,
-                              Role = new RoleResponseDTO { Id = role.Id, Name = role.Name }
-                          })
-                          .FirstOrDefaultAsync();
-                return Ok(CreateSuccessResponse(createdUser));
-            }
-            //this fallback return value will not be returned due to model validation.
-            return Ok();
+            return Ok(CreateSuccessResponse(otp.Code));
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> LoginAsync([FromBody] AuthRequest Req)
+        [HttpPost("verifyPhoneNumber")]
+        public async Task<IActionResult> VerifyPhoneNumberAsync([FromBody] VerifyReq verifyReq)
         {
-            var user = await _userManager.FindByNameAsync(Req.UserName);
-            if (user != null && await _userManager.CheckPasswordAsync(user, Req.Password))
+            var tempUser = await _mainAppContext.TempUsers.Where(x => x.PhoneNumber == verifyReq.Phone)
+                .FirstOrDefaultAsync();
+
+            var isPhoneNumberConfirmed = await _mainAppContext.TempUsers.AnyAsync(x => x.PhoneNumberConfirmed == true);
+            if (tempUser != null && !isPhoneNumberConfirmed)
             {
-                if (!await _userManager.IsPhoneNumberConfirmedAsync(user))
-                    return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "Verify Your Account First"));
-
-                var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
-                var token = _jwtService.GenerateJWT(user, role);
-                return Ok(CreateSuccessResponse(new LoginResponse()
-                {
-                    AccessToken = token,
-                    UserDetailsDTO = new UserDetailsDTO(user, role)
-                }));
-            }
-
-            return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "UnAuthorized"));
-        }
-
-        [HttpPost("verify")]
-        public async Task<IActionResult> VerifyAsync([FromBody] VerifyReq verifyReq)
-        {
-            var user = await _userManager.Users.Where(x => x.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
-            if (user != null && !await _userManager.IsPhoneNumberConfirmedAsync(user))
-            {
-                OTP? otp = await _mainAppContext.OTPs.Where(o => o.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
+                var otp = await _mainAppContext.OTPs.Where(o => o.PhoneNumber == verifyReq.Phone)
+                    .FirstOrDefaultAsync();
 
                 // verify OTP
-                if (otp != null && verifyReq.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpiresAt)
+                if (otp != null && verifyReq.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpiresAt && otp.IsUsed == false)
                 {
-                    user.PhoneNumberConfirmed = true;
-                    await _userManager.UpdateAsync(user);
-
-                    // disable sent OTP
+                    tempUser.PhoneNumberConfirmed = true;
                     otp.IsUsed = true;
                     await _mainAppContext.SaveChangesAsync();
 
                     return Ok(CreateSuccessResponse("Activated"));
                 }
             }
+
             return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "UnAuthorized"));
         }
 
-        //[HttpPost("forgotpassword")]
-        //public async Task<IActionResult> ForgotPasswordMethod([FromBody] ForgotPasswordReq forgotPasswordRequest)
-        //{
-        //    var user = await _userManager.Users.Where(u => u.PhoneNumber == forgotPasswordRequest.PhoneNumber).FirstOrDefaultAsync();
-        //    if (user != null)
-        //    {
-        //        string token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        [HttpPost("completeRegistration")]
+        public async Task<IActionResult> CompleteRegistrationAsync([FromBody] RegisterRequest registerReq)
+        {
+            var tempUser =
+                await _mainAppContext.TempUsers.FirstOrDefaultAsync(t => t.PhoneNumber == registerReq.PhoneNumber);
+            if (tempUser == null)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),
+                    "Phone number is invalid."));
+            
+            User? user = registerReq.UserType switch
+            {
+                Constants.USER_TYPE_FREELANCER => new Freelancer
+                {
+                    Name = registerReq.Name,
+                    UserName = registerReq.Username,
+                    PhoneNumber = tempUser.PhoneNumber,
+                    PhoneNumberConfirmed = tempUser.PhoneNumberConfirmed,
+                    Skills = registerReq.Skills ?? string.Empty,
+                },
+                Constants.USER_TYPE_CLIENT => new Client()
+                {
+                    Name = registerReq.Name,
+                    UserName = registerReq.Username,
+                    PhoneNumber = tempUser.PhoneNumber,
+                    PhoneNumberConfirmed = tempUser.PhoneNumberConfirmed,
+                    CompanyName = registerReq.CompanyName ?? string.Empty,
+                },
+                _ => null
+            };
 
-        //        //send whatsapp  message containing the reset password url
-        //        await _otpManager.sendForgotPasswordMessageAsync(token, user.PhoneNumber);
-        //    }
-        //    // to maintain confidentiality, we always return an OK response even if the user was not found. 
-        //    return Ok(CreateSuccessResponse("Check your WhatsApp inbox for password reset token."));
-        //}
+            if (user == null)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),
+                    "No such user type exists."));
 
-        //[HttpPost("resetpassword")]
-        //public async Task<IActionResult> ResetPasswordMethod([FromBody] ResetPasswordReq resetPasswordReq)
-        //{
-        //    User? user = await _userManager.Users.Where(u => u.PhoneNumber == resetPasswordReq.PhoneNumber).FirstOrDefaultAsync();
-        //    if (user != null)
-        //        await _userManager.ResetPasswordAsync(user, resetPasswordReq.Token, resetPasswordReq.Password);
+            var userCreationResult = await _userManager.CreateAsync(user, registerReq.Password);
+            if (!userCreationResult.Succeeded)
+                return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>()
+                {
+                    Errors = userCreationResult.Errors
+                        .Select(e => new Error()
+                        {
+                            Code = e.Code,
+                            Message = e.Description
+                        })
+                        .ToList()
+                });
+            
+            var role = new ApplicationRole { Name = registerReq.UserType };
+            await _roleManager.CreateAsync(role);
+            await _userManager.AddToRoleAsync(user, role.Name);
+            _mainAppContext.TempUsers.Remove(tempUser);
 
-        //    // to maintain confidentiality, we always return an OK response even if the user was not found. 
-        //    return Ok(CreateSuccessResponse("Your password have been reset"));
-        //}
+            await _mainAppContext.SaveChangesAsync();
+            
+            return CreatedAtAction(nameof(UsersController.GetProfileByIdAsync), "users", 
+                new { id = user.Id }, null);
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> LoginAsync([FromBody] AuthRequest req)
+        {
+            var user = await _userManager.FindByNameAsync(req.UserName);
+            if (user != null && await _userManager.CheckPasswordAsync(user, req.Password))
+            {
+                if (!await _userManager.IsPhoneNumberConfirmedAsync(user))
+                    return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(),
+                        "Verify Your Account First"));
+
+                var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+                var token = _jwtService.GenerateJWT(user, role ?? string.Empty);
+                return Ok(CreateSuccessResponse(new LoginResponse()
+                {
+                    AccessToken = token,
+                    UserDetailsDTO = new UserDetailsDTO(user, role ?? string.Empty)
+                }));
+            }
+
+            return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "UnAuthorized"));
+        }
+
+        // [HttpPost("forgot-password")]
+        // public async Task<IActionResult> ForgotPasswordAsync([FromBody] ForgotPasswordReq req)
+        // {
+        //     if (string.IsNullOrEmpty(req.PhoneNumber))
+        //     {
+        //         return BadRequest(new ApiResponse<string>
+        //         {
+        //             IsSuccess = false,
+        //             Results = null,
+        //             Errors = new List<Error> {
+        //                 new() { Code = StatusCodes.Status400BadRequest.ToString(), Message = "Invalid request." }
+        //             }
+        //         });
+        //     }
+        //
+        //     var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
+        //     if (user == null)
+        //     {
+        //         return Ok(new ApiResponse<string>
+        //         {
+        //             IsSuccess = true,
+        //             Results = "If the phone number is registered, you will receive an OTP.",
+        //             Errors = []
+        //         });
+        //     }
+        //
+        //     var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        //     await _otpManager.SendOTPAsync(user.PhoneNumber ?? string.Empty, token);
+        //     
+        //     return Ok(new ApiResponse<string>
+        //     {
+        //         IsSuccess = true,
+        //         Results = "If the phone number is registered, you will receive an OTP.",
+        //         Errors = []
+        //     });
+        // }
+        //
+        // [Authorize(Roles = "Freelancer, Client")]
+        // [HttpPost("reset-password")]
+        // public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordReq req)
+        // {
+        //     if (string.IsNullOrEmpty(req.PhoneNumber) || string.IsNullOrEmpty(req.Password))
+        //     {
+        //         return BadRequest(new ApiResponse<string>
+        //         {
+        //             IsSuccess = false,
+        //             Results = null,
+        //             Errors = new List<Error> {
+        //                 new() { 
+        //                     Code = StatusCodes.Status400BadRequest.ToString(),
+        //                     Message = "Invalid request." 
+        //                 }
+        //             }
+        //         });
+        //     }
+        //
+        //     var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
+        //     if (user == null)
+        //     {
+        //         return NotFound(new ApiResponse<string>
+        //         {
+        //             IsSuccess = false,
+        //             Results = null,
+        //             Errors = new List<Error> {
+        //                 new() { 
+        //                     Code = StatusCodes.Status404NotFound.ToString(),
+        //                     Message = "User not found." 
+        //                 }
+        //             }
+        //         });
+        //     }
+        //
+        //     if (req.Password != req.ConfirmPassword)
+        //     {
+        //         return BadRequest(new ApiResponse<string>
+        //         {
+        //             IsSuccess = false,
+        //             Results = null,
+        //             Errors = new List<Error> {
+        //                 new()
+        //                 {
+        //                     Code = StatusCodes.Status400BadRequest.ToString(), 
+        //                     Message = "Passwords do not match."
+        //                 }
+        //             }
+        //         });
+        //     }
+        //
+        //     var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        //     var result = await _userManager.ResetPasswordAsync(user, token ,req.Password);
+        //
+        //     if (result.Succeeded)
+        //     {
+        //         return Ok(new ApiResponse<string>
+        //         {
+        //             IsSuccess = true,
+        //             Results = "Password reset successfully.",
+        //             Errors = []
+        //         });
+        //     }
+        //
+        //     return BadRequest(new ApiResponse<string>
+        //     {
+        //         IsSuccess = false,
+        //         Results = null,
+        //         Errors = result.Errors.Select(e => new Error
+        //         {
+        //             Code = e.Code,
+        //             Message = e.Description
+        //         }).ToList()
+        //     });
+        // }
     }
 }
