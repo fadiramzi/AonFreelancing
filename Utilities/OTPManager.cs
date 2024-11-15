@@ -32,6 +32,11 @@ namespace AonFreelancing.Utilities
         }
         public async Task SendForgotPasswordMessageAsync(string message,string receiverPhoneNumber)
         {
+            if (_configuration["Env"] == Constants.ENV_SIT)
+            {
+                return;
+            }
+
             var accountSid = _configuration["Twilio:Sid"];
             var authToken = _configuration["Twilio:Token"];
             TwilioClient.Init(accountSid, authToken);

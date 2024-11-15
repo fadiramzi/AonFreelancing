@@ -19,6 +19,11 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost]
         public async Task<IActionResult> PostProjectAsync([FromBody] ProjectInputDto projectInputDto)
         {
+            if(!ModelState.IsValid)
+            {
+                
+                return base.CustomBadRequest();
+            }
             var user = await userManager.GetUserAsync(HttpContext.User);
             if (user == null)
                 return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),
@@ -52,56 +57,47 @@ namespace AonFreelancing.Controllers.Mobile.v1
         {
             var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
             List<ProjectOutDTO>? projects;
-            
-            if (qur != null)
+
+            var query = mainAppContext.Projects.AsQueryable();
+
+            var count = await query.CountAsync();
+
+            if(!string.IsNullOrEmpty(trimmedQuery))
             {
-                projects = await mainAppContext.Projects
-                .OrderByDescending(p => p.CreatedAt)
-                .Where(p => qualificationNames.Contains(p.QualificationName))
-                .Where(p => p.Title.ToLower().Contains(trimmedQuery))
-                .Skip(page * pageSize)
-                .Take(pageSize).Select(p => new ProjectOutDTO
-                {
-                    Title = p.Title,
-                    Description = p.Description,
-                    Status = p.Status,
-                    Budget = p.Budget,
-                    Duration = p.Duration,
-                    PriceType = p.PriceType,
-                    Qualifications = p.QualificationName,
-                    StartDate = p.StartDate,
-                    EndDate = p.EndDate,
-                    CreatedAt = p.CreatedAt,
-                    CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
-                }).ToListAsync();
+                query = query
+                    .Where(p=>p.Title.ToLower().Contains(trimmedQuery));
             }
-            else
+            if(qualificationNames != null && qualificationNames.Count >0)
             {
-                projects = await mainAppContext.Projects
-                .OrderByDescending(p => p.CreatedAt)
-                .Where(p => qualificationNames.Contains(p.QualificationName))
-                .Where(p => p.Title.ToLower().Contains(trimmedQuery))
-                .Skip(page * pageSize)
-                .Take(pageSize).Select(p => new ProjectOutDTO
-                {
-                    Title = p.Title,
-                    Description = p.Description,
-                    Status = p.Status,
-                    Budget = p.Budget,
-                    Duration = p.Duration,
-                    PriceType = p.PriceType,
-                    Qualifications = p.QualificationName,
-                    StartDate = p.StartDate,
-                    EndDate = p.EndDate,
-                    CreatedAt = p.CreatedAt,
-                    CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
-                }).ToListAsync();
+                query = query
+                    .Where(p => qualificationNames.Contains(p.QualificationName));
             }
 
-            if (projects == null)
-                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "Project not loaded."));
+            // ORder by LAtest created
+            projects = await query.OrderByDescending(p => p.CreatedAt)
+            .Skip(page * pageSize)
+            .Take(pageSize)
+            .Select(p => new ProjectOutDTO
+            {
 
-            return Ok(CreateSuccessResponse(projects));
+                Title = p.Title,
+                Description = p.Description,
+                Status = p.Status,
+                Budget = p.Budget,
+                Duration = p.Duration,
+                PriceType = p.PriceType,
+                Qualifications = p.QualificationName,
+                StartDate = p.StartDate,
+                EndDate = p.EndDate,
+                CreatedAt = p.CreatedAt,
+                CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+            })
+            .ToListAsync();
+           
+            return Ok(CreateSuccessResponse(new { 
+                Total=count,
+                Items=projects
+            }));
         }
 
         //[HttpGet("{id}")]

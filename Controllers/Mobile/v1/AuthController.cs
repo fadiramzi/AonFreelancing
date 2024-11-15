@@ -64,7 +64,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 PhoneNumber = phoneNumberReq.PhoneNumber,
                 Code = _otpManager.GenerateOtp(),
                 CreatedDate = DateTime.Now,
-                ExpiresAt = DateTime.Now.AddMinutes(1),
+                ExpiresAt = DateTime.Now.AddMinutes(10),
                 IsUsed = false,
             };
 

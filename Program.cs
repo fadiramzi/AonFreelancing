@@ -6,6 +6,7 @@ using AonFreelancing.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -32,6 +33,7 @@ namespace AonFreelancing
             builder.Configuration.AddJsonFile("appsettings.json");
 
 
+
             // JWT Authentication configuration
             var jwtSettings = builder.Configuration.GetSection("Jwt");
             var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty);
@@ -55,12 +57,18 @@ namespace AonFreelancing
                 };
             });
 
+            builder.Services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true;
+            });
+
             var app = builder.Build();
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
 
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 
