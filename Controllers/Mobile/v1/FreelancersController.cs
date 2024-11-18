@@ -10,7 +10,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
-    [Authorize]
+    [Authorize ]
+    
     [Route("api/mobile/v1/freelancers")]
     [ApiController]
     public class FreelancersController : BaseController

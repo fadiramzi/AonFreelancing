@@ -1,4 +1,5 @@
 ﻿using AonFreelancing.Models;
+using AonFreelancing.Models.Responses;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Emit;
@@ -13,6 +14,7 @@ namespace AonFreelancing.Contexts
         //public DbSet<Client> Clients { get; set; }
 
         // instead, use User only
+        public DbSet<TemUser> TemUsers { get; set; }       
         public DbSet<User> Users { get; set; } // Will access Freelancers, Clients, SystemUsers through inheritance and ofType 
         public DbSet<OTP> OTPs { get; set; }
         public MainAppContext(DbContextOptions<MainAppContext> contextOptions) : base(contextOptions) {
@@ -23,13 +25,14 @@ namespace AonFreelancing.Contexts
         {
             
             // For TPT design
+
             builder.Entity<User>().ToTable("AspNetUsers")
                                         .HasIndex(u=>u.PhoneNumber).IsUnique();
             builder.Entity<Freelancer>().ToTable("Freelancers");
             builder.Entity<Client>().ToTable("Clients");
             builder.Entity<SystemUser>().ToTable("SystemUsers");
             builder.Entity<OTP>().ToTable("otps", o => o.HasCheckConstraint("CK_CODE","length([Code]) = 6"));
-
+            builder.Entity<TemUser>().ToTable("TempUsers").HasIndex(u=>u.phoneNumber).IsUnique();   
             //set up relationships
             builder.Entity<User>().HasOne<OTP>()
                                     .WithOne()

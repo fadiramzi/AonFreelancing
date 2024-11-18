@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Net;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.TwiML.Messaging;
@@ -47,6 +48,79 @@ namespace AonFreelancing.Controllers.Mobile.v1
             _jwtService = jwtService;
         }
 
+
+        [HttpPost("RegisterByPhone")]
+
+        public async Task <IActionResult> RegisterPhoneNumberAsync([FromBody] RegistByPhoneNumberDTO reg) 
+        {
+            var user= await _mainAppContext.TemUsers.Where(ph=>ph.phoneNumber==reg.PhoneNumber).FirstOrDefaultAsync();
+
+
+            if (user != null && !user.PhoneNumberConfirm==false)
+            {
+                
+                return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "Verify Your Account First"));
+            }
+
+            user = new TemUser() { phoneNumber=reg.PhoneNumber };
+
+           await _mainAppContext.TemUsers.AddAsync(user);
+
+            string otpCode = _otpManager.GenerateOtp();
+            await _mainAppContext.SaveChangesAsync();
+
+            OTP otp = new OTP()
+            {
+                Code = otpCode,
+                PhoneNumber = reg.PhoneNumber,
+                CreatedDate = DateTime.Now,
+                ExpiresAt = DateTime.Now.AddMinutes(1),
+            };
+           
+
+            //send the otp to the specified phone number
+            await _otpManager.SendOTPAsync(otp.Code, reg.PhoneNumber);
+            await _mainAppContext.OTPs.AddAsync(otp);
+            await _mainAppContext.SaveChangesAsync();
+          
+
+
+            return Ok();
+
+
+        }
+
+
+        [HttpPost("completeRegister")]
+
+        public async Task<IActionResult> completeRegister([FromBody]CompletRegister re)
+        {
+
+
+            var user = new User()
+            {
+
+                Email = re.EmailAddress,
+              
+                Name = re.Name,
+
+                PhoneNumber=re.PhoneNumber
+            };
+          await  _userManager.CreateAsync(user,re.Password);
+
+            var ApiResponce = new ApiResponse<object>()
+            {
+                IsSuccess = true,
+                Results = user,
+                Errors = []
+            };
+            return Ok (ApiResponce);
+
+
+
+
+        }
+            
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] RegRequest regRequest)
         {
@@ -177,25 +251,74 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyAsync([FromBody] VerifyReq verifyReq)
         {
-            var user = await _userManager.Users.Where(x => x.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
-            if (user != null && !await _userManager.IsPhoneNumberConfirmedAsync(user))
+            var user = await _mainAppContext.TemUsers.Where(x => x.phoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
+            if (user != null && ! user.PhoneNumberConfirm==false)
             {
                 OTP? otp = await _mainAppContext.OTPs.Where(o => o.PhoneNumber == verifyReq.Phone).FirstOrDefaultAsync();
 
                 // verify OTP
                 if (otp != null && verifyReq.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpiresAt)
                 {
-                    user.PhoneNumberConfirmed = true;
-                    await _userManager.UpdateAsync(user);
+                    user.PhoneNumberConfirm = true;
+                     _mainAppContext.Update(user);
 
                     // disable sent OTP
                     otp.IsUsed = true;
+                     _mainAppContext.Update(otp);
                     await _mainAppContext.SaveChangesAsync();
 
                     return Ok(CreateSuccessResponse("Activated"));
                 }
             }
             return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "UnAuthorized"));
+        }
+
+
+
+        [HttpGet("PhoneNumber")]
+
+        public async Task<IActionResult> GetProfile(string PhoneNumber)
+        {
+            var User = _userManager.Users.Where(p => p.PhoneNumber == PhoneNumber).FirstOrDefault();
+
+            if (User != null)
+            {
+                var user = await _userManager.Users.Include(p => p.projects).Select(async U => new UserProfileDTO
+
+
+
+                {
+
+                    PhoneNumber = User.PhoneNumber,
+                    Email = User.Email,
+                    id = User.Id,
+                    name = User.Name,
+                    About = U.projects.Select(p => new ProjectProfileDTO
+                    {
+
+
+                        Id = p.Id,
+                        Description = p.Description,
+                        startDate = DateTime.Now,
+                        endDate = DateTime.Now,
+
+                    }).ToList()
+
+
+                }).ToListAsync();
+
+                var ApiRespons = new ApiResponse<object>()
+                {
+                    IsSuccess = true,
+                    Results = user,
+                    Errors = []
+                };
+                return Ok(ApiRespons);  
+            }
+            return NotFound();
+
+
+
         }
 
         //[HttpPost("forgotpassword")]
