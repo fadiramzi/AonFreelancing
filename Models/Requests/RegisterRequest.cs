@@ -2,36 +2,18 @@
 
 namespace AonFreelancing.Models.Requests
 {
-    public class RegRequest
-    {
-        [Required]
-        [MinLength(2)]
-        public string Name { get; set; }
-
-        [Required]
-        [MinLength(4)]
-        public string Username { get; set; }
-
-        [Required]
-        [Phone]
-        public string PhoneNumber { get; set; }
-
-
-        [Required]
-        [MinLength(6, ErrorMessage ="Too short password")]
-        public string Password { get; set; }
-
-        [Required]
-        [AllowedValues("Freelancer","Client")]
-        public string UserType { get; set; }
-
-        // For freelancer type only
-        public string? Skills { get; set; }
-
-        // For Client user type only
-
-
-        public string? CompanyName { get; set; }
-
-    }
+    public record RegisterRequest(
+        [Required, MinLength(2)] 
+        string Name,
+        [Required, MinLength(4)]
+        string Username,
+        [Required, Phone] 
+        string PhoneNumber,
+        [Required, MinLength(4, ErrorMessage = "Too short password")]
+        string Password,
+        [Required, AllowedValues("FREELANCER", "CLIENT")] 
+        string UserType,
+        string? Skills = null,
+        string? CompanyName = null
+    );
 }

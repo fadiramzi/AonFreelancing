@@ -5,23 +5,24 @@
 namespace AonFreelancing.Migrations
 {
     /// <inheritdoc />
-    public partial class otpmigwithcheck : Migration
+    public partial class userTypeToUserTable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddCheckConstraint(
-                name: "CK_CODE",
-                table: "otps",
-                sql: "length([Code]) = 6");
+            migrationBuilder.AddColumn<string>(
+                name: "UserType",
+                table: "AspNetUsers",
+                type: "TEXT",
+                nullable: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_CODE",
-                table: "otps");
+            migrationBuilder.DropColumn(
+                name: "UserType",
+                table: "AspNetUsers");
         }
     }
 }

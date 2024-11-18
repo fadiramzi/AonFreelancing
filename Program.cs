@@ -6,6 +6,7 @@ using AonFreelancing.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -18,26 +19,24 @@ namespace AonFreelancing
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-
-            builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            
+            builder.Services.AddControllers(o => o.SuppressAsyncSuffixInActionNames = false);
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
             builder.Services.AddSingleton<OTPManager>();
             builder.Services.AddSingleton<JwtService>();
             builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlite("Data Source=aon.db"));
-            builder.Services.AddIdentity<User,ApplicationRole>()
+            builder.Services.AddIdentity<User, ApplicationRole>()
                 .AddEntityFrameworkStores<MainAppContext>()
                 .AddDefaultTokenProviders();
+            
             builder.Configuration.AddJsonFile("appsettings.json");
+
 
 
             // JWT Authentication configuration
             var jwtSettings = builder.Configuration.GetSection("Jwt");
-            var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
+            var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty);
 
             builder.Services.AddAuthentication(options =>
             {
@@ -58,15 +57,18 @@ namespace AonFreelancing
                 };
             });
 
+            builder.Services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true;
+            });
 
             var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
 
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 

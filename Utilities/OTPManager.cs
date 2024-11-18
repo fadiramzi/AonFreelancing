@@ -30,8 +30,13 @@ namespace AonFreelancing.Utilities
 
             var message =await MessageResource.CreateAsync(messageOptions);
         }
-        public async Task sendForgotPasswordMessageAsync(string message,string receiverPhoneNumber)
+        public async Task SendForgotPasswordMessageAsync(string message,string receiverPhoneNumber)
         {
+            if (_configuration["Env"] == Constants.ENV_SIT)
+            {
+                return;
+            }
+
             var accountSid = _configuration["Twilio:Sid"];
             var authToken = _configuration["Twilio:Token"];
             TwilioClient.Init(accountSid, authToken);
@@ -45,14 +50,14 @@ namespace AonFreelancing.Utilities
         }
         public string GenerateOtp()
         {
-            int otp = 123456;
-            Random _random = new Random();
+            var otp = 123456;
+            var random = new Random();
             if (_configuration["Env"] == Constants.ENV_SIT)
             {
                 return otp.ToString("D6");
             }
             // Generate a random number between 0 and 999999
-            otp = _random.Next(0, (int)Math.Pow(10, 6));
+            otp = random.Next(0, (int)Math.Pow(10, 6));
 
             // Format the number to ensure it's always 6 digits
             return otp.ToString("D6");
