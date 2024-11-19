@@ -89,8 +89,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 Qualifications = p.QualificationName,
                 StartDate = p.StartDate,
                 EndDate = p.EndDate,
-                CreatedAt = p.CreatedAt,
-                CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+                CreatedAt = p.CreatedAt
+                //CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
             })
             .ToListAsync();
            
@@ -127,16 +127,47 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
             return StatusCode(StatusCodes.Status201Created);
         }
+        [Authorize(Roles ="CLIENT")]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProject(int id)
+        {
+            var storedProject = await mainAppContext.Projects.Where(p => p.Id == id)
+                .Include(p => p.Bids)
+                //.Include(p => p.Client)
+                .Select(p => new ProjectOutDTO(p))
+                .FirstOrDefaultAsync();
 
-        //[HttpGet("{id}")]
-        //public IActionResult GetProject(int id)
-        //{
-        //    var project = _mainAppContext.Projects
-        //        .Include(p => p.Client)
-        //        .FirstOrDefault(p => p.Id == id);
+            return Ok(CreateSuccessResponse(storedProject));
 
-        //    return Ok(CreateSuccessResponse(project));
+        }
 
-        //}
+        [Authorize(Roles ="CLIENT")]
+        [HttpPatch("{projectId}/bids/{bidId}/approve")]
+        public async Task<IActionResult> ApproveBid(long projectId, long bidId)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            long clientId = Convert.ToInt64(identity.FindFirst(ClaimTypes.NameIdentifier).Value);
+
+           Project? storedProject = await mainAppContext.Projects.Where(p => p.Id == projectId)
+                                                                .Include(p => p.Bids)
+                                                                .FirstOrDefaultAsync();
+            Error? error = null;
+            if(storedProject == null) 
+                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),"Project not found"));
+            if (storedProject.Status != Constants.PROJECT_STATUS_AVAILABLE)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "project status is not 'Available'"));
+
+            Bid? storedBid = storedProject.Bids.Where(b => b.Id == bidId).FirstOrDefault();
+            if (storedBid == null)
+                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "Bid not found"));
+
+            storedBid.Status = Constants.BID_STATUS_APPROVED;
+            storedBid.ApprovedAt = DateTime.Now;
+            storedProject.Status = Constants.PROJECT_STATUS_CLOSED;
+
+            await mainAppContext.SaveChangesAsync();
+            return NoContent();
+
+        }
     }
 }
