@@ -25,6 +25,7 @@ namespace AonFreelancing
             builder.Services.AddSwaggerGen();
             builder.Services.AddSingleton<OTPManager>();
             builder.Services.AddSingleton<JwtService>();
+            builder.Services.AddScoped<FileStorageService>();
             builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlite("Data Source=aon.db"));
             builder.Services.AddIdentity<User, ApplicationRole>()
                 .AddEntityFrameworkStores<MainAppContext>()

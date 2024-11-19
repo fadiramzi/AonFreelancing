@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using AonFreelancing.Utilities;
+using AonFreelancing.Utilities.Attributes;
 
 namespace AonFreelancing.Models.DTOs
 {
@@ -24,5 +26,9 @@ namespace AonFreelancing.Models.DTOs
         public string PriceType { get; set; }
 
         [Required] [Range(0, int.MaxValue)] public decimal Budget { get; set; }
+        
+        [MaxFileSize(1024 * 1024 * 30)]
+        [AllowedFileExtensions([".jpg", ".jpeg", ".png"])]
+        public IFormFile ImageFile { get; set; }
     }
 }

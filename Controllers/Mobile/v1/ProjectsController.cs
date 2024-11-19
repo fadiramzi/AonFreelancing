@@ -1,6 +1,7 @@
 ﻿using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
+using AonFreelancing.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -12,38 +13,46 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Authorize]
     [Route("api/mobile/v1/projects")]
     [ApiController]
-    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager)
+    public class ProjectsController(
+        MainAppContext mainAppContext,
+        UserManager<User> userManager,
+        FileStorageService fileStorageService)
         : BaseController
     {
         [Authorize(Roles = Constants.USER_TYPE_CLIENT)]
         [HttpPost]
-        public async Task<IActionResult> PostProjectAsync([FromBody] ProjectInputDto projectInputDto)
+        public async Task<IActionResult> PostProjectAsync([FromBody] ProjectInputDto? projectInputDto)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
                 return CustomBadRequest();
-            
+
             var user = await userManager.GetUserAsync(HttpContext.User);
             if (user == null)
                 return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),
                     "Unable to load user."));
 
             var userId = user.Id;
-            var project = new Project
+            if (projectInputDto != null)
             {
-                ClientId = userId,
-                Title = projectInputDto.Title,
-                Description = projectInputDto.Description,
-                QualificationName = projectInputDto.QualificationName,
-                Duration = projectInputDto.Duration,
-                Budget = projectInputDto.Budget,
-                PriceType = projectInputDto.PriceType,
-                CreatedAt = DateTime.Now,
-            };
+                var project = new Project
+                {
+                    ClientId = userId,
+                    Title = projectInputDto.Title,
+                    Description = projectInputDto.Description,
+                    QualificationName = projectInputDto.QualificationName,
+                    Duration = projectInputDto.Duration,
+                    Budget = projectInputDto.Budget,
+                    PriceType = projectInputDto.PriceType,
+                    CreatedAt = DateTime.Now,
+                };
 
-            await mainAppContext.Projects.AddAsync(project);
-            await mainAppContext.SaveChangesAsync();
-
-            return Ok(CreateSuccessResponse("Project added."));
+                var imageName = await fileStorageService.SaveFileAsync(projectInputDto.ImageFile);
+                project.ImageName = imageName;
+                
+                await mainAppContext.Projects.AddAsync(project);
+                await mainAppContext.SaveChangesAsync();
+            }
+            return StatusCode(StatusCodes.Status201Created, CreateSuccessResponse("Project added."));
         }
 
         [Authorize(Roles = Constants.USER_TYPE_CLIENT)]
@@ -53,23 +62,22 @@ namespace AonFreelancing.Controllers.Mobile.v1
             [FromQuery] int pageSize = 8, [FromQuery] string? qur = default
         )
         {
+            var imageUrl = $"{Request.Scheme}://{Request.Host}/projectImages";
             var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
-
             var query = mainAppContext.Projects.AsQueryable();
-
             var count = await query.CountAsync();
 
-            if(!string.IsNullOrEmpty(trimmedQuery))
+            if (!string.IsNullOrEmpty(trimmedQuery))
             {
                 query = query
-                    .Where(p=>p.Title.ToLower().Contains(trimmedQuery));
+                    .Where(p => p.Title.ToLower().Contains(trimmedQuery));
             }
-            if(quls != null && quls.Count >0)
+
+            if (quls != null && quls.Count > 0)
             {
                 query = query
                     .Where(p => quls.Contains(p.QualificationName));
             }
-
             // ORder by LAtest created
             var projects = await query.AsNoTracking()
                 .OrderByDescending(p => p.CreatedAt)
@@ -86,14 +94,16 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     Qualifications = p.QualificationName,
                     StartDate = p.StartDate,
                     EndDate = p.EndDate,
+                    Image = p.ImageName != null ? $"{imageUrl}/{p.ImageName}" : string.Empty,
                     CreatedAt = p.CreatedAt,
                     CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
                 })
                 .ToListAsync();
-            
-            return Ok(CreateSuccessResponse(new { 
-                Total=count,
-                Items=projects
+
+            return Ok(CreateSuccessResponse(new
+            {
+                Total = count,
+                Items = projects
             }));
         }
 
