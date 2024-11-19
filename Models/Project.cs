@@ -8,10 +8,10 @@ namespace AonFreelancing.Models
     [Table("Projects")]
     public class Project
     {
-        public int Id { get; set; }
-        [Required] public string Title { get; set; }
+        public long Id { get; set; }
+        public string Title { get; set; }
 
-        [AllowNull] public string Description { get; set; }
+        public string? Description { get; set; }
 
         public long ClientId { get; set; } //FK
 
@@ -29,6 +29,7 @@ namespace AonFreelancing.Models
         public string Status { get; set; }
         public long? FreelancerId { get; set; }
         [ForeignKey("FreelancerId")]
-        public virtual Freelancer? Freelancer { get; set; }
+        public Freelancer? Freelancer { get; set; }
+        public List<Bid> Bids { get; set; }
     }
 }

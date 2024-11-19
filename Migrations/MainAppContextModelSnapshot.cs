@@ -44,6 +44,47 @@ namespace AonFreelancing.Migrations
                     b.ToTable("AspNetRoles", (string)null);
                 });
 
+            modelBuilder.Entity("AonFreelancing.Models.Bid", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("FreelancerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("ProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("ProposedPrice")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("pending");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FreelancerId")
+                        .IsUnique();
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("Bids");
+                });
+
             modelBuilder.Entity("AonFreelancing.Models.OTP", b =>
                 {
                     b.Property<string>("PhoneNumber")
@@ -72,7 +113,7 @@ namespace AonFreelancing.Migrations
 
             modelBuilder.Entity("AonFreelancing.Models.Project", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -86,7 +127,6 @@ namespace AonFreelancing.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Duration")
@@ -365,6 +405,21 @@ namespace AonFreelancing.Migrations
                     b.ToTable("SystemUsers", (string)null);
                 });
 
+            modelBuilder.Entity("AonFreelancing.Models.Bid", b =>
+                {
+                    b.HasOne("AonFreelancing.Models.Freelancer", null)
+                        .WithOne()
+                        .HasForeignKey("AonFreelancing.Models.Bid", "FreelancerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AonFreelancing.Models.Project", null)
+                        .WithMany("Bids")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AonFreelancing.Models.OTP", b =>
                 {
                     b.HasOne("AonFreelancing.Models.TempUser", null)
@@ -468,6 +523,11 @@ namespace AonFreelancing.Migrations
                         .HasForeignKey("AonFreelancing.Models.SystemUser", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("AonFreelancing.Models.Project", b =>
+                {
+                    b.Navigation("Bids");
                 });
 
             modelBuilder.Entity("AonFreelancing.Models.Client", b =>

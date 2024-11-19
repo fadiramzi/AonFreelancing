@@ -100,6 +100,34 @@ namespace AonFreelancing.Controllers.Mobile.v1
             }));
         }
 
+        [Authorize(Roles ="FREELANCER")]
+        [HttpPost("{projectId}/bids")]
+        public async Task<IActionResult> CreateBid([FromRoute]long projectId, [FromBody] BidInputDTO bidInputDTO)
+        {
+            if (!ModelState.IsValid)
+                return base.CustomBadRequest();
+
+            Project? storedProject = mainAppContext.Projects.Where(p => p.Id == projectId).Include(p=>p.Bids).FirstOrDefault();
+            if (storedProject == null)
+                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "project not found"));
+            
+            if (storedProject.Budget <= bidInputDTO.ProposedPrice)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "proposed price must be less than the project's budget"));
+            
+            Bid? storedBidWithLowestPrice = storedProject.Bids.OrderBy(b => b.ProposedPrice).FirstOrDefault();
+            if (storedBidWithLowestPrice != null && storedBidWithLowestPrice.ProposedPrice <= bidInputDTO.ProposedPrice)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "proposed price should be less than earlier proposed prices"));
+
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            long freelancerId = Convert.ToInt64(identity.FindFirst(ClaimTypes.NameIdentifier).Value);
+            Bid newBid = new Bid(bidInputDTO, projectId, freelancerId);
+
+            await mainAppContext.AddAsync(newBid);
+            await mainAppContext.SaveChangesAsync();
+
+            return StatusCode(StatusCodes.Status201Created);
+        }
+
         //[HttpGet("{id}")]
         //public IActionResult GetProject(int id)
         //{
