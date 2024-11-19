@@ -44,6 +44,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("sendVerificationCode")]
         public async Task<IActionResult> SendVerificationCodeAsync([FromBody] PhoneNumberReq phoneNumberReq)
         {
+            if (!ModelState.IsValid)
+                return base.CustomBadRequest();
+
             var storedTempUser = await _mainAppContext.TempUsers
                 .Where(u => u.PhoneNumber == phoneNumberReq.PhoneNumber)
                 .FirstOrDefaultAsync();
@@ -83,6 +86,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("verifyPhoneNumber")]
         public async Task<IActionResult> VerifyPhoneNumberAsync([FromBody] VerifyReq verifyReq)
         {
+            if (!ModelState.IsValid)
+                return base.CustomBadRequest();
+
             var storedTempUser = await _mainAppContext.TempUsers.Where(tu => tu.PhoneNumber == verifyReq.Phone)
                 .FirstOrDefaultAsync();
 
@@ -108,6 +114,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("completeRegistration")]
         public async Task<IActionResult> CompleteRegistrationAsync([FromBody] RegisterRequest registerReq)
         {
+            if (!ModelState.IsValid)
+                return base.CustomBadRequest();
+
             var storedTempUser =
                 await _mainAppContext.TempUsers.FirstOrDefaultAsync(tu => tu.PhoneNumber == registerReq.PhoneNumber);
             if (storedTempUser == null)
@@ -166,6 +175,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("login")]
         public async Task<IActionResult> LoginAsync([FromBody] AuthRequest req)
         {
+            if (!ModelState.IsValid)
+                return base.CustomBadRequest();
+
             var storedUser = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == req.PhoneNumber);
             if (storedUser != null && await _userManager.CheckPasswordAsync(storedUser, req.Password))
             {

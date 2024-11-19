@@ -19,11 +19,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost]
         public async Task<IActionResult> PostProjectAsync([FromBody] ProjectInputDto projectInputDto)
         {
-            if(!ModelState.IsValid)
-            {
-                
+            if (!ModelState.IsValid)
                 return base.CustomBadRequest();
-            }
+
             var user = await userManager.GetUserAsync(HttpContext.User);
             if (user == null)
                 return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),
@@ -55,6 +53,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
             [FromQuery] int pageSize = 8, [FromQuery] string? qur = default
         )
         {
+            if (!ModelState.IsValid)
+                return base.CustomBadRequest();
             var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
             List<ProjectOutDTO>? projects;
 

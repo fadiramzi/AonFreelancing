@@ -18,6 +18,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpGet("{id}/profile")]
         public async Task<IActionResult> GetProfileByIdAsync([FromRoute]long id)
         {
+            if (!ModelState.IsValid)
+                return base.CustomBadRequest();
+            
             var storedFreelancer = await mainAppContext.Users 
                 .OfType<Freelancer>().Where(f => f.Id == id)
                 .Select(f => new FreelancerResponseDTO
