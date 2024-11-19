@@ -46,20 +46,12 @@ namespace AonFreelancing.Controllers.Mobile.v1
         {
             if (!ModelState.IsValid)
                 return base.CustomBadRequest();
-
-            if (await _mainAppContext.Users.AnyAsync(u => u.PhoneNumber == phoneNumberReq.PhoneNumber))
-                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "phone number is already used by an account"));
-
-            var storedTempUser = await _mainAppContext.TempUsers
-                .Where(u => u.PhoneNumber == phoneNumberReq.PhoneNumber)
-                .FirstOrDefaultAsync();
-
-            if (storedTempUser != null)
-            {
-                return Conflict(CreateErrorResponse(
-                    StatusCodes.Status409Conflict.ToString(), "User already exists."));
-            }
-
+            bool isUserExists = await _mainAppContext.Users.AnyAsync(u => u.PhoneNumber == phoneNumberReq.PhoneNumber);
+            bool isTempUserExists = await _mainAppContext.TempUsers.AnyAsync(u => u.PhoneNumber == phoneNumberReq.PhoneNumber);
+           
+            if(isUserExists || isTempUserExists)
+                return Conflict(CreateErrorResponse(StatusCodes.Status409Conflict.ToString(), "this phone number is already used"));
+            
             var newTempUser = new TempUser()
             {
                 PhoneNumber = phoneNumberReq.PhoneNumber,
