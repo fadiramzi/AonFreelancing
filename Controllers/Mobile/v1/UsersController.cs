@@ -18,7 +18,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpGet("{id}/profile")]
         public async Task<IActionResult> GetProfileByIdAsync([FromRoute]long id)
         {
-            var freelancer = await mainAppContext.Users 
+            var storedFreelancer = await mainAppContext.Users 
                 .OfType<Freelancer>().Where(f => f.Id == id)
                 .Select(f => new FreelancerResponseDTO
                 {
@@ -33,16 +33,16 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 }).FirstOrDefaultAsync();
 
 
-            if (freelancer != null)
+            if (storedFreelancer != null)
                 return Ok(new ApiResponse<FreelancerResponseDTO>
                 {
                     IsSuccess = true,
-                    Results = freelancer,
+                    Results = storedFreelancer,
                     Errors = null
                 });
 
 
-            var client = await mainAppContext.Users
+            var storedClient = await mainAppContext.Users
                 .OfType<Client>()
                 .Where(c => c.Id == id)
                 .Include(c => c.Projects)
@@ -68,8 +68,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                  }).FirstOrDefaultAsync();
 
 
-            if (client != null)
-                return Ok(CreateSuccessResponse(client));
+            if (storedClient != null)
+                return Ok(CreateSuccessResponse(storedClient));
 
             return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "NotFound"));
 
