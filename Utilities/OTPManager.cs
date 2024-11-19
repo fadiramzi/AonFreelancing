@@ -18,6 +18,8 @@ namespace AonFreelancing.Utilities
         //TODO: make this method void
         public async Task SendOTPAsync(string otp,string receiverPhoneNumber)
         {
+            if (_configuration["Env"] == Constants.ENV_SIT) return;
+
             var accountSid = _configuration["Twilio:Sid"];
             var authToken = _configuration["Twilio:Token"];
             TwilioClient.Init(accountSid, authToken);
@@ -28,15 +30,12 @@ namespace AonFreelancing.Utilities
             messageOptions.ContentVariables = "{\"1\":\"" + otp + "\"}";
 
 
-            var message =await MessageResource.CreateAsync(messageOptions);
+            var message = await MessageResource.CreateAsync(messageOptions);
         }
         public async Task SendForgotPasswordMessageAsync(string message,string receiverPhoneNumber)
         {
-            if (_configuration["Env"] == Constants.ENV_SIT)
-            {
-                return;
-            }
-
+            if (_configuration["Env"] == Constants.ENV_SIT) return;
+            
             var accountSid = _configuration["Twilio:Sid"];
             var authToken = _configuration["Twilio:Token"];
             TwilioClient.Init(accountSid, authToken);

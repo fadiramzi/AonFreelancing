@@ -13,4 +13,6 @@ public class TempUser
     [Required]
     public string PhoneNumber { get; set; }
     public bool PhoneNumberConfirmed { get; set; }
+    [Required, AllowedValues("FREELANCER", "CLIENT")] 
+    public string UserType { get; set; }
 }

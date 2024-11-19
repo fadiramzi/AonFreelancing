@@ -2,7 +2,7 @@
 
 namespace AonFreelancing.Models.Requests
 {
-    public record VerifyReq(
+    public record VerifyPhoneNumberReq(
         [Required, StringLength(14, MinimumLength = 14)] 
         string Phone,
         [Required, StringLength(6, MinimumLength = 6)] 

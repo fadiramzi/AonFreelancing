@@ -5,28 +5,21 @@ using System.Text;
 
 namespace AonFreelancing.Services
 {
-    public class JwtService
+    public class JwtService(IConfiguration config)
     {
-        private readonly IConfiguration _config;
-
-        public JwtService(IConfiguration config)
+        public string GenerateJwt(Models.User user, string role)
         {
-            _config = config;
-        }
-
-        public string GenerateJWT(Models.User user, string role)
-        {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config[$"Jwt:{Utilities.Constants.JWT_KEY}"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
+                issuer: config[$"Jwt:{Utilities.Constants.JWT_ISSUER}"],
+                audience: config[$"Jwt:{Utilities.Constants.JWT_AUDIENCE}"],
                 claims:
                 [
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(ClaimTypes.Role, role)
                 ],
-                expires: DateTime.Now.AddMinutes(Convert.ToDouble(_config["Jwt:ExpireInMinutes"])),
+                expires: DateTime.Now.AddMinutes(Convert.ToDouble(config[$"Jwt:{Utilities.Constants.JWT_EXPIRATION}"])),
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);

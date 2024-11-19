@@ -31,7 +31,6 @@ namespace AonFreelancing.Controllers
                 .SelectMany(x => x.Errors)
                 .Select(e => new Error
                 {
-                    Code = "",
                     Message = e.ErrorMessage
                 })
                 .ToList();

@@ -6,24 +6,22 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
     [Authorize]
     [Route("api/mobile/v1/projects")]
     [ApiController]
-    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager) : BaseController
+    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager)
+        : BaseController
     {
-        [Authorize(Roles = "CLIENT")]
+        [Authorize(Roles = Constants.USER_TYPE_CLIENT)]
         [HttpPost]
         public async Task<IActionResult> PostProjectAsync([FromBody] ProjectInputDto projectInputDto)
         {
             if(!ModelState.IsValid)
-            {
-                
-                return base.CustomBadRequest();
-            }
+                return CustomBadRequest();
+            
             var user = await userManager.GetUserAsync(HttpContext.User);
             if (user == null)
                 return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),
@@ -48,15 +46,14 @@ namespace AonFreelancing.Controllers.Mobile.v1
             return Ok(CreateSuccessResponse("Project added."));
         }
 
-        [Authorize(Roles = "CLIENT")]
+        [Authorize(Roles = Constants.USER_TYPE_CLIENT)]
         [HttpGet("clientFeed")]
         public async Task<IActionResult> GetClientFeedAsync(
-            [FromQuery] List<string>? qualificationNames, [FromQuery] int page = 0,
+            [FromQuery] List<string>? quls, [FromQuery] int page = 0,
             [FromQuery] int pageSize = 8, [FromQuery] string? qur = default
         )
         {
             var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
-            List<ProjectOutDTO>? projects;
 
             var query = mainAppContext.Projects.AsQueryable();
 
@@ -67,33 +64,33 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 query = query
                     .Where(p=>p.Title.ToLower().Contains(trimmedQuery));
             }
-            if(qualificationNames != null && qualificationNames.Count >0)
+            if(quls != null && quls.Count >0)
             {
                 query = query
-                    .Where(p => qualificationNames.Contains(p.QualificationName));
+                    .Where(p => quls.Contains(p.QualificationName));
             }
 
             // ORder by LAtest created
-            projects = await query.OrderByDescending(p => p.CreatedAt)
-            .Skip(page * pageSize)
-            .Take(pageSize)
-            .Select(p => new ProjectOutDTO
-            {
-
-                Title = p.Title,
-                Description = p.Description,
-                Status = p.Status,
-                Budget = p.Budget,
-                Duration = p.Duration,
-                PriceType = p.PriceType,
-                Qualifications = p.QualificationName,
-                StartDate = p.StartDate,
-                EndDate = p.EndDate,
-                CreatedAt = p.CreatedAt,
-                CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
-            })
-            .ToListAsync();
-           
+            var projects = await query.AsNoTracking()
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip(page * pageSize)
+                .Take(pageSize)
+                .Select(p => new ProjectOutDTO
+                {
+                    Title = p.Title,
+                    Description = p.Description,
+                    Status = p.Status,
+                    Budget = p.Budget,
+                    Duration = p.Duration,
+                    PriceType = p.PriceType,
+                    Qualifications = p.QualificationName,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    CreatedAt = p.CreatedAt,
+                    CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+                })
+                .ToListAsync();
+            
             return Ok(CreateSuccessResponse(new { 
                 Total=count,
                 Items=projects

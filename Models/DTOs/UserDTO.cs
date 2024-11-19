@@ -8,8 +8,9 @@ namespace AonFreelancing.Models.DTOs
         [StringLength(64)]
         public string Name { get; set; }
 
-        [StringLength(32)]
-        public string Username { get; set; }
+        [Display(Name = "Email address")]
+        [EmailAddress(ErrorMessage = "Invalid Email Address")]
+        public string Email { get; set; }
 
         [StringLength(32)]
         public string PhoneNumber { get; set; }
@@ -24,21 +25,16 @@ namespace AonFreelancing.Models.DTOs
     {
         public long Id { get; set; }
         public string Name { get; set; }
-
-        public string Username { get; set; }
-
+        public string Email { get; set; }
     }
 
     public class UserResponseDTO
     {
         public long Id { get; set; }
         public string Name { get; set; }
-
         public string Email { get; set; }
         public string? About { get; set; }
-        public string Username { get; set; }
         public string PhoneNumber { get; set; }
-
         public bool IsPhoneNumberVerified { get; set; }
         public string UserType { get; set; }
         public RoleResponseDTO Role { get; set; }

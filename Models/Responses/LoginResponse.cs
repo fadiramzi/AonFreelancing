@@ -4,7 +4,7 @@ namespace AonFreelancing.Models.Responses
 {
     public class LoginResponse
     {
-        public UserDetailsDTO UserDetailsDTO { get; set; }
+        public UserDetailsDTO UserDetails { get; set; }
         public string AccessToken { get; set; }
     }
 }
