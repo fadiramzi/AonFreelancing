@@ -23,7 +23,7 @@ namespace AonFreelancing.Services
                 audience: _config["Jwt:Audience"],
                 claims:
                 [
-                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(ClaimTypes.Role, role)
                 ],
                 expires: DateTime.Now.AddMinutes(Convert.ToDouble(_config["Jwt:ExpireInMinutes"])),

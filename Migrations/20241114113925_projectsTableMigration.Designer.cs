@@ -11,13 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-<<<<<<<< HEAD:Migrations/20241114201856_Cr1Cr2Cr3Cr4Mig.Designer.cs
-    [Migration("20241114201856_Cr1Cr2Cr3Cr4Mig")]
-    partial class Cr1Cr2Cr3Cr4Mig
-========
-    [Migration("20241113063403_InitialMigration")]
-    partial class InitialMigration
->>>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2:Migrations/20241113063403_InitialMigration.Designer.cs
+    [Migration("20241114113925_projectsTableMigration")]
+    partial class projectsTableMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -58,15 +53,16 @@ namespace AonFreelancing.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Code")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("CreatedDate")
+                    b.Property<DateTime>("CreatedDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("ExpiresAt")
+                    b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<bool?>("IsUsed")
+                    b.Property<bool>("IsUsed")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("PhoneNumber");
@@ -96,12 +92,12 @@ namespace AonFreelancing.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-<<<<<<<< HEAD:Migrations/20241114201856_Cr1Cr2Cr3Cr4Mig.Designer.cs
                     b.Property<int>("Duration")
                         .HasColumnType("INTEGER");
 
-========
->>>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2:Migrations/20241113063403_InitialMigration.Designer.cs
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<long?>("FreelancerId")
                         .HasColumnType("INTEGER");
 
@@ -109,21 +105,18 @@ namespace AonFreelancing.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-<<<<<<<< HEAD:Migrations/20241114201856_Cr1Cr2Cr3Cr4Mig.Designer.cs
                     b.Property<string>("QualificationName")
-========
-                    b.Property<string>("ProgressStatus")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Qualification")
->>>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2:Migrations/20241113063403_InitialMigration.Designer.cs
-                        .IsRequired()
+                    b.Property<DateTime?>("StartDate")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("Available");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -135,45 +128,26 @@ namespace AonFreelancing.Migrations
 
                     b.HasIndex("FreelancerId");
 
-                    b.ToTable("Projects");
+                    b.ToTable("Projects", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PRICE_TYPE", "[PriceType] IN ('Fixed', 'PerHour')");
+
+                            t.HasCheckConstraint("CK_QUALIFICATION_NAME", "[QualificationName] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')");
+
+                            t.HasCheckConstraint("CK_STATUS", "[Status] IN ('Available', 'Closed')");
+                        });
                 });
 
-<<<<<<<< HEAD:Migrations/20241114201856_Cr1Cr2Cr3Cr4Mig.Designer.cs
-            modelBuilder.Entity("AonFreelancing.Models.TempOTP", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Code")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("CreatedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool?>("IsUsed")
-                        .HasColumnType("INTEGER");
-
-========
             modelBuilder.Entity("AonFreelancing.Models.TempUser", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
->>>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2:Migrations/20241113063403_InitialMigration.Designer.cs
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-<<<<<<<< HEAD:Migrations/20241114201856_Cr1Cr2Cr3Cr4Mig.Designer.cs
-                    b.HasKey("ID");
-
-                    b.ToTable("TempOtps");
-========
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("INTEGER");
 
@@ -183,7 +157,6 @@ namespace AonFreelancing.Migrations
                         .IsUnique();
 
                     b.ToTable("TempUser", (string)null);
->>>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2:Migrations/20241113063403_InitialMigration.Designer.cs
                 });
 
             modelBuilder.Entity("AonFreelancing.Models.User", b =>
@@ -193,7 +166,6 @@ namespace AonFreelancing.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("About")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("AccessFailedCount")
@@ -232,7 +204,6 @@ namespace AonFreelancing.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("PhoneNumberConfirmed")
@@ -263,22 +234,6 @@ namespace AonFreelancing.Migrations
                     b.ToTable("AspNetUsers", (string)null);
 
                     b.UseTptMappingStrategy();
-                });
-
-            modelBuilder.Entity("AonFreelancing.Models.UsersTemp", b =>
-                {
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool?>("IsVerfied")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("VerifyTime")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("PhoneNumber");
-
-                    b.ToTable("UsersTemps", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
@@ -415,10 +370,10 @@ namespace AonFreelancing.Migrations
 
             modelBuilder.Entity("AonFreelancing.Models.OTP", b =>
                 {
-                    b.HasOne("AonFreelancing.Models.User", null)
+                    b.HasOne("AonFreelancing.Models.TempUser", null)
                         .WithOne()
                         .HasForeignKey("AonFreelancing.Models.OTP", "PhoneNumber")
-                        .HasPrincipalKey("AonFreelancing.Models.User", "PhoneNumber")
+                        .HasPrincipalKey("AonFreelancing.Models.TempUser", "PhoneNumber")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

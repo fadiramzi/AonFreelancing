@@ -17,7 +17,11 @@ namespace AonFreelancing.Models
     public class User : IdentityUser<long>
     {
         public string Name { get; set; }
+<<<<<<< HEAD
 
         public string About { get; set; }
+=======
+        public string? About {  get; set; }
+>>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2
     }
 }

@@ -2,13 +2,10 @@
 
 namespace AonFreelancing.Models.Requests
 {
-    public class AuthRequest
-    {
-        [Required]
-        [MinLength(4, ErrorMessage ="Invalid Username")]
-        public string UserName { get; set; }
-        [Required]
-        [MinLength(6, ErrorMessage = "Invalid Password")]
-        public string Password { get; set; }
-    }
+    public record AuthRequest(
+        [Required, StringLength(14, ErrorMessage = "Invalid Phone Number, should be 14 digit starts with country code")] 
+        string PhoneNumber,
+        [Required, MinLength(4, ErrorMessage = "Invalid Password")] 
+        string Password
+    );
 }
