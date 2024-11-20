@@ -17,22 +17,23 @@ namespace AonFreelancing.Models.DTOs
         public DateTime CreatedAt { get; set; }
         public DateTime? StartDate {  get; set; }
         public DateTime? EndDate { get; set; }
+        public string? Image { get; set; }
         public List<BidOutputDTO> Bids { get; set; }
         public ProjectOutDTO() { }
-        public ProjectOutDTO(Project project) {
+        public ProjectOutDTO(Project project, string imageBaseUrl) {
             Title = project.Title;
             Description = project.Description;
             Status = project.Status;
             Budget = project.Budget;
-            //if (project.ImageFileName != null)
-            //    Image = $"{imageBaseUrl}/{project.ImageFileName}";
+            if (project.ImageFileName != null)
+                Image = $"{imageBaseUrl}/{project.ImageFileName}";
             Duration = project.Duration;
             PriceType = project.PriceType;
             Qualifications = project.QualificationName;
             CreatedAt = project.CreatedAt;
             StartDate = project.StartDate;
             EndDate = project.EndDate;
-            Bids = project.Bids.Select(b=>new BidOutputDTO(b)).OrderBy(b => b.ProposedPrice).ToList();
+            Bids = project.Bids?.Select(b=>new BidOutputDTO(b)).OrderBy(b => b.ProposedPrice).ToList();
         }
     }
 }

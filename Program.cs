@@ -5,10 +5,12 @@ using AonFreelancing.Models;
 using AonFreelancing.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -50,6 +52,7 @@ namespace AonFreelancing
 
 
             builder.Services.AddSingleton<OTPManager>();
+            builder.Services.AddSingleton<FileStorageService>();
             builder.Services.AddSingleton<JwtService>();
             builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlite("Data Source=aon.db"));
             builder.Services.AddIdentity<User, ApplicationRole>()
@@ -83,6 +86,13 @@ namespace AonFreelancing
                 };
             });
 
+            builder.Services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+            });
+
             builder.Services.Configure<ApiBehaviorOptions>(options =>
             {
                 options.SuppressModelStateInvalidFilter = true;
@@ -103,6 +113,11 @@ namespace AonFreelancing
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(FileStorageService.ROOT),
+                RequestPath = "/images"
+            });
 
             app.MapControllers();
 

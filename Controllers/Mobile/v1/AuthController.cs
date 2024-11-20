@@ -5,6 +5,7 @@ using AonFreelancing.Models.Requests;
 using AonFreelancing.Models.Responses;
 using AonFreelancing.Services;
 using AonFreelancing.Utilities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ using Client = AonFreelancing.Models.Client;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
+    [AllowAnonymous]
     [Route("api/mobile/v1/auth")]
     [ApiController]
     public class AuthController : BaseController

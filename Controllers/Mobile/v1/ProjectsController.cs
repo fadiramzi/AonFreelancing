@@ -1,6 +1,7 @@
 ﻿using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
+using AonFreelancing.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -13,11 +14,11 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Authorize]
     [Route("api/mobile/v1/projects")]
     [ApiController]
-    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager) : BaseController
+    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager,FileStorageService fileStorageService) : BaseController
     {
         [Authorize(Roles = "CLIENT")]
         [HttpPost]
-        public async Task<IActionResult> PostProjectAsync([FromBody] ProjectInputDto projectInputDto)
+        public async Task<IActionResult> PostProjectAsync([FromForm] ProjectInputDto projectInputDTO)
         {
             if (!ModelState.IsValid)
                 return base.CustomBadRequest();
@@ -31,15 +32,19 @@ namespace AonFreelancing.Controllers.Mobile.v1
             var project = new Project
             {
                 ClientId = userId,
-                Title = projectInputDto.Title,
-                Description = projectInputDto.Description,
-                QualificationName = projectInputDto.QualificationName,
-                Duration = projectInputDto.Duration,
-                Budget = projectInputDto.Budget,
-                PriceType = projectInputDto.PriceType,
+                Title = projectInputDTO.Title,
+                Description = projectInputDTO.Description,
+                QualificationName = projectInputDTO.QualificationName,
+                Duration = projectInputDTO.Duration,
+                Budget = projectInputDTO.Budget,
+                PriceType = projectInputDTO.PriceType,
                 CreatedAt = DateTime.Now,
             };
-
+            if (projectInputDTO.ImageFile != null)
+            {
+                string fileName = await fileStorageService.SaveAsync(projectInputDTO.ImageFile);
+                project.ImageFileName = fileName;
+            }
             await mainAppContext.Projects.AddAsync(project);
             await mainAppContext.SaveChangesAsync();
 
@@ -57,6 +62,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 return base.CustomBadRequest();
             var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
             List<ProjectOutDTO>? projects;
+            var imagesBaseUrl = $"{Request.Scheme}://{Request.Host}/images";
 
             var query = mainAppContext.Projects.AsQueryable();
 
@@ -77,21 +83,21 @@ namespace AonFreelancing.Controllers.Mobile.v1
             projects = await query.OrderByDescending(p => p.CreatedAt)
             .Skip(page * pageSize)
             .Take(pageSize)
-            .Select(p => new ProjectOutDTO
-            {
-
-                Title = p.Title,
-                Description = p.Description,
-                Status = p.Status,
-                Budget = p.Budget,
-                Duration = p.Duration,
-                PriceType = p.PriceType,
-                Qualifications = p.QualificationName,
-                StartDate = p.StartDate,
-                EndDate = p.EndDate,
-                CreatedAt = p.CreatedAt
-                //CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
-            })
+            .Select(p => new ProjectOutDTO(p,imagesBaseUrl)
+            //{
+            //    Title = p.Title,
+            //    Description = p.Description,
+            //    Status = p.Status,
+            //    Budget = p.Budget,
+            //    Duration = p.Duration,
+            //    PriceType = p.PriceType,
+            //    Qualifications = p.QualificationName,
+            //    StartDate = p.StartDate,
+            //    EndDate = p.EndDate,
+            //    CreatedAt = p.CreatedAt
+            //    //CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+            //}
+            )
             .ToListAsync();
            
             return Ok(CreateSuccessResponse(new { 
@@ -109,9 +115,12 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
             Project? storedProject = mainAppContext.Projects.Where(p => p.Id == projectId).Include(p=>p.Bids).FirstOrDefault();
             if (storedProject == null)
-                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "project not found"));
-            
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "invalid project id"));
+
             if (storedProject.Budget <= bidInputDTO.ProposedPrice)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "proposed price must be less than the project's budget"));
+            
+            if(storedProject.Status == Constants.PROJECT_STATUS_AVAILABLE)
                 return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "proposed price must be less than the project's budget"));
             
             Bid? storedBidWithLowestPrice = storedProject.Bids.OrderBy(b => b.ProposedPrice).FirstOrDefault();
@@ -131,10 +140,12 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProject(int id)
         {
+            var imagesBaseUrl = $"{Request.Scheme}://{Request.Host}/images";
+
             var storedProject = await mainAppContext.Projects.Where(p => p.Id == id)
                 .Include(p => p.Bids)
                 //.Include(p => p.Client)
-                .Select(p => new ProjectOutDTO(p))
+                .Select(p => new ProjectOutDTO(p,imagesBaseUrl))
                 .FirstOrDefaultAsync();
 
             return Ok(CreateSuccessResponse(storedProject));
@@ -152,8 +163,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                                                                 .Include(p => p.Bids)
                                                                 .FirstOrDefaultAsync();
             Error? error = null;
-            if(storedProject == null) 
-                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),"Project not found"));
+            if(storedProject == null)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "invalid  project id"));
             if (storedProject.Status != Constants.PROJECT_STATUS_AVAILABLE)
                 return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "project status is not 'Available'"));
 
@@ -204,7 +215,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
         {
             var storedTask = await mainAppContext.Tasks.Where(t => t.Id == taskId).FirstOrDefaultAsync();
             if (storedTask == null)
-            return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),"Task not found"));
+            return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),"invalid task id"));
+
+            if(taskUpdateDTO.Status == Constants.TASK_STATUS_DONE)
+                storedTask.CompletedAt = DateTime.Now;   
 
             storedTask.Status = taskUpdateDTO.Status;
             await mainAppContext.SaveChangesAsync();

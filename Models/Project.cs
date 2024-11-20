@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AonFreelancing.Models
 {
@@ -27,6 +25,7 @@ namespace AonFreelancing.Models
         public decimal Budget { get; set; }
         public string QualificationName { get; set; }
         public string Status { get; set; }
+        public string? ImageFileName { get; set; }
         public long? FreelancerId { get; set; }
         [ForeignKey("FreelancerId")]
         public Freelancer? Freelancer { get; set; }
