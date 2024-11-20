@@ -13,7 +13,7 @@ namespace AonFreelancing.Middlewares
             _logger = logger;
         }
 
-        public async Task InvokeAsync(HttpContext context)
+        public async System.Threading.Tasks.Task InvokeAsync(HttpContext context)
         {
             try
             {
@@ -26,7 +26,7 @@ namespace AonFreelancing.Middlewares
             }
         }
 
-        private Task HandleExceptionAsync(HttpContext context, Exception exception)
+        private System.Threading.Tasks.Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;

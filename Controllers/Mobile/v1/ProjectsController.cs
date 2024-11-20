@@ -169,5 +169,47 @@ namespace AonFreelancing.Controllers.Mobile.v1
             return NoContent();
 
         }
+        [Authorize(Roles ="CLIENT")]
+        [HttpPost("{projectId}/tasks")]
+        public async Task<IActionResult> CreateTask([FromRoute] long projectId, [FromBody] TaskInputDTO taskInputDTO)
+        {
+            if (!ModelState.IsValid)
+                return base.CustomBadRequest();
+
+            Models.Task newTask = new Models.Task(taskInputDTO, projectId);
+            await mainAppContext.AddAsync(newTask);
+            await mainAppContext.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetTaskById), new {projectId = projectId, taskId = newTask.Id }, new TaskOutputDTO(newTask));
+        }
+        [HttpGet("{projectId}/tasks")]
+        public async Task<IActionResult> GetTasksByProjectId(long projectId)
+        {
+            var storedTasksDTOs = await mainAppContext.Tasks.Where(t => t.ProjectId== projectId).Select(t => new TaskOutputDTO(t)).ToListAsync();
+                return Ok(CreateSuccessResponse(storedTasksDTOs));
+        }
+
+        [HttpGet("{projectId}/tasks/{taskId}")]
+        public async Task<IActionResult> GetTaskById(long taskId)
+        {
+            var storedTask = await mainAppContext.Tasks.Where(t => t.Id == taskId).FirstOrDefaultAsync();
+            if (storedTask != null)
+                return Ok(CreateSuccessResponse(new TaskOutputDTO(storedTask)));
+
+            return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),"Task not found"));
+        }  
+
+        [HttpPatch("{projectId}/tasks/{taskId}")]
+        public async Task<IActionResult> UpdateTaskById(long taskId, [FromBody] TaskUpdateDTO taskUpdateDTO)
+        {
+            var storedTask = await mainAppContext.Tasks.Where(t => t.Id == taskId).FirstOrDefaultAsync();
+            if (storedTask == null)
+            return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),"Task not found"));
+
+            storedTask.Status = taskUpdateDTO.Status;
+            await mainAppContext.SaveChangesAsync();
+
+            return Ok(CreateSuccessResponse(new TaskOutputDTO(storedTask)));
+        }
     }
 }

@@ -9,5 +9,10 @@
         public const string BID_STATUS_APPROVED = "approved";
         public static string PROJECT_STATUS_CLOSED = "Closed";
         public static string PROJECT_STATUS_AVAILABLE= "Available";
+        public static string TASK_STATUS_TODO = "to-do";
+        public static string TASK_STATUS_IN_PROGRESS = "in-progress";
+        public static string TASK_STATUS_IN_REVIEW= "in-review";
+        public static string TASK_STATUS_DONE = "done";
+
     }
 }

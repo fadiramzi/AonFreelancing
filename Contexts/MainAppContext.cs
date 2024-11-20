@@ -2,7 +2,6 @@
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using static System.Net.WebRequestMethods;
 
 namespace AonFreelancing.Contexts
 {
@@ -15,6 +14,7 @@ namespace AonFreelancing.Contexts
         public DbSet<OTP> OTPs { get; set; }
         public DbSet<TempUser> TempUsers { get; set; }
         public DbSet<Bid> Bids { get; set; }
+        public DbSet<Models.Task> Tasks{ get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -30,6 +30,17 @@ namespace AonFreelancing.Contexts
             builder.Entity<SystemUser>().ToTable("SystemUsers");
             builder.Entity<OTP>().ToTable("otps", o => o.HasCheckConstraint("CK_CODE","length([Code]) = 6"));
 
+            builder.Entity<Project>().ToTable("Projects", tb => tb.HasCheckConstraint("CK_PRICE_TYPE", "[PriceType] IN ('Fixed', 'PerHour')"));
+            builder.Entity<Project>().ToTable("Projects", tb => tb.HasCheckConstraint("CK_QUALIFICATION_NAME", "[QualificationName] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')"));
+            builder.Entity<Project>().ToTable("Projects", tb => tb.HasCheckConstraint("CK_STATUS", "[Status] IN ('Available', 'Closed')"))
+                .Property(p => p.Status).HasDefaultValue("Available");
+
+
+            builder.Entity<Bid>().Property(b => b.Status).HasDefaultValue(Constants.BID_STATUS_PENDING);
+            builder.Entity<Models.Task>().Property(t => t.Status).HasDefaultValue(Constants.TASK_STATUS_TODO);
+            builder.Entity<Models.Task>().ToTable("Tasks",t=>t.HasCheckConstraint("CK_TASK_STATUS", $"[Status] IN ('{Constants.TASK_STATUS_DONE}', '{Constants.TASK_STATUS_IN_REVIEW}', '{Constants.TASK_STATUS_IN_PROGRESS}', '{Constants.TASK_STATUS_TODO}')"));
+
+
 
             //set up relationships
             builder.Entity<TempUser>().HasOne<OTP>()
@@ -41,12 +52,8 @@ namespace AonFreelancing.Contexts
                                     .HasForeignKey<Bid>()
                                     .HasPrincipalKey<Freelancer>(nameof(Freelancer.Id));
 
-            builder.Entity<Project>().ToTable("Projects", tb => tb.HasCheckConstraint("CK_PRICE_TYPE", "[PriceType] IN ('Fixed', 'PerHour')"));
-            builder.Entity<Project>().ToTable("Projects", tb => tb.HasCheckConstraint("CK_QUALIFICATION_NAME", "[QualificationName] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')"));
-            builder.Entity<Project>().ToTable("Projects", tb => tb.HasCheckConstraint("CK_STATUS", "[Status] IN ('Available', 'Closed')"))
-                .Property(p=>p.Status).HasDefaultValue("Available");
 
-            builder.Entity<Bid>().Property(b => b.Status).HasDefaultValue(Constants.BID_STATUS_PENDING);
+
 
             base.OnModelCreating(builder);
         }

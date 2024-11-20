@@ -16,7 +16,7 @@ namespace AonFreelancing.Utilities
             _configuration = configuration;
         }
         //TODO: make this method void
-        public async Task SendOTPAsync(string otp,string receiverPhoneNumber)
+        public async System.Threading.Tasks.Task SendOTPAsync(string otp,string receiverPhoneNumber)
         {
             if (_configuration["Env"] == Constants.ENV_SIT)
             {
@@ -34,7 +34,7 @@ namespace AonFreelancing.Utilities
 
             var message =await MessageResource.CreateAsync(messageOptions);
         }
-        public async Task SendForgotPasswordMessageAsync(string message,string receiverPhoneNumber)
+        public async System.Threading.Tasks.Task SendForgotPasswordMessageAsync(string message,string receiverPhoneNumber)
         {
             if (_configuration["Env"] == Constants.ENV_SIT)
             {

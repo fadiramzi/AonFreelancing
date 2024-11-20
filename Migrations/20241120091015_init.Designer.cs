@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    [Migration("20241119141330_init-mig")]
-    partial class initmig
+    [Migration("20241120091015_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -175,6 +175,44 @@ namespace AonFreelancing.Migrations
                             t.HasCheckConstraint("CK_QUALIFICATION_NAME", "[QualificationName] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')");
 
                             t.HasCheckConstraint("CK_STATUS", "[Status] IN ('Available', 'Closed')");
+                        });
+                });
+
+            modelBuilder.Entity("AonFreelancing.Models.Task", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Deadline")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("ProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("to-do");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("Tasks", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TASK_STATUS", "[Status] IN ('done', 'in-review', 'in-progress', 'to-do')");
                         });
                 });
 
@@ -450,6 +488,15 @@ namespace AonFreelancing.Migrations
                     b.Navigation("Freelancer");
                 });
 
+            modelBuilder.Entity("AonFreelancing.Models.Task", b =>
+                {
+                    b.HasOne("AonFreelancing.Models.Project", null)
+                        .WithMany("Tasks")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
                 {
                     b.HasOne("AonFreelancing.Models.ApplicationRole", null)
@@ -531,6 +578,8 @@ namespace AonFreelancing.Migrations
             modelBuilder.Entity("AonFreelancing.Models.Project", b =>
                 {
                     b.Navigation("Bids");
+
+                    b.Navigation("Tasks");
                 });
 
             modelBuilder.Entity("AonFreelancing.Models.Client", b =>

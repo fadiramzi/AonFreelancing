@@ -31,5 +31,6 @@ namespace AonFreelancing.Models
         [ForeignKey("FreelancerId")]
         public Freelancer? Freelancer { get; set; }
         public List<Bid> Bids { get; set; }
+        public List<Task> Tasks{ get; set; }
     }
 }
