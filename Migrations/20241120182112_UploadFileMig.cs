@@ -5,24 +5,25 @@
 namespace AonFreelancing.Migrations
 {
     /// <inheritdoc />
-    public partial class userTypeToUserTable : Migration
+    public partial class UploadFileMig : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "UserType",
-                table: "AspNetUsers",
+                name: "ImagePath",
+                table: "Projects",
                 type: "TEXT",
-                nullable: true);
+                nullable: false,
+                defaultValue: "");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "UserType",
-                table: "AspNetUsers");
+                name: "ImagePath",
+                table: "Projects");
         }
     }
 }

@@ -11,8 +11,18 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    [Migration("20241113064604_otpToTempUser")]
-    partial class otpToTempUser
+<<<<<<< HEAD:Migrations/20241120160202_TasksMig.Designer.cs
+    [Migration("20241120160202_TasksMig")]
+    partial class TasksMig
+=======
+<<<<<<<< HEAD:Migrations/20241114201856_Cr1Cr2Cr3Cr4Mig.Designer.cs
+    [Migration("20241114201856_Cr1Cr2Cr3Cr4Mig")]
+    partial class Cr1Cr2Cr3Cr4Mig
+========
+    [Migration("20241113063403_InitialMigration")]
+    partial class InitialMigration
+>>>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2:Migrations/20241113063403_InitialMigration.Designer.cs
+>>>>>>> 7a1bf9d3c70dc397651dcc412af417235d1c26a5:Migrations/20241113063403_InitialMigration.Designer.cs
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -47,22 +57,69 @@ namespace AonFreelancing.Migrations
                     b.ToTable("AspNetRoles", (string)null);
                 });
 
+            modelBuilder.Entity("AonFreelancing.Models.Bid", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("ClientId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("FreelancerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("ProposedPrice")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("SystemUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("FreelancerId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("SystemUserId");
+
+                    b.ToTable("Bids");
+                });
+
             modelBuilder.Entity("AonFreelancing.Models.OTP", b =>
                 {
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Code")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ExpiresAt")
+                    b.Property<DateTime?>("ExpiresAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsUsed")
+                    b.Property<bool?>("IsUsed")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("PhoneNumber");
@@ -92,6 +149,21 @@ namespace AonFreelancing.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+<<<<<<< HEAD:Migrations/20241120160202_TasksMig.Designer.cs
+                    b.Property<int>("Duration")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("TEXT");
+
+=======
+<<<<<<<< HEAD:Migrations/20241114201856_Cr1Cr2Cr3Cr4Mig.Designer.cs
+                    b.Property<int>("Duration")
+                        .HasColumnType("INTEGER");
+
+========
+>>>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2:Migrations/20241113063403_InitialMigration.Designer.cs
+>>>>>>> 7a1bf9d3c70dc397651dcc412af417235d1c26a5:Migrations/20241113063403_InitialMigration.Designer.cs
                     b.Property<long?>("FreelancerId")
                         .HasColumnType("INTEGER");
 
@@ -99,17 +171,31 @@ namespace AonFreelancing.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+<<<<<<< HEAD:Migrations/20241120160202_TasksMig.Designer.cs
+                    b.Property<string>("QualificationName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("StartDate")
+=======
+<<<<<<<< HEAD:Migrations/20241114201856_Cr1Cr2Cr3Cr4Mig.Designer.cs
+                    b.Property<string>("QualificationName")
+========
                     b.Property<string>("ProgressStatus")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Qualification")
+>>>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2:Migrations/20241113063403_InitialMigration.Designer.cs
                         .IsRequired()
+>>>>>>> 7a1bf9d3c70dc397651dcc412af417235d1c26a5:Migrations/20241113063403_InitialMigration.Designer.cs
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("Available");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -121,19 +207,86 @@ namespace AonFreelancing.Migrations
 
                     b.HasIndex("FreelancerId");
 
-                    b.ToTable("Projects");
+                    b.ToTable("Projects", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PRICE_TYPE", "[PriceType] IN ('Fixed', 'PerHour')");
+
+                            t.HasCheckConstraint("CK_QUALIFICATION_NAME", "[QualificationName] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')");
+
+                            t.HasCheckConstraint("CK_STATUS", "[Status] IN ('Available', 'Closed')");
+                        });
                 });
 
+            modelBuilder.Entity("AonFreelancing.Models.Tasks", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DeadlineAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("Tasks");
+                });
+
+<<<<<<<< HEAD:Migrations/20241114201856_Cr1Cr2Cr3Cr4Mig.Designer.cs
+            modelBuilder.Entity("AonFreelancing.Models.TempOTP", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Code")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool?>("IsUsed")
+                        .HasColumnType("INTEGER");
+
+========
             modelBuilder.Entity("AonFreelancing.Models.TempUser", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+>>>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2:Migrations/20241113063403_InitialMigration.Designer.cs
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+<<<<<<<< HEAD:Migrations/20241114201856_Cr1Cr2Cr3Cr4Mig.Designer.cs
+                    b.HasKey("ID");
+
+                    b.ToTable("TempOtps");
+========
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("INTEGER");
 
@@ -143,6 +296,7 @@ namespace AonFreelancing.Migrations
                         .IsUnique();
 
                     b.ToTable("TempUser", (string)null);
+>>>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2:Migrations/20241113063403_InitialMigration.Designer.cs
                 });
 
             modelBuilder.Entity("AonFreelancing.Models.User", b =>
@@ -150,6 +304,13 @@ namespace AonFreelancing.Migrations
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("About")
+<<<<<<< HEAD:Migrations/20241120160202_TasksMig.Designer.cs
+=======
+                        .IsRequired()
+>>>>>>> 7a1bf9d3c70dc397651dcc412af417235d1c26a5:Migrations/20241113063403_InitialMigration.Designer.cs
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("INTEGER");
@@ -217,6 +378,22 @@ namespace AonFreelancing.Migrations
                     b.ToTable("AspNetUsers", (string)null);
 
                     b.UseTptMappingStrategy();
+                });
+
+            modelBuilder.Entity("AonFreelancing.Models.UsersTemp", b =>
+                {
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool?>("IsVerfied")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("VerifyTime")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("PhoneNumber");
+
+                    b.ToTable("UsersTemps", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
@@ -351,6 +528,33 @@ namespace AonFreelancing.Migrations
                     b.ToTable("SystemUsers", (string)null);
                 });
 
+            modelBuilder.Entity("AonFreelancing.Models.Bid", b =>
+                {
+                    b.HasOne("AonFreelancing.Models.Client", null)
+                        .WithMany("Bids")
+                        .HasForeignKey("ClientId");
+
+                    b.HasOne("AonFreelancing.Models.Freelancer", "Freelancer")
+                        .WithMany("Bids")
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AonFreelancing.Models.Project", "Project")
+                        .WithMany("Bids")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AonFreelancing.Models.SystemUser", null)
+                        .WithMany("Bids")
+                        .HasForeignKey("SystemUserId");
+
+                    b.Navigation("Freelancer");
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("AonFreelancing.Models.OTP", b =>
                 {
                     b.HasOne("AonFreelancing.Models.TempUser", null)
@@ -376,6 +580,17 @@ namespace AonFreelancing.Migrations
                     b.Navigation("Client");
 
                     b.Navigation("Freelancer");
+                });
+
+            modelBuilder.Entity("AonFreelancing.Models.Tasks", b =>
+                {
+                    b.HasOne("AonFreelancing.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
@@ -456,9 +671,26 @@ namespace AonFreelancing.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("AonFreelancing.Models.Project", b =>
+                {
+                    b.Navigation("Bids");
+                });
+
             modelBuilder.Entity("AonFreelancing.Models.Client", b =>
                 {
+                    b.Navigation("Bids");
+
                     b.Navigation("Projects");
+                });
+
+            modelBuilder.Entity("AonFreelancing.Models.Freelancer", b =>
+                {
+                    b.Navigation("Bids");
+                });
+
+            modelBuilder.Entity("AonFreelancing.Models.SystemUser", b =>
+                {
+                    b.Navigation("Bids");
                 });
 #pragma warning restore 612, 618
         }
