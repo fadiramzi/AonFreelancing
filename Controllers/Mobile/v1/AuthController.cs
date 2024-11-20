@@ -27,10 +27,12 @@ namespace AonFreelancing.Controllers.Mobile.v1
         public async Task<IActionResult> SendVerificationCodeAsync([FromBody] VerificationCodeReq verificationCodeReq)
         {
             var isUserExists = await mainAppContext.TempUsers
-                .Where(u => u.PhoneNumber == verificationCodeReq.PhoneNumber)
-                .FirstOrDefaultAsync();
+                .AnyAsync(u => u.PhoneNumber == verificationCodeReq.PhoneNumber);
 
-            if (isUserExists != null)
+            var isPhoneNumberUnique = await mainAppContext.Users
+                .AnyAsync(u => u.PhoneNumber == verificationCodeReq.PhoneNumber);
+            
+            if (isUserExists || isPhoneNumberUnique)
             {
                 return Conflict(CreateErrorResponse(
                     StatusCodes.Status409Conflict.ToString(), "User already exists."));

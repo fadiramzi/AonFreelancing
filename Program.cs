@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -78,6 +79,11 @@ namespace AonFreelancing
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(FileStorageService.Root),
+                RequestPath = "/images"
+            });
 
             app.MapControllers();
 

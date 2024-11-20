@@ -16,8 +16,8 @@ namespace AonFreelancing.Services
                 audience: config[$"Jwt:{Utilities.Constants.JWT_AUDIENCE}"],
                 claims:
                 [
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(ClaimTypes.Role, role)
+                    new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                    new Claim(ClaimTypes.Role, role)
                 ],
                 expires: DateTime.Now.AddMinutes(Convert.ToDouble(config[$"Jwt:{Utilities.Constants.JWT_EXPIRATION}"])),
                 signingCredentials: creds);

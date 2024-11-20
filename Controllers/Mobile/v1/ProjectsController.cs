@@ -21,7 +21,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
     {
         [Authorize(Roles = Constants.USER_TYPE_CLIENT)]
         [HttpPost]
-        public async Task<IActionResult> PostProjectAsync([FromBody] ProjectInputDto? projectInputDto)
+        public async Task<IActionResult> PostProjectAsync([FromForm] ProjectInputDto? projectInputDto)
         {
             if (!ModelState.IsValid)
                 return CustomBadRequest();
@@ -62,7 +62,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             [FromQuery] int pageSize = 8, [FromQuery] string? qur = default
         )
         {
-            var imageUrl = $"{Request.Scheme}://{Request.Host}/projectImages";
+            var imageUrl = $"{Request.Scheme}://{Request.Host}/images";
             var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
             var query = mainAppContext.Projects.AsQueryable();
             var count = await query.CountAsync();
@@ -106,16 +106,5 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 Items = projects
             }));
         }
-
-        //[HttpGet("{id}")]
-        //public IActionResult GetProject(int id)
-        //{
-        //    var project = _mainAppContext.Projects
-        //        .Include(p => p.Client)
-        //        .FirstOrDefault(p => p.Id == id);
-
-        //    return Ok(CreateSuccessResponse(project));
-
-        //}
     }
 }
