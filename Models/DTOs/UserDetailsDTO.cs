@@ -10,7 +10,7 @@ namespace AonFreelancing.Models.DTOs
         public string PhoneNumber { get; set; }
         public string Role { get; set; }
 
-        public UserDetailsDTO(User user,string role)
+        public UserDetailsDTO(UserEntity user,string role)
         {
             Id = user.Id;
             Name = user.Name;

@@ -4,10 +4,10 @@ namespace AonFreelancing.Models.Entities
 {
 
     [Table("Clients")]
-    public class Client : User
+    public class ClientEntity : UserEntity
     {
         public string CompanyName { get; set; }
-        public List<Project>? Projects { get; set; }
+        public List<ProjectEntity>? Projects { get; set; }
 
     }
 }

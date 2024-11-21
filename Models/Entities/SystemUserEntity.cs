@@ -4,7 +4,7 @@
 namespace AonFreelancing.Models.Entities
 {
     [Table("SystemUsers")]
-    public class SystemUser : User
+    public class SystemUserEntity : UserEntity
     {
         public string Permissions { get; set; }
     }

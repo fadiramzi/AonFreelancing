@@ -6,9 +6,9 @@ namespace AonFreelancing.Models.Entities
 {
     //Entity
     [Table("Projects")]
-    public class Project
+    public class ProjectEntity
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         [Required] public string Title { get; set; }
 
         [AllowNull] public string Description { get; set; }
@@ -17,7 +17,7 @@ namespace AonFreelancing.Models.Entities
 
         // Belongs to a client
         [ForeignKey("ClientId")]
-        public Client Client { get; set; }
+        public ClientEntity Client { get; set; }
         public string? ImageName { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? StartDate { get; set; }
@@ -29,6 +29,7 @@ namespace AonFreelancing.Models.Entities
         public string Status { get; set; }
         public long? FreelancerId { get; set; }
         [ForeignKey("FreelancerId")]
-        public virtual Freelancer? Freelancer { get; set; }
+        public FreelancerEntity? Freelancer { get; set; }
+        public List<BidsEntity> Bids { get; set; }
     }
 }

@@ -1,6 +1,8 @@
+using System.Security.Claims;
+
 namespace AonFreelancing.Utilities;
 
-public class StringOperations
+public class UtilitesMethods
 {
     public static string GetTimeAgo(DateTime createdAt)
     {
@@ -15,5 +17,11 @@ public class StringOperations
             < 525600 => $"{timeSpan.Days / 30} month{(timeSpan.Days / 30 != 1 ? "s" : "")} ago", // 525600 minutes in a year
             _ => $"{timeSpan.Days / 365} year{(timeSpan.Days / 365 != 1 ? "s" : "")} ago"
         };
+    }
+
+    public static long GetUserId(ClaimsIdentity identity)
+    {
+        var userId = identity.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return Convert.ToInt64(userId);
     }
 }

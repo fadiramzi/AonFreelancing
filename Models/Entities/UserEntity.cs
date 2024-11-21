@@ -2,9 +2,10 @@
 
 namespace AonFreelancing.Models.Entities
 {
-    public class User : IdentityUser<long>
+    public class UserEntity : IdentityUser<long>
     {
         public string Name { get; set; }
         public string? About { get; set; }
+        public List<BidsEntity> Bids { get; set; }
     }
 }

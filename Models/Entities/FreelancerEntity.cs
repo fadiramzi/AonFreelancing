@@ -3,7 +3,7 @@
 namespace AonFreelancing.Models.Entities
 {
     [Table("Freelancers")]
-    public class Freelancer : User
+    public class FreelancerEntity : UserEntity
     {
 
         public string Skills { get; set; }

@@ -5,7 +5,7 @@ using AonFreelancing.Utilities;
 namespace AonFreelancing.Models.Entities;
 
 [Table("TempUser")]
-public class TempUser
+public class TempUserEntity
 {
     [Key]
     public long Id { get; set; }

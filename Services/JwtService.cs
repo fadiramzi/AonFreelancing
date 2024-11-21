@@ -8,7 +8,7 @@ namespace AonFreelancing.Services
 {
     public class JwtService(IConfiguration config)
     {
-        public string GenerateJwt(User user, string role)
+        public string GenerateJwt(UserEntity user, string role)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config[$"Jwt:{Utilities.Constants.JWT_KEY}"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

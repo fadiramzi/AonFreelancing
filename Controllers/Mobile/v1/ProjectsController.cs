@@ -1,12 +1,14 @@
 ﻿using AonFreelancing.Contexts;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.Entities;
+using AonFreelancing.Models.Responses;
 using AonFreelancing.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -15,28 +17,24 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [ApiController]
     public class ProjectsController(
         MainAppContext mainAppContext,
-        UserManager<User> userManager,
+        UserManager<UserEntity> userManager,
         FileStorageService fileStorageService)
         : BaseController
     {
         [Authorize(Roles = Constants.USER_TYPE_CLIENT)]
         [HttpPost]
-        public async Task<IActionResult> PostProjectAsync([FromForm] ProjectInputDto? projectInputDto)
+        public async Task<IActionResult> PostProjectAsync([FromForm] ProjectInputDTO? projectInputDto)
         {
             if (!ModelState.IsValid)
                 return CustomBadRequest();
 
-            var user = await userManager.GetUserAsync(HttpContext.User);
-            if (user == null)
-                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),
-                    "Unable to load user."));
+            var clientId = UtilitesMethods.GetUserId(HttpContext.User.Identity as ClaimsIdentity ?? throw new InvalidOperationException("User identity is null"));
 
-            var userId = user.Id;
             if (projectInputDto != null)
             {
-                var project = new Project
+                var project = new ProjectEntity
                 {
-                    ClientId = userId,
+                    ClientId = clientId,
                     Title = projectInputDto.Title,
                     Description = projectInputDto.Description,
                     QualificationName = projectInputDto.QualificationName,
@@ -95,7 +93,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     EndDate = p.EndDate,
                     Image = p.ImageName != null ? $"{imageUrl}/{p.ImageName}" : string.Empty,
                     CreatedAt = p.CreatedAt,
-                    CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+                    CreationTime = UtilitesMethods.GetTimeAgo(p.CreatedAt)
                 })
                 .ToListAsync();
 
@@ -104,6 +102,59 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 Total = count,
                 Items = projects
             }));
+        }
+
+        [Authorize(Roles = Constants.USER_TYPE_FREELANCER)]
+        [HttpPost("{id}/bids")]
+        public async Task<IActionResult> AddBidsAsync([FromRoute] long id, [FromBody] BidsInputDTO bidsInputDTO)
+        {
+            if (!ModelState.IsValid) return CustomBadRequest();
+
+            var project = await mainAppContext.Projects.Include(p => p.Bids)
+                .FirstOrDefaultAsync(p => p.Id == id);
+            var freelancer = await userManager.GetUserAsync(HttpContext.User);
+
+            if (freelancer == null || freelancer is not FreelancerEntity)
+                return Forbid();
+
+            if (project == null)
+            {
+                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "Project not found."));
+            }
+
+            if (project.Status.Equals(Constants.PROJECT_STATUS_CLOSED))
+            {
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "Project is closed."));
+            }
+
+            if (project.Budget <= bidsInputDTO.ProposedPrice)
+            {
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),
+                    "Proposed price is higher or equal than budget."));
+            }
+
+            if (project.Bids != null && project.Bids.Count > 0 && project.Bids
+                .OrderBy(b => b.ProposedPrice)
+                .FirstOrDefault()?.ProposedPrice <= bidsInputDTO.ProposedPrice)
+            {
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),
+                    "Proposed price is higher or equal than lowest bid."));
+            }
+
+            var bid = new BidsEntity
+            {
+                FreelancerId = freelancer.Id,
+                ProjectId = project.Id,
+                ProposedPrice = bidsInputDTO.ProposedPrice,
+                Notes = bidsInputDTO.Notes ?? string.Empty,
+                Status = Constants.BID_STATUS_PENDING,
+                SubmittedAt = DateTime.Now
+            };
+
+            await mainAppContext.Bids.AddAsync(bid);
+            await mainAppContext.SaveChangesAsync();
+
+            return Ok(CreateSuccessResponse("Bid added successfully"));
         }
     }
 }

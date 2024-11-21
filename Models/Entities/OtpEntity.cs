@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace AonFreelancing.Models.Entities
 {
     [Table("Otps")]
-    public class OTP
+    public class OtpEntity
     {
         [Key]
         public string PhoneNumber { get; set; }

@@ -14,10 +14,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Route("api/mobile/v1/auth")]
     [ApiController]
     public class AuthController(
-        UserManager<User> userManager,
+        UserManager<UserEntity> userManager,
         MainAppContext mainAppContext,
         IConfiguration configuration,
-        RoleManager<ApplicationRole> roleManager,
+        RoleManager<ApplicationRoleEntity> roleManager,
         OTPManager otpManager,
         JwtService jwtService)
         : BaseController
@@ -37,7 +37,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     StatusCodes.Status409Conflict.ToString(), "User already exists."));
             }
 
-            var tempUser = new TempUser()
+            var tempUser = new TempUserEntity()
             {
                 PhoneNumber = verificationCodeReq.PhoneNumber,
                 UserType = verificationCodeReq.UserType,
@@ -50,7 +50,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             var otpCode = otpManager.GenerateOtp(); 
             if (configuration["Env"] != Constants.ENV_SIT)
             {
-                var otp = new OTP()
+                var otp = new OtpEntity()
                 {
                     PhoneNumber = verificationCodeReq.PhoneNumber,
                     Code = otpCode,
@@ -111,9 +111,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),
                     "Phone number is invalid."));
             
-            User? user = tempUser.UserType switch
+            UserEntity? user = tempUser.UserType switch
             {
-                Constants.USER_TYPE_FREELANCER => new Freelancer
+                Constants.USER_TYPE_FREELANCER => new FreelancerEntity
                 {
                     Name = registerReq.Name,
                     Email = registerReq.Email,
@@ -122,7 +122,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     PhoneNumberConfirmed = tempUser.PhoneNumberConfirmed,
                     Skills = registerReq.Skills ?? string.Empty,
                 },
-                Constants.USER_TYPE_CLIENT => new Client()
+                Constants.USER_TYPE_CLIENT => new ClientEntity()
                 {
                     Name = registerReq.Name,
                     UserName = registerReq.Username,
@@ -151,7 +151,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                         .ToList()
                 });
             
-            var role = new ApplicationRole { Name = tempUser.UserType };
+            var role = new ApplicationRoleEntity { Name = tempUser.UserType };
             await roleManager.CreateAsync(role);
             await userManager.AddToRoleAsync(user, role.Name);
             mainAppContext.TempUsers.Remove(tempUser);

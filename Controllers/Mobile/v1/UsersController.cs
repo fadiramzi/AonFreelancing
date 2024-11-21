@@ -18,7 +18,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
         public async Task<IActionResult> GetProfileByIdAsync([FromRoute]long id)
         {
             var freelancer = await mainAppContext.Users 
-                .OfType<Freelancer>().Where(f => f.Id == id)
+                .OfType<FreelancerEntity>().Where(f => f.Id == id)
                 .Select(f => new FreelancerResponseDTO
                 {
                     Id = f.Id,
@@ -36,7 +36,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 return Ok(CreateSuccessResponse(freelancer));
           
             var client = await mainAppContext.Users
-                .OfType<Client>()
+                .OfType<ClientEntity>()
                 .Where(c => c.Id == id)
                 .Include(c => c.Projects)
                 .Select(c => new ClientResponseDTO

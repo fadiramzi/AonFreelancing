@@ -2,7 +2,7 @@
 
 namespace AonFreelancing.Models.Entities
 {
-    public class ApplicationRole : IdentityRole<long>
+    public class ApplicationRoleEntity : IdentityRole<long>
     {
     }
 }
