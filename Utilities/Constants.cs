@@ -26,5 +26,11 @@
         // Bids status
         public const string BID_STATUS_PENDING = "pending";
         public const string BID_STATUS_APPROVED = "approved";
+
+        // Tasks status
+        public const string TASK_STATUS_TODO = "to-do";
+        public const string TASK_STATUS_IN_PROGRESS = "in-progress";
+        public const string TASK_STATUS_IN_REVIEW = "in-review";
+        public const string TASK_STATUS_DONE = "done";
     }
 }

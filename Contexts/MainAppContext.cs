@@ -20,6 +20,7 @@ namespace AonFreelancing.Contexts
         public DbSet<OtpEntity> OTPs { get; set; }
         public DbSet<TempUserEntity> TempUsers { get; set; }
         public DbSet<BidsEntity> Bids { get; set; }
+        public DbSet<TaskEntity> Tasks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -71,6 +72,12 @@ namespace AonFreelancing.Contexts
 
             builder.Entity<BidsEntity>().Property(b => b.Status)
                 .HasDefaultValue(Constants.BID_STATUS_PENDING);
+
+            builder.Entity<TaskEntity>().
+                ToTable("Tasks", t => t.HasCheckConstraint("CK_TASK_STATUS", $"[Status] IN ('{Constants.TASK_STATUS_DONE}', " +
+                $"'{Constants.TASK_STATUS_IN_REVIEW}', '{Constants.TASK_STATUS_IN_PROGRESS}', '{Constants.TASK_STATUS_TODO}')"));
+
+            builder.Entity<TaskEntity>().Property(t => t.Status).HasDefaultValue(Constants.TASK_STATUS_TODO);
 
             base.OnModelCreating(builder);
         }

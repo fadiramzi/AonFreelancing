@@ -1,6 +1,7 @@
 ﻿using AonFreelancing.Contexts;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.Entities;
+using AonFreelancing.Models.Requests;
 using AonFreelancing.Models.Responses;
 using AonFreelancing.Services;
 using AonFreelancing.Utilities;
@@ -222,6 +223,72 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 }).FirstOrDefaultAsync();
 
             return Ok(CreateSuccessResponse(projectOutDTO));
+        }
+
+        [Authorize(Roles = Constants.USER_TYPE_CLIENT)]
+        [HttpPost("{id}/create-tasks")]
+        public async Task<IActionResult> CreateTasksAsync([FromRoute] long id, [FromBody] TasksInputDTO tasksInputDTO)
+        {
+            if (!ModelState.IsValid) return CustomBadRequest();
+
+            var project = await mainAppContext.Projects.Include(p => p.Bids).FirstOrDefaultAsync(p => p.Id == id);
+
+            if (project == null || project.Bids.Any(b => b.Status.Equals(Constants.BID_STATUS_PENDING)))
+                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "Project not found or project bid's status still on pending."));
+
+            var clientId = UtilitesMethods.GetUserId(HttpContext.User.Identity as ClaimsIdentity
+                ?? throw new InvalidOperationException("User is does not exists."));
+
+            var task = new TaskEntity
+            {
+                ClientId = clientId,
+                ProjectId = project.Id,
+                Name = tasksInputDTO.Name,
+                Notes = tasksInputDTO.Notes ?? string.Empty,
+                Deadline = tasksInputDTO.DeadlineAt,
+            };
+
+            await mainAppContext.AddAsync(task);
+            await mainAppContext.SaveChangesAsync();
+
+            return Ok(CreateSuccessResponse("Task Created."));
+        }
+
+        [Authorize(Roles = Constants.USER_TYPE_CLIENT)]
+        [HttpGet("{id}/tasks-status")]
+        public async Task<IActionResult> FilterTaskStatus([FromRoute] long id, [FromQuery] TasksStatusRequest taskStatusRequest)
+        {
+            var taskDTO = await mainAppContext.Tasks
+                .AsNoTracking()
+                .Where(t => t.ProjectId == id && t.Status.Contains(taskStatusRequest.Status))
+                .Select(t => new TasksOutDTO
+                {
+                    Id = t.Id,
+                    ProjectId = t.ProjectId,
+                    Name = t.Name,
+                    Notes = t.Notes,
+                    Status = t.Status,
+                    Deadline = t.Deadline,
+                    CompletedAt = t.CompletedAt
+                }).ToListAsync();
+            return Ok(CreateSuccessResponse(taskDTO));
+        }
+
+        [Authorize(Roles = Constants.USER_TYPE_CLIENT)]
+        [HttpPatch("{id}/update")]
+        public async Task<IActionResult> UpdateByIdAsync(long id, [FromBody] TasksStatusRequest taskStatusRequest)
+        {
+            var task = await mainAppContext.Tasks.FirstOrDefaultAsync(t => t.Id == id);
+            if (task == null)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "Invalid task."));
+
+            if (taskStatusRequest.Status.ToLower().Equals(Constants.TASK_STATUS_DONE))
+                task.CompletedAt = DateTime.Now;
+
+            task.Status = taskStatusRequest.Status;
+            await mainAppContext.SaveChangesAsync();
+
+            return Ok(CreateSuccessResponse(taskStatusRequest.Status));
         }
     }
 }
