@@ -180,7 +180,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpGet("{Id}")]
         public async Task<IActionResult> GetProject(long id)
         {
-            var project = await mainAppContext.Projects.Where(p => p.Id == id).Include(p => p.Bids.OrderBy(b => b.proposed_Price)).FirstOrDefaultAsync();
+            string imageUrL = $"{Request.Scheme}://{Request.Host}/images";
+            var project = await mainAppContext.Projects.Where(p => p.Id == id).Include(p => p.Bids.OrderBy(b => b.proposed_Price)).Select(p=>new ProjectOutDTO(p,imageUrL)).FirstOrDefaultAsync();
 
             if (project == null)
             {
@@ -192,7 +193,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
 
 
-            return Ok(project);
+            return Ok(CreateSuccessResponse<object>(project));
             
               
           
@@ -251,7 +252,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 await mainAppContext.SaveChangesAsync();
                 return Ok();
             }
-            return NotFound();
+            return NotFound(CreateErrorResponse("400","the project Task Not Found"));
 
 
         }
@@ -267,7 +268,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 mainAppContext.Tasks.Update(Task);
                 await mainAppContext.SaveChangesAsync();
             }
-            return NotFound();
+            return NotFound(CreateErrorResponse("400", "the project Not Found"));
 
         }
 
