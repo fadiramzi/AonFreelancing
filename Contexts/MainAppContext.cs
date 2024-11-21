@@ -3,6 +3,7 @@ using AonFreelancing.Models.Responses;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using static System.Net.WebRequestMethods;
+using Task = System.Threading.Tasks.Task;
 
 namespace AonFreelancing.Contexts
 {
@@ -19,6 +20,9 @@ namespace AonFreelancing.Contexts
         public DbSet<User> Users { get; set; } // Will access Freelancers, Clients, SystemUsers through inheritance and ofType 
         public DbSet<OTP> OTPs { get; set; }
         public DbSet<TempUser> TempUsers { get; set; }
+        public DbSet<EntityTask> Tasks { get; set; }
+     
+        public DbSet<Bid>Bids { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -29,8 +33,10 @@ namespace AonFreelancing.Contexts
                 .HasIndex(u=>u.PhoneNumber).IsUnique();
             builder.Entity<TempUser>().ToTable("TempUser")
                 .HasIndex(u=>u.PhoneNumber).IsUnique();
-            
+            builder.Entity<EntityTask>().ToTable("Tasks");
+          
             builder.Entity<Freelancer>().ToTable("Freelancers");
+            builder.Entity<Bid>().ToTable("Bids"); 
             builder.Entity<Client>().ToTable("Clients");
             builder.Entity<SystemUser>().ToTable("SystemUsers");
             builder.Entity<OTP>().ToTable("otps", o => o.HasCheckConstraint("CK_CODE","length([Code]) = 6"));

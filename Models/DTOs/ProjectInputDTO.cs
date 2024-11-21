@@ -16,6 +16,8 @@ namespace AonFreelancing.Models.DTOs
         [AllowedValues(["uiux", "mobile", "frontend", "backend", "fullstack"])]
         public string QualificationName { get; set; }
 
+
+        public IFormFile? ImageName {  get; set; }   
         [Required]
         [Range(1,int.MaxValue)]
         public int Duration { get; set; } //Number of days

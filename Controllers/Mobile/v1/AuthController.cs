@@ -3,7 +3,7 @@ using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.Requests;
 using AonFreelancing.Models.Responses;
-using AonFreelancing.Services;
+using AonFreelancing.Models.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
