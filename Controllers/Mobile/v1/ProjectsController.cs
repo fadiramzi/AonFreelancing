@@ -8,7 +8,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -28,7 +30,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
             if (!ModelState.IsValid)
                 return CustomBadRequest();
 
-            var clientId = UtilitesMethods.GetUserId(HttpContext.User.Identity as ClaimsIdentity ?? throw new InvalidOperationException("User identity is null"));
+            var clientId = UtilitesMethods.GetUserId(HttpContext.User.Identity as ClaimsIdentity 
+                ?? throw new InvalidOperationException("User is does not exists."));
 
             if (projectInputDto != null)
             {
@@ -82,6 +85,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 .Take(pageSize)
                 .Select(p => new ProjectOutDTO
                 {
+                    Id = p.Id,
                     Title = p.Title,
                     Description = p.Description,
                     Status = p.Status,
@@ -155,6 +159,69 @@ namespace AonFreelancing.Controllers.Mobile.v1
             await mainAppContext.SaveChangesAsync();
 
             return Ok(CreateSuccessResponse("Bid added successfully"));
+        }
+
+        [Authorize(Roles = Constants.USER_TYPE_CLIENT)]
+        [HttpPatch("{id}/bids/{bidId}/approve")]
+        public async Task<IActionResult> ApproveBidsAsync([FromRoute] long id, [FromRoute] long bidId)
+        {
+            var project = await mainAppContext.Projects.Include(p => p.Bids)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (project == null || project.Status == Constants.PROJECT_STATUS_CLOSED)
+                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "Project not found or project has been closed."));
+
+            BidsEntity? bids = project.Bids.FirstOrDefault(b => b.Id == bidId);
+
+            if (bids == null || bids.ProjectId != id || bids.Status == Constants.BID_STATUS_APPROVED)
+                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "No bid found or bid already approved."));
+
+            bids.Status = Constants.BID_STATUS_APPROVED;
+            bids.ApprovedAt = DateTime.Now;
+            project.Status = Constants.PROJECT_STATUS_CLOSED;
+
+            await mainAppContext.SaveChangesAsync();
+
+            return Ok(CreateSuccessResponse("Bid has been approved"));
+        }
+
+        [Authorize(Roles = Constants.USER_TYPE_CLIENT)]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProjectByIdAsync([FromRoute] long id)
+        {
+            var imageUrl = $"{Request.Scheme}://{Request.Host}/images";
+
+            var projectOutDTO = await mainAppContext
+                .Projects.Where(p => p.Id == id)
+                .Include(p => p.Bids)
+                .Select(p => new ProjectOutDTO
+                {
+                    Id = p.Id,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Status = p.Status,
+                    Budget = p.Budget,
+                    Duration = p.Duration,
+                    PriceType = p.PriceType,
+                    Qualifications = p.QualificationName,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    Image = p.ImageName != null ? $"{imageUrl}/{p.ImageName}" : string.Empty,
+                    CreatedAt = p.CreatedAt,
+                    CreationTime = UtilitesMethods.GetTimeAgo(p.CreatedAt),
+                    Bids = p.Bids.Select(b => new BidsOutDTO
+                    {
+                        Id = b.Id,
+                        FreelancerId = b.FreelancerId,
+                        ProposedPrice = b.ProposedPrice,
+                        Notes = b.Notes,
+                        Status = b.Status,
+                        SubmittedAt = b.SubmittedAt,
+                        ApprovedAt = b.ApprovedAt
+                    }).OrderBy(b => (double)b.ProposedPrice).ToList()
+                }).FirstOrDefaultAsync();
+
+            return Ok(CreateSuccessResponse(projectOutDTO));
         }
     }
 }
