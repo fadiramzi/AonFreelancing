@@ -1,4 +1,4 @@
-﻿using AonFreelancing.Models;
+﻿using AonFreelancing.Models.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

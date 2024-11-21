@@ -1,7 +1,7 @@
 
 using AonFreelancing.Contexts;
 using AonFreelancing.Middlewares;
-using AonFreelancing.Models;
+using AonFreelancing.Models.Entities;
 using AonFreelancing.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

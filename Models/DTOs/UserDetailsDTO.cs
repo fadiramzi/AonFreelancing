@@ -1,4 +1,6 @@
-﻿namespace AonFreelancing.Models.DTOs
+﻿using AonFreelancing.Models.Entities;
+
+namespace AonFreelancing.Models.DTOs
 {
     public class UserDetailsDTO
     {

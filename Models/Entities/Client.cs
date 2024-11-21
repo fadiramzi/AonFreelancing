@@ -1,11 +1,11 @@
-﻿    using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AonFreelancing.Models
+namespace AonFreelancing.Models.Entities
 {
 
     [Table("Clients")]
@@ -16,7 +16,7 @@ namespace AonFreelancing.Models
 
         // Has many projects, 1-m
         public List<Project>? Projects { get; set; }
-  
+
 
         //public override void DisplayProfile()
         //{

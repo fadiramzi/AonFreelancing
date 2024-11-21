@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using AonFreelancing.Models.Entities;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -7,7 +8,7 @@ namespace AonFreelancing.Services
 {
     public class JwtService(IConfiguration config)
     {
-        public string GenerateJwt(Models.User user, string role)
+        public string GenerateJwt(User user, string role)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config[$"Jwt:{Utilities.Constants.JWT_KEY}"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

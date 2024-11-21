@@ -1,6 +1,7 @@
 ﻿using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
+using AonFreelancing.Models.Entities;
 using AonFreelancing.Models.Requests;
 using AonFreelancing.Models.Responses;
 using AonFreelancing.Services;
@@ -8,7 +9,7 @@ using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Client = AonFreelancing.Models.Client;
+using Client = AonFreelancing.Models.Entities.Client;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {

@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace AonFreelancing.Models
+namespace AonFreelancing.Models.Entities
 {
     [Table("otps")]
     public class OTP
