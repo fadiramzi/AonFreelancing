@@ -20,7 +20,7 @@ namespace AonFreelancing.Attributes
                 return ValidationResult.Success;
 
             _extension = Path.GetExtension(file.FileName);
-            if (Utilities.FileCheckUtils.IsValidFileExtensionAndSignature(file.FileName, file.OpenReadStream(), _extensions))
+            if (Utilities.FileCheckUtil.IsValidFileExtensionAndSignature(file.FileName, file.OpenReadStream(), _extensions))
                 return ValidationResult.Success;
 
             return new ValidationResult(GetErrorMessage());

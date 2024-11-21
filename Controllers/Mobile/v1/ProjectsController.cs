@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace AonFreelancing.Controllers.Mobile.v1
@@ -28,8 +29,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),
                     "Unable to load user."));
 
-            var userId = user.Id;
-            var project = new Project
+            long userId = user.Id;
+            Project newProject = new Project
             {
                 ClientId = userId,
                 Title = projectInputDTO.Title,
@@ -43,9 +44,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
             if (projectInputDTO.ImageFile != null)
             {
                 string fileName = await fileStorageService.SaveAsync(projectInputDTO.ImageFile);
-                project.ImageFileName = fileName;
+                newProject.ImageFileName = fileName;
             }
-            await mainAppContext.Projects.AddAsync(project);
+            await mainAppContext.Projects.AddAsync(newProject);
             await mainAppContext.SaveChangesAsync();
 
             return Ok(CreateSuccessResponse("Project added."));
@@ -83,21 +84,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             projects = await query.OrderByDescending(p => p.CreatedAt)
             .Skip(page * pageSize)
             .Take(pageSize)
-            .Select(p => new ProjectOutDTO(p,imagesBaseUrl)
-            //{
-            //    Title = p.Title,
-            //    Description = p.Description,
-            //    Status = p.Status,
-            //    Budget = p.Budget,
-            //    Duration = p.Duration,
-            //    PriceType = p.PriceType,
-            //    Qualifications = p.QualificationName,
-            //    StartDate = p.StartDate,
-            //    EndDate = p.EndDate,
-            //    CreatedAt = p.CreatedAt
-            //    //CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
-            //}
-            )
+            .Select(p => new ProjectOutDTO(p,imagesBaseUrl))
             .ToListAsync();
            
             return Ok(CreateSuccessResponse(new { 
@@ -108,53 +95,52 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
         [Authorize(Roles ="FREELANCER")]
         [HttpPost("{projectId}/bids")]
-        public async Task<IActionResult> CreateBid([FromRoute]long projectId, [FromBody] BidInputDTO bidInputDTO)
+        public async Task<IActionResult> CreateBidAsync([FromRoute]long projectId, [FromBody] BidInputDTO bidInputDTO)
         {
             if (!ModelState.IsValid)
                 return base.CustomBadRequest();
 
-            Project? storedProject = mainAppContext.Projects.Where(p => p.Id == projectId).Include(p=>p.Bids).FirstOrDefault();
-            if (storedProject == null)
-                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "invalid project id"));
-
-            if (storedProject.Budget <= bidInputDTO.ProposedPrice)
-                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "proposed price must be less than the project's budget"));
-            
-            if(storedProject.Status == Constants.PROJECT_STATUS_AVAILABLE)
-                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "proposed price must be less than the project's budget"));
-            
-            Bid? storedBidWithLowestPrice = storedProject.Bids.OrderBy(b => b.ProposedPrice).FirstOrDefault();
-            if (storedBidWithLowestPrice != null && storedBidWithLowestPrice.ProposedPrice <= bidInputDTO.ProposedPrice)
-                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "proposed price should be less than earlier proposed prices"));
-
             var identity = HttpContext.User.Identity as ClaimsIdentity;
             long freelancerId = Convert.ToInt64(identity.FindFirst(ClaimTypes.NameIdentifier).Value);
-            Bid newBid = new Bid(bidInputDTO, projectId, freelancerId);
 
+            Project? storedProject = mainAppContext.Projects.Where(p => p.Id == projectId).Include(p=>p.Bids).FirstOrDefault();
+            string? errorMessage = storedProject switch
+            {
+                _ when storedProject is null => "invalid project id",
+                _ when storedProject.Bids.Any(b=>b.FreelancerId == freelancerId) => "you have already submitted a bid for this project",
+                _ when storedProject.Status != Constants.PROJECT_STATUS_AVAILABLE => "cannot POST a bid for a project that is not available for bids",
+                _ when storedProject.Budget <= bidInputDTO.ProposedPrice => "proposed price must be less than the project's budget",
+                _ when storedProject.Bids.Any() && storedProject.Bids.OrderBy(b => b.ProposedPrice).First().ProposedPrice <= bidInputDTO.ProposedPrice => "proposed price must be less than earlier proposed prices",
+                _ => null
+            };
+            if (errorMessage != null)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), errorMessage));
+
+            var newBid = new Bid(bidInputDTO, projectId, freelancerId);
             await mainAppContext.AddAsync(newBid);
             await mainAppContext.SaveChangesAsync();
 
-            return StatusCode(StatusCodes.Status201Created);
+            return NoContent();
         }
+
         [Authorize(Roles ="CLIENT")]
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetProject(int id)
+        public async Task<IActionResult> GetProjectAsync(int id)
         {
-            var imagesBaseUrl = $"{Request.Scheme}://{Request.Host}/images";
+            string imagesBaseUrl = $"{Request.Scheme}://{Request.Host}/images";
 
-            var storedProject = await mainAppContext.Projects.Where(p => p.Id == id)
-                .Include(p => p.Bids)
-                //.Include(p => p.Client)
-                .Select(p => new ProjectOutDTO(p,imagesBaseUrl))
-                .FirstOrDefaultAsync();
+            var storedProjectOutDTO = await mainAppContext.Projects.AsNoTracking()
+                                                                    .Where(p => p.Id == id)
+                                                                    .Include(p => p.Bids)
+                                                                    .Select(p => new ProjectOutDTO(p,imagesBaseUrl))
+                                                                    .FirstOrDefaultAsync();
 
-            return Ok(CreateSuccessResponse(storedProject));
-
+            return Ok(CreateSuccessResponse(storedProjectOutDTO));
         }
 
         [Authorize(Roles ="CLIENT")]
         [HttpPatch("{projectId}/bids/{bidId}/approve")]
-        public async Task<IActionResult> ApproveBid(long projectId, long bidId)
+        public async Task<IActionResult> ApproveBidAsync(long projectId, long bidId)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
             long clientId = Convert.ToInt64(identity.FindFirst(ClaimTypes.NameIdentifier).Value);
@@ -162,15 +148,17 @@ namespace AonFreelancing.Controllers.Mobile.v1
            Project? storedProject = await mainAppContext.Projects.Where(p => p.Id == projectId)
                                                                 .Include(p => p.Bids)
                                                                 .FirstOrDefaultAsync();
-            Error? error = null;
-            if(storedProject == null)
-                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "invalid  project id"));
-            if (storedProject.Status != Constants.PROJECT_STATUS_AVAILABLE)
-                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "project status is not 'Available'"));
+            Bid? storedBid = null;
 
-            Bid? storedBid = storedProject.Bids.Where(b => b.Id == bidId).FirstOrDefault();
-            if (storedBid == null)
-                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "Bid not found"));
+            string? badRequestErrorMessage = storedProject switch
+            {
+                _ when storedProject is null => "invalid  project id",
+                _ when storedProject.Status != Constants.PROJECT_STATUS_AVAILABLE => "project status is not 'Available'",
+                _ when (storedBid = storedProject.Bids.Where(b=>b.Id == bidId).FirstOrDefault()) is null => "invalid bid id",
+                _ => null
+            };
+            if (badRequestErrorMessage != null)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), badRequestErrorMessage));
 
             storedBid.Status = Constants.BID_STATUS_APPROVED;
             storedBid.ApprovedAt = DateTime.Now;
@@ -182,48 +170,34 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
         [Authorize(Roles ="CLIENT")]
         [HttpPost("{projectId}/tasks")]
-        public async Task<IActionResult> CreateTask([FromRoute] long projectId, [FromBody] TaskInputDTO taskInputDTO)
+        public async Task<IActionResult> CreateTaskAsync([FromRoute] long projectId, [FromBody] TaskInputDTO taskInputDTO)
         {
             if (!ModelState.IsValid)
                 return base.CustomBadRequest();
 
-            Models.Task newTask = new Models.Task(taskInputDTO, projectId);
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            long clientId = Convert.ToInt64(identity.FindFirst(ClaimTypes.NameIdentifier).Value);
+
+            Models.Task newTask = new Models.Task(taskInputDTO, projectId, clientId);
             await mainAppContext.AddAsync(newTask);
             await mainAppContext.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetTaskById), new {projectId = projectId, taskId = newTask.Id }, new TaskOutputDTO(newTask));
+            return CreatedAtAction(nameof(TasksController.GetByIdAsync),"Tasks", new {id = newTask.Id }, new TaskOutputDTO(newTask));
         }
         [HttpGet("{projectId}/tasks")]
-        public async Task<IActionResult> GetTasksByProjectId(long projectId)
+        public async Task<IActionResult> GetTasksByProjectIdAsync([FromRoute] long projectId,
+                                                                [AllowedValues("to-do", "done", "in-progress", "in-review",ErrorMessage = "status should be one of the values: 'to-do', 'done', 'in-progress', 'in-review'")][FromQuery] string status = "")
         {
-            var storedTasksDTOs = await mainAppContext.Tasks.Where(t => t.ProjectId== projectId).Select(t => new TaskOutputDTO(t)).ToListAsync();
+            if (!ModelState.IsValid)
+                return base.CustomBadRequest();
+
+            var storedTasksDTOs = await mainAppContext.Tasks.AsNoTracking()
+                                                            .Where(t => t.ProjectId == projectId && t.Status.Contains(status))
+                                                            .Select(t => new TaskOutputDTO(t))
+                                                            .ToListAsync();
                 return Ok(CreateSuccessResponse(storedTasksDTOs));
         }
 
-        [HttpGet("{projectId}/tasks/{taskId}")]
-        public async Task<IActionResult> GetTaskById(long taskId)
-        {
-            var storedTask = await mainAppContext.Tasks.Where(t => t.Id == taskId).FirstOrDefaultAsync();
-            if (storedTask != null)
-                return Ok(CreateSuccessResponse(new TaskOutputDTO(storedTask)));
 
-            return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),"Task not found"));
-        }  
-
-        [HttpPatch("{projectId}/tasks/{taskId}")]
-        public async Task<IActionResult> UpdateTaskById(long taskId, [FromBody] TaskUpdateDTO taskUpdateDTO)
-        {
-            var storedTask = await mainAppContext.Tasks.Where(t => t.Id == taskId).FirstOrDefaultAsync();
-            if (storedTask == null)
-            return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),"invalid task id"));
-
-            if(taskUpdateDTO.Status == Constants.TASK_STATUS_DONE)
-                storedTask.CompletedAt = DateTime.Now;   
-
-            storedTask.Status = taskUpdateDTO.Status;
-            await mainAppContext.SaveChangesAsync();
-
-            return Ok(CreateSuccessResponse(new TaskOutputDTO(storedTask)));
-        }
     }
 }
