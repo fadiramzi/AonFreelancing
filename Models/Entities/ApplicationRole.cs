@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace AonFreelancing.Models
+namespace AonFreelancing.Models.Entities
 {
-    public class ApplicationRole:IdentityRole<long>
+    public class ApplicationRole : IdentityRole<long>
     {
     }
 }

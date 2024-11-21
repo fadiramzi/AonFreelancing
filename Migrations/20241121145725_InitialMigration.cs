@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AonFreelancing.Migrations
 {
     /// <inheritdoc />
-    public partial class initialMigration : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -234,7 +234,7 @@ namespace AonFreelancing.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "otps",
+                name: "Otps",
                 columns: table => new
                 {
                     PhoneNumber = table.Column<string>(type: "TEXT", nullable: false),
@@ -245,10 +245,10 @@ namespace AonFreelancing.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_otps", x => x.PhoneNumber);
+                    table.PrimaryKey("PK_Otps", x => x.PhoneNumber);
                     table.CheckConstraint("CK_CODE", "length([Code]) = 6");
                     table.ForeignKey(
-                        name: "FK_otps_TempUser_PhoneNumber",
+                        name: "FK_Otps_TempUser_PhoneNumber",
                         column: x => x.PhoneNumber,
                         principalTable: "TempUser",
                         principalColumn: "PhoneNumber",
@@ -264,10 +264,11 @@ namespace AonFreelancing.Migrations
                     Title = table.Column<string>(type: "TEXT", nullable: false),
                     Description = table.Column<string>(type: "TEXT", nullable: false),
                     ClientId = table.Column<long>(type: "INTEGER", nullable: false),
+                    ImageName = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     StartDate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     EndDate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    PriceType = table.Column<string>(type: "TEXT", nullable: false),
+                    PriceType = table.Column<string>(type: "TEXT", nullable: false, defaultValue: "Fixed"),
                     Duration = table.Column<int>(type: "INTEGER", nullable: false),
                     Budget = table.Column<decimal>(type: "TEXT", nullable: false),
                     QualificationName = table.Column<string>(type: "TEXT", nullable: false),
@@ -372,7 +373,7 @@ namespace AonFreelancing.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "otps");
+                name: "Otps");
 
             migrationBuilder.DropTable(
                 name: "Projects");

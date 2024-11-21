@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
-namespace AonFreelancing.Models
+namespace AonFreelancing.Models.Entities
 {
     //Entity
     [Table("Projects")]
@@ -16,7 +16,7 @@ namespace AonFreelancing.Models
         public long ClientId { get; set; } //FK
 
         // Belongs to a client
-        [ForeignKey("ClientId")] 
+        [ForeignKey("ClientId")]
         public Client Client { get; set; }
         public string? ImageName { get; set; }
         public DateTime CreatedAt { get; set; }

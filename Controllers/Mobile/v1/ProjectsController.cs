@@ -55,8 +55,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             return StatusCode(StatusCodes.Status201Created, CreateSuccessResponse("Project added."));
         }
 
-        [Authorize(Roles = Constants.USER_TYPE_CLIENT)]
-        [HttpGet("clientFeed")]
+        [HttpGet("feed")]
         public async Task<IActionResult> GetClientFeedAsync(
             [FromQuery] List<string>? quls, [FromQuery] int page = 0,
             [FromQuery] int pageSize = 8, [FromQuery] string? qur = default

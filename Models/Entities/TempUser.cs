@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.AspNetCore.Identity;
+using AonFreelancing.Utilities;
 
 namespace AonFreelancing.Models.Entities;
 
@@ -13,6 +12,6 @@ public class TempUser
     [Required]
     public string PhoneNumber { get; set; }
     public bool PhoneNumberConfirmed { get; set; }
-    [Required, AllowedValues("FREELANCER", "CLIENT")]
+    [Required, AllowedValues(Constants.USER_TYPE_FREELANCER, Constants.USER_TYPE_CLIENT)]
     public string UserType { get; set; }
 }

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AonFreelancing.Models.Entities
 {
@@ -12,15 +7,7 @@ namespace AonFreelancing.Models.Entities
     public class Client : User
     {
         public string CompanyName { get; set; }
-
-
-        // Has many projects, 1-m
         public List<Project>? Projects { get; set; }
 
-
-        //public override void DisplayProfile()
-        //{
-        //    Console.WriteLine($"Client display profile, Company: {CompanyName}");
-        //}
     }
 }

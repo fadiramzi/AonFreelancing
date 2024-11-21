@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using AonFreelancing.Utilities;
 using AonFreelancing.Utilities.Attributes;
 
 namespace AonFreelancing.Models.DTOs

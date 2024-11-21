@@ -1,4 +1,4 @@
-﻿using AonFreelancing.Models;
+﻿using AonFreelancing.Models.Responses;
 
 namespace AonFreelancing.Middlewares
 {

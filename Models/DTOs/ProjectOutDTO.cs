@@ -1,8 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
-
-namespace AonFreelancing.Models.DTOs
+﻿namespace AonFreelancing.Models.DTOs
 {
     public class ProjectOutDTO
     {

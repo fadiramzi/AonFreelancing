@@ -1,10 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AonFreelancing.Models.Entities
 {
-    [Table("otps")]
+    [Table("Otps")]
     public class OTP
     {
         [Key]

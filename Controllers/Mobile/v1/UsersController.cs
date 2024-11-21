@@ -1,10 +1,8 @@
 ﻿using AonFreelancing.Contexts;
-using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.Entities;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +11,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Authorize]
     [Route("api/mobile/v1/users")]
     [ApiController]
-    public class UsersController(MainAppContext mainAppContext, RoleManager<ApplicationRole> roleManager)
+    public class UsersController(MainAppContext mainAppContext)
         : BaseController
     {
         [HttpGet("{id}/profile")]
@@ -35,14 +33,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
 
             if (freelancer != null)
-                return Ok(new ApiResponse<FreelancerResponseDTO>
-                {
-                    IsSuccess = true,
-                    Results = freelancer,
-                    Errors = null
-                });
-
-
+                return Ok(CreateSuccessResponse(freelancer));
+          
             var client = await mainAppContext.Users
                 .OfType<Client>()
                 .Where(c => c.Id == id)

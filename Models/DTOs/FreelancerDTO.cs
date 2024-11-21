@@ -1,6 +1,4 @@
-﻿using AonFreelancing.Utilities;
-
-namespace AonFreelancing.Models.DTOs
+﻿namespace AonFreelancing.Models.DTOs
 {
     public class FreelancerDTO:UserDTO
     {

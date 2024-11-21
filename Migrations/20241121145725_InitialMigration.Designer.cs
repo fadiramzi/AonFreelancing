@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    [Migration("20241118085433_initialMigration")]
-    partial class initialMigration
+    [Migration("20241121145725_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -20,7 +20,7 @@ namespace AonFreelancing.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
 
-            modelBuilder.Entity("AonFreelancing.Models.ApplicationRole", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.ApplicationRole", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -47,7 +47,7 @@ namespace AonFreelancing.Migrations
                     b.ToTable("AspNetRoles", (string)null);
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.OTP", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.OTP", b =>
                 {
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("TEXT");
@@ -67,13 +67,13 @@ namespace AonFreelancing.Migrations
 
                     b.HasKey("PhoneNumber");
 
-                    b.ToTable("otps", null, t =>
+                    b.ToTable("Otps", null, t =>
                         {
                             t.HasCheckConstraint("CK_CODE", "length([Code]) = 6");
                         });
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.Project", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.Project", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -101,9 +101,14 @@ namespace AonFreelancing.Migrations
                     b.Property<long?>("FreelancerId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ImageName")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("PriceType")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("Fixed");
 
                     b.Property<string>("QualificationName")
                         .IsRequired()
@@ -138,7 +143,7 @@ namespace AonFreelancing.Migrations
                         });
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.TempUser", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.TempUser", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -163,7 +168,7 @@ namespace AonFreelancing.Migrations
                     b.ToTable("TempUser", (string)null);
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.User", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.User", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -339,9 +344,9 @@ namespace AonFreelancing.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.Client", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.Client", b =>
                 {
-                    b.HasBaseType("AonFreelancing.Models.User");
+                    b.HasBaseType("AonFreelancing.Models.Entities.User");
 
                     b.Property<string>("CompanyName")
                         .IsRequired()
@@ -350,9 +355,9 @@ namespace AonFreelancing.Migrations
                     b.ToTable("Clients", (string)null);
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.Freelancer", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.Freelancer", b =>
                 {
-                    b.HasBaseType("AonFreelancing.Models.User");
+                    b.HasBaseType("AonFreelancing.Models.Entities.User");
 
                     b.Property<string>("Skills")
                         .IsRequired()
@@ -361,9 +366,9 @@ namespace AonFreelancing.Migrations
                     b.ToTable("Freelancers", (string)null);
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.SystemUser", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.SystemUser", b =>
                 {
-                    b.HasBaseType("AonFreelancing.Models.User");
+                    b.HasBaseType("AonFreelancing.Models.Entities.User");
 
                     b.Property<string>("Permissions")
                         .IsRequired()
@@ -372,25 +377,25 @@ namespace AonFreelancing.Migrations
                     b.ToTable("SystemUsers", (string)null);
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.OTP", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.OTP", b =>
                 {
-                    b.HasOne("AonFreelancing.Models.TempUser", null)
+                    b.HasOne("AonFreelancing.Models.Entities.TempUser", null)
                         .WithOne()
-                        .HasForeignKey("AonFreelancing.Models.OTP", "PhoneNumber")
-                        .HasPrincipalKey("AonFreelancing.Models.TempUser", "PhoneNumber")
+                        .HasForeignKey("AonFreelancing.Models.Entities.OTP", "PhoneNumber")
+                        .HasPrincipalKey("AonFreelancing.Models.Entities.TempUser", "PhoneNumber")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.Project", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.Project", b =>
                 {
-                    b.HasOne("AonFreelancing.Models.Client", "Client")
+                    b.HasOne("AonFreelancing.Models.Entities.Client", "Client")
                         .WithMany("Projects")
                         .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AonFreelancing.Models.Freelancer", "Freelancer")
+                    b.HasOne("AonFreelancing.Models.Entities.Freelancer", "Freelancer")
                         .WithMany()
                         .HasForeignKey("FreelancerId");
 
@@ -401,7 +406,7 @@ namespace AonFreelancing.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
                 {
-                    b.HasOne("AonFreelancing.Models.ApplicationRole", null)
+                    b.HasOne("AonFreelancing.Models.Entities.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -410,7 +415,7 @@ namespace AonFreelancing.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<long>", b =>
                 {
-                    b.HasOne("AonFreelancing.Models.User", null)
+                    b.HasOne("AonFreelancing.Models.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -419,7 +424,7 @@ namespace AonFreelancing.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<long>", b =>
                 {
-                    b.HasOne("AonFreelancing.Models.User", null)
+                    b.HasOne("AonFreelancing.Models.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -428,13 +433,13 @@ namespace AonFreelancing.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<long>", b =>
                 {
-                    b.HasOne("AonFreelancing.Models.ApplicationRole", null)
+                    b.HasOne("AonFreelancing.Models.Entities.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AonFreelancing.Models.User", null)
+                    b.HasOne("AonFreelancing.Models.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -443,41 +448,41 @@ namespace AonFreelancing.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<long>", b =>
                 {
-                    b.HasOne("AonFreelancing.Models.User", null)
+                    b.HasOne("AonFreelancing.Models.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.Client", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.Client", b =>
                 {
-                    b.HasOne("AonFreelancing.Models.User", null)
+                    b.HasOne("AonFreelancing.Models.Entities.User", null)
                         .WithOne()
-                        .HasForeignKey("AonFreelancing.Models.Client", "Id")
+                        .HasForeignKey("AonFreelancing.Models.Entities.Client", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.Freelancer", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.Freelancer", b =>
                 {
-                    b.HasOne("AonFreelancing.Models.User", null)
+                    b.HasOne("AonFreelancing.Models.Entities.User", null)
                         .WithOne()
-                        .HasForeignKey("AonFreelancing.Models.Freelancer", "Id")
+                        .HasForeignKey("AonFreelancing.Models.Entities.Freelancer", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.SystemUser", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.SystemUser", b =>
                 {
-                    b.HasOne("AonFreelancing.Models.User", null)
+                    b.HasOne("AonFreelancing.Models.Entities.User", null)
                         .WithOne()
-                        .HasForeignKey("AonFreelancing.Models.SystemUser", "Id")
+                        .HasForeignKey("AonFreelancing.Models.Entities.SystemUser", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.Client", b =>
+            modelBuilder.Entity("AonFreelancing.Models.Entities.Client", b =>
                 {
                     b.Navigation("Projects");
                 });

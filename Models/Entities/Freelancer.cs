@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AonFreelancing.Models.Entities
 {
@@ -13,13 +8,5 @@ namespace AonFreelancing.Models.Entities
 
         public string Skills { get; set; }
 
-
-        //public override void DisplayProfile()
-        //{
-        //    Console.WriteLine($"Overrided Method in Freelancer Class");
-        //}
-
     }
-
-
 }
