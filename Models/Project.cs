@@ -30,5 +30,10 @@ namespace AonFreelancing.Models
         public long? FreelancerId { get; set; }
         [ForeignKey("FreelancerId")]
         public virtual Freelancer? Freelancer { get; set; }
+        public ICollection<Bid> Bids { get; set; } = new List<Bid>();
+        public string? ImagePath { get; set; }
+
+        public ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
+
     }
 }

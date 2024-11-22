@@ -1,6 +1,7 @@
 ﻿using AonFreelancing.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 using static System.Net.WebRequestMethods;
 
 namespace AonFreelancing.Contexts
@@ -17,6 +18,8 @@ namespace AonFreelancing.Contexts
         public DbSet<User> Users { get; set; } // Will access Freelancers, Clients, SystemUsers through inheritance and ofType 
         public DbSet<OTP> OTPs { get; set; }
         public DbSet<TempUser> TempUsers { get; set; }
+        public DbSet<Bid> Bids { get; set; }
+        public DbSet<TaskEntity> Tasks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -44,7 +47,22 @@ namespace AonFreelancing.Contexts
                 .ToTable("Projects", tb => tb.HasCheckConstraint("CK_QUALIFICATION_NAME", "[QualificationName] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')"));
             builder.Entity<Project>().ToTable("Projects", tb => tb.HasCheckConstraint("CK_STATUS", "[Status] IN ('Available', 'Closed')"))
                 .Property(p=>p.Status).HasDefaultValue("Available");
-            
+
+            builder.Entity<Bid>()
+               .HasOne(b => b.Project)
+               .WithMany(p => p.Bids)
+               .HasForeignKey(b => b.ProjectId)
+               .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<Bid>()
+                .HasOne(b => b.Freelancer)
+                .WithMany(f => f.Bids)
+                .HasForeignKey(b => b.FreelancerId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+
+            builder.Entity<TaskEntity>().ToTable("Tasks");
+
             base.OnModelCreating(builder);
         }
     }

@@ -30,7 +30,6 @@ namespace AonFreelancing
             builder.Services.AddIdentity<User, ApplicationRole>()
                 .AddEntityFrameworkStores<MainAppContext>()
                 .AddDefaultTokenProviders();
-            
             builder.Configuration.AddJsonFile("appsettings.json");
 
 
@@ -80,7 +79,6 @@ namespace AonFreelancing
 
             app.UseAuthentication();
             app.UseAuthorization();
-
 
             app.MapControllers();
 

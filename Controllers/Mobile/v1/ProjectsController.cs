@@ -1,4 +1,5 @@
-﻿using AonFreelancing.Contexts;
+﻿
+using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Utilities;
@@ -6,7 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -73,13 +73,12 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     .Where(p => qualificationNames.Contains(p.QualificationName));
             }
 
-            // ORder by LAtest created
             projects = await query.OrderByDescending(p => p.CreatedAt)
             .Skip(page * pageSize)
             .Take(pageSize)
             .Select(p => new ProjectOutDTO
             {
-
+                Id= p.Id,
                 Title = p.Title,
                 Description = p.Description,
                 Status = p.Status,
@@ -98,6 +97,323 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 Total=count,
                 Items=projects
             }));
+        }
+
+
+        [Authorize(Roles = "FREELANCER")]
+        [HttpPost("{id}/bids")]
+        public async Task<IActionResult> SubmitBidAsync(int id, [FromBody] BidInputDto bidDto)
+        {
+            if (!ModelState.IsValid)
+                return CustomBadRequest();
+
+            var project = await mainAppContext.Projects.FindAsync(id);
+            if (project == null)
+                return NotFound(CreateErrorResponse("404", "Project not found."));
+
+            var user = await userManager.GetUserAsync(User);
+            //if (user == null || !User.IsInRole("FREELANCER"))
+            //    return Forbid();
+
+            var lastBid = await mainAppContext.Bids
+                .Where(b => b.ProjectId == id)
+                .OrderByDescending(b => b.SubmittedAt)
+                .FirstOrDefaultAsync();
+
+            if (bidDto.ProposedPrice <= 0 ||
+                (lastBid != null && bidDto.ProposedPrice > lastBid.ProposedPrice) ||
+                (lastBid == null && bidDto.ProposedPrice > project.Budget))
+            {
+                return BadRequest(CreateErrorResponse("400", "Invalid proposed price. The proposed price must be positive and lower than the last bid or project budget."));
+            }
+
+            var bid = new Bid
+            {
+                ProjectId = id,
+                FreelancerId = user.Id,
+                ProposedPrice = bidDto.ProposedPrice,
+                Notes = bidDto.Notes,
+                Status = "pending", 
+                SubmittedAt = DateTime.Now
+            };
+
+            await mainAppContext.Bids.AddAsync(bid);
+            await mainAppContext.SaveChangesAsync();
+
+            return Ok(CreateSuccessResponse("Bid submitted successfully."));
+        }
+
+
+        [Authorize(Roles = "CLIENT")]
+        [HttpPut("{pid}/bids/{bid}/approve")]
+        public async Task<IActionResult> ApproveBidAsync(int pid, int bid)
+        {
+            var project = await mainAppContext.Projects.FindAsync(pid);
+            if (project == null || project.Status != "Available")
+                return BadRequest(CreateErrorResponse("400", $"Project status is '{project?.Status}', but must be 'available'."));
+
+            var bidID = await mainAppContext.Bids.FirstOrDefaultAsync(b => b.Id == bid);
+            if (bidID == null || bidID.ProjectId != pid || bidID.Status == "approved")
+                return BadRequest(CreateErrorResponse("400", "Bid not found or already approved."));
+
+            bidID.Status = "approved";
+            bidID.ApprovedAt = DateTime.Now;
+
+            project.Status = "Closed";
+
+            await mainAppContext.SaveChangesAsync();
+
+            return Ok(CreateSuccessResponse("Bid approved successfully."));
+        }
+
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProjectDetailsAsync(int id)
+        {
+            var project = await mainAppContext.Projects
+                .Where(p => p.Id == id)
+                .Include(p => p.Bids)
+                .ThenInclude(b => b.Freelancer)
+                .FirstOrDefaultAsync();
+
+            if (project == null)
+                return NotFound(CreateErrorResponse("404", "Project not found."));
+
+            var orderedBids = project.Bids
+                .OrderByDescending(b => b.ProposedPrice)
+                .Select(b => new BidOutDto { 
+                Id = b.Id,
+                FreelancerId = b.FreelancerId,
+                Freelancer = new FreelancerShortOutDTO { 
+                    Id = b.FreelancerId,
+                    Name = b.Freelancer.Name
+                },
+                ProposedPrice = b.ProposedPrice,
+                Notes = b.Notes,
+                Status = b.Status,
+                SubmittedAt = b.SubmittedAt,
+                ApprovedAt = b.ApprovedAt
+                } );
+
+
+          
+            return Ok(CreateSuccessResponse(new
+            {
+                project.Id,
+                project.Title,
+                project.Status,
+                project.Budget,
+                project.Duration,
+                project.Description, 
+                Bids = orderedBids
+            }));
+        }
+
+
+        [Authorize(Roles = "CLIENT")]
+        [HttpPost("{id}/tasks")]
+        public async Task<IActionResult> CreateTaskAsync(int id, [FromBody] TaskInputDto taskDto)
+        {
+            var project = await mainAppContext.Projects.FindAsync(id);
+            if (project == null || project.Status != "Closed")
+                return BadRequest(CreateErrorResponse("400", "Project not found or not closed."));
+
+            var task = new TaskEntity
+            {
+                ProjectId = id,
+                Name = taskDto.Name,
+                DeadlineAt = taskDto.DeadlineAt,
+                Notes = taskDto.Notes
+            };
+
+            await mainAppContext.Tasks.AddAsync(task);
+            await mainAppContext.SaveChangesAsync();
+
+            return Ok(CreateSuccessResponse("Task created successfully."));
+        }
+
+
+        [Authorize(Roles = "CLIENT, FREELANCER")]
+        [HttpPut("tasks/{id}")]
+        public async Task<IActionResult> UpdateTaskStatusAsync(int id, [FromBody] TaskStatusDto taskStatusDto)
+        {
+            var task = await mainAppContext.Tasks.FindAsync(id);
+            if (task == null)
+            {
+                var errorResponse = new ApiResponse<string>
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error>
+                {
+                    new Error { Code = "404", Message = "Task not found." }
+                }
+                };
+                return NotFound(errorResponse);
+            }
+
+            var validStatuses = new List<string> { "to-do", "in-progress", "in-review", "done" };
+
+            if (!validStatuses.Contains(taskStatusDto.NewStatus.ToLower()))
+            {
+                var errorResponse = new ApiResponse<string>
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error>
+                {
+                    new Error { Code = "400", Message = "Invalid status provided." }
+                }
+                };
+                return BadRequest(errorResponse);
+            }
+
+            if (task.Status.ToLower() == "to do" && taskStatusDto.NewStatus.ToLower() != "in progress")
+            {
+                var errorResponse = new ApiResponse<string>
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error>
+                {
+                    new Error { Code = "400", Message = "Invalid status transition from 'To Do'." }
+                }
+                };
+                return BadRequest(errorResponse);
+            }
+            if (task.Status.ToLower() == "in progress" &&
+                taskStatusDto.NewStatus.ToLower() != "in review" && taskStatusDto.NewStatus.ToLower() != "done")
+            {
+                var errorResponse = new ApiResponse<string>
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error>
+                {
+                    new Error { Code = "400", Message = "Invalid status transition from 'In Progress'." }
+                }
+                };
+                return BadRequest(errorResponse);
+            }
+            if (task.Status.ToLower() == "in review" && taskStatusDto.NewStatus.ToLower() != "done")
+            {
+                var errorResponse = new ApiResponse<string>
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error>
+                {
+                    new Error { Code = "400", Message = "Invalid status transition from 'In Review'." }
+                }
+                };
+                return BadRequest(errorResponse);
+            }
+            if (task.Status.ToLower() == "done")
+            {
+                var errorResponse = new ApiResponse<string>
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error>
+                {
+                    new Error { Code = "400", Message = "No further status transitions allowed from 'Done'." }
+                }
+                };
+                return BadRequest(errorResponse);
+            }
+
+            task.Status = taskStatusDto.NewStatus;
+
+            task.CompletedAt = taskStatusDto.NewStatus.ToLower() == "done" ? DateTime.UtcNow : (DateTime?)null;
+
+            await mainAppContext.SaveChangesAsync();
+
+            var successResponse = new ApiResponse<string>
+            {
+                IsSuccess = true,
+                Results = "Task status updated.",
+                Errors = null
+            };
+            return Ok(successResponse);
+        }
+
+
+        [Authorize(Roles = "CLIENT")]
+        [HttpPost("{id}/upload-image")]
+        public async Task<IActionResult> UploadProjectImage(int id, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new ApiResponse<string>
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error> { new Error { Code = "400", Message = "No file uploaded." } }
+                });
+            }
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var extension = Path.GetExtension(file.FileName).ToLower();
+            if (!allowedExtensions.Contains(extension))
+            {
+                return BadRequest(new ApiResponse<string>
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error> { new Error { Code = "400", Message = "Invalid file type. Only image files are allowed." } }
+                });
+            }
+
+            if (file.Length > 5 * 1024 * 1024)
+            {
+                return BadRequest(new ApiResponse<string>
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error> { new Error { Code = "400", Message = "File size exceeds the 5 MB limit." } }
+                });
+            }
+
+            // Define the file path to save the image (e.g., in wwwroot/images)
+            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+            if (!Directory.Exists(uploadPath))
+            {
+                Directory.CreateDirectory(uploadPath);
+            }
+
+            // Generate a unique file name
+            var fileName = Guid.NewGuid().ToString() + extension;
+            var filePath = Path.Combine(uploadPath, fileName);
+
+            // Save the image to the server
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // Save the file metadata to the database 
+            var project = await mainAppContext.Projects.FindAsync(id);
+            if (project == null)
+            {
+                return NotFound(new ApiResponse<string>
+                {
+                    IsSuccess = false,
+                    Results = null,
+                    Errors = new List<Error> { new Error { Code = "404", Message = "Project not found." } }
+                });
+            }
+
+            // Save the image path or filename to the project model
+            project.ImagePath = $"/images/{fileName}";
+            await mainAppContext.SaveChangesAsync();
+
+            // Return a success response with the image URL or file path
+            return Ok(new ApiResponse<string>
+            {
+                IsSuccess = true,
+                Results = $"/images/{fileName}",
+                Errors = null
+            });
         }
 
         //[HttpGet("{id}")]
