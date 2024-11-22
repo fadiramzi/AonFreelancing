@@ -1,6 +1,6 @@
 ﻿namespace AonFreelancing.Models
 {
-    public class Tasks
+    public class TaskEntity
     {
         public int Id { get; set; }
         public int ProjectId { get; set; }

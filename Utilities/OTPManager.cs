@@ -18,6 +18,8 @@ namespace AonFreelancing.Utilities
         //TODO: make this method void
         public async Task SendOTPAsync(string otp,string receiverPhoneNumber)
         {
+            if (_configuration["Env"] == Constants.ENV_SIT)
+                return;
             var accountSid = _configuration["Twilio:Sid"];
             var authToken = _configuration["Twilio:Token"];
             TwilioClient.Init(accountSid, authToken);

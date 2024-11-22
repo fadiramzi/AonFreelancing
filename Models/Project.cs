@@ -1,13 +1,11 @@
-﻿using AonFreelancing.Models.DTOs;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
 namespace AonFreelancing.Models
 {
-    //Entity
     [Table("Projects")]
-    public class Project 
+    public class Project
     {
         public int Id { get; set; }
         [Required] public string Title { get; set; }
@@ -17,7 +15,7 @@ namespace AonFreelancing.Models
         public long ClientId { get; set; } //FK
 
         // Belongs to a client
-        [ForeignKey("ClientId")] 
+        [ForeignKey("ClientId")]
         public Client Client { get; set; }
 
         public DateTime CreatedAt { get; set; }
@@ -27,30 +25,14 @@ namespace AonFreelancing.Models
         public int Duration { get; set; }
         public decimal Budget { get; set; }
         public string QualificationName { get; set; }
-<<<<<<< HEAD
-
-        public decimal Budget { get; set; }
-
-        public string Status { get; set; }
-
-        public long? FreelancerId { get; set; }//FK
-
-        // Belongs to a Freelancers
-        [ForeignKey("FreelancerId")]
-        public Freelancer Freelancer { get; set; }
-
-
-=======
         public string Status { get; set; }
         public long? FreelancerId { get; set; }
         [ForeignKey("FreelancerId")]
         public virtual Freelancer? Freelancer { get; set; }
-<<<<<<< HEAD
         public ICollection<Bid> Bids { get; set; } = new List<Bid>();
-        public string ImagePath { get; set; }
+        public string? ImagePath { get; set; }
 
-=======
->>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2
->>>>>>> 7a1bf9d3c70dc397651dcc412af417235d1c26a5
+        public ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
+
     }
 }

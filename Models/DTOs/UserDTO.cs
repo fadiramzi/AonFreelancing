@@ -41,7 +41,6 @@ namespace AonFreelancing.Models.DTOs
 
         public bool IsPhoneNumberVerified { get; set; }
         public string UserType { get; set; }
-        public string About { get; set; }
         public RoleResponseDTO Role { get; set; }
     }
 }

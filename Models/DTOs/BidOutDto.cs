@@ -1,14 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-
-namespace AonFreelancing.Models
+﻿namespace AonFreelancing.Models.DTOs
 {
-    public class Bid
+    public class BidOutDto
     {
         public int Id { get; set; }
         public int ProjectId { get; set; }
-        public Project Project { get; set; }
+
+        public ProjectOutDTO Project { get; set; }
         public long FreelancerId { get; set; }
-        public Freelancer Freelancer { get; set; }
+        public FreelancerShortOutDTO Freelancer { get; set; }
         public decimal ProposedPrice { get; set; }
         public string? Notes { get; set; }
         public string Status { get; set; } = "pending";

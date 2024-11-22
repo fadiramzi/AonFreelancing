@@ -6,12 +6,8 @@ using static System.Net.WebRequestMethods;
 
 namespace AonFreelancing.Contexts
 {
-<<<<<<< HEAD
-    public class MainAppContext : IdentityDbContext<User, ApplicationRole, long>
-=======
     public class MainAppContext(DbContextOptions<MainAppContext> contextOptions) 
         : IdentityDbContext<User, ApplicationRole, long>(contextOptions)
->>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2
     {
         // For TPT design, no need to define each one
         //public DbSet<Freelancer> Freelancers { get; set; }
@@ -21,43 +17,23 @@ namespace AonFreelancing.Contexts
         // instead, use User only
         public DbSet<User> Users { get; set; } // Will access Freelancers, Clients, SystemUsers through inheritance and ofType 
         public DbSet<OTP> OTPs { get; set; }
-<<<<<<< HEAD
-
-        public DbSet<UsersTemp> UsersTemps { get; set; }
-        public DbSet<TempOTP> TempOTPs { get; set; }
-        //Add temp table for PhoneNumber verfiy 
-
-        public MainAppContext(DbContextOptions<MainAppContext> contextOptions) : base(contextOptions)
-        {
-
-        }
-=======
         public DbSet<TempUser> TempUsers { get; set; }
-<<<<<<< HEAD
         public DbSet<Bid> Bids { get; set; }
-        public DbSet<Tasks> Tasks { get; set; }
-=======
->>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2
->>>>>>> 7a1bf9d3c70dc397651dcc412af417235d1c26a5
+        public DbSet<TaskEntity> Tasks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-
+            
             // For TPT design
             builder.Entity<User>().ToTable("AspNetUsers")
-<<<<<<< HEAD
-                                        .HasIndex(u => u.PhoneNumber).IsUnique();
-=======
                 .HasIndex(u=>u.PhoneNumber).IsUnique();
             builder.Entity<TempUser>().ToTable("TempUser")
                 .HasIndex(u=>u.PhoneNumber).IsUnique();
             
->>>>>>> bd49e789eca82cf0b70e0aad4d121920d1c2c3b2
             builder.Entity<Freelancer>().ToTable("Freelancers");
             builder.Entity<Client>().ToTable("Clients");
             builder.Entity<SystemUser>().ToTable("SystemUsers");
-            builder.Entity<OTP>().ToTable("otps", o => o.HasCheckConstraint("CK_CODE", "length([Code]) = 6"));
-            builder.Entity<UsersTemp>().ToTable("UsersTemps");
+            builder.Entity<OTP>().ToTable("otps", o => o.HasCheckConstraint("CK_CODE","LEN([Code]) = 6"));
 
             //set up relationships
             builder.Entity<TempUser>().HasOne<OTP>()
@@ -76,15 +52,16 @@ namespace AonFreelancing.Contexts
                .HasOne(b => b.Project)
                .WithMany(p => p.Bids)
                .HasForeignKey(b => b.ProjectId)
-               .OnDelete(DeleteBehavior.Cascade);
+               .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<Bid>()
                 .HasOne(b => b.Freelancer)
                 .WithMany(f => f.Bids)
                 .HasForeignKey(b => b.FreelancerId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
 
+            builder.Entity<TaskEntity>().ToTable("Tasks");
 
             base.OnModelCreating(builder);
         }
