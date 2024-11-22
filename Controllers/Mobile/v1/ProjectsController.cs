@@ -139,18 +139,18 @@ namespace AonFreelancing.Controllers.Mobile.v1
             if (user != null)
             {
                 if (!(rol == Constants.USER_TYPE_FREELANCER))
-                {
+                
                     return Unauthorized(CreateErrorResponse(StatusCodes.Status403Forbidden.ToString(), "you are not Freelancer"));
 
-                }
+                
                 if (bidrq.proposed < 0)
-                {
+                
                     return BadRequest("you must not  put price in negative");
 
-                }
+                
 
 
-                if (bidrq.proposed < project.Budget && bidrq.proposed < lastproposed.proposed_Price && user != null)
+                if (bidrq.proposed < project.Budget && bidrq.proposed < lastproposed.proposed_Price )
                 {
 
                     var bid = new Bid()
@@ -174,7 +174,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 }
             }
 
-            return NotFound("the User NOt Found");
+            return NotFound(CreateErrorResponse("400","the user NOt found"));
         }
 
         [HttpGet("{Id}")]
