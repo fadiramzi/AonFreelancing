@@ -12,4 +12,10 @@
         public string NewStatus { get; set; }
     }
 
+    public class TaskDetailsDto
+    {
+        public string Name { get; set; }
+        public DateTime DeadlineAt { get; set; }
+        public string? Notes { get; set; }
+    }
 }

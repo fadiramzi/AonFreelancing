@@ -194,8 +194,6 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 SubmittedAt = b.SubmittedAt,
                 ApprovedAt = b.ApprovedAt
                 } );
-
-
           
             return Ok(CreateSuccessResponse(new
             {
@@ -208,7 +206,6 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 Bids = orderedBids
             }));
         }
-
 
         [Authorize(Roles = "CLIENT")]
         [HttpPost("{id}/tasks")]
@@ -233,109 +230,109 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
 
-        [Authorize(Roles = "CLIENT, FREELANCER")]
-        [HttpPut("tasks/{id}")]
-        public async Task<IActionResult> UpdateTaskStatusAsync(int id, [FromBody] TaskStatusDto taskStatusDto)
-        {
-            var task = await mainAppContext.Tasks.FindAsync(id);
-            if (task == null)
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "404", Message = "Task not found." }
-                }
-                };
-                return NotFound(errorResponse);
-            }
+        //[Authorize(Roles = "CLIENT, FREELANCER")]
+        //[HttpPut("tasks/{id}")]
+        //public async Task<IActionResult> UpdateTaskStatusAsync(int id, [FromBody] TaskStatusDto taskStatusDto)
+        //{
+        //    var task = await mainAppContext.Tasks.FindAsync(id);
+        //    if (task == null)
+        //    {
+        //        var errorResponse = new ApiResponse<string>
+        //        {
+        //            IsSuccess = false,
+        //            Results = null,
+        //            Errors = new List<Error>
+        //        {
+        //            new Error { Code = "404", Message = "Task not found." }
+        //        }
+        //        };
+        //        return NotFound(errorResponse);
+        //    }
 
-            var validStatuses = new List<string> { "to-do", "in-progress", "in-review", "done" };
+        //    var validStatuses = new List<string> { "to-do", "in-progress", "in-review", "done" };
 
-            if (!validStatuses.Contains(taskStatusDto.NewStatus.ToLower()))
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "Invalid status provided." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
+        //    if (!validStatuses.Contains(taskStatusDto.NewStatus.ToLower()))
+        //    {
+        //        var errorResponse = new ApiResponse<string>
+        //        {
+        //            IsSuccess = false,
+        //            Results = null,
+        //            Errors = new List<Error>
+        //        {
+        //            new Error { Code = "400", Message = "Invalid status provided." }
+        //        }
+        //        };
+        //        return BadRequest(errorResponse);
+        //    }
 
-            if (task.Status.ToLower() == "to do" && taskStatusDto.NewStatus.ToLower() != "in progress")
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "Invalid status transition from 'To Do'." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
-            if (task.Status.ToLower() == "in progress" &&
-                taskStatusDto.NewStatus.ToLower() != "in review" && taskStatusDto.NewStatus.ToLower() != "done")
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "Invalid status transition from 'In Progress'." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
-            if (task.Status.ToLower() == "in review" && taskStatusDto.NewStatus.ToLower() != "done")
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "Invalid status transition from 'In Review'." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
-            if (task.Status.ToLower() == "done")
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "No further status transitions allowed from 'Done'." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
+        //    if (task.Status.ToLower() == "to do" && taskStatusDto.NewStatus.ToLower() != "in progress")
+        //    {
+        //        var errorResponse = new ApiResponse<string>
+        //        {
+        //            IsSuccess = false,
+        //            Results = null,
+        //            Errors = new List<Error>
+        //        {
+        //            new Error { Code = "400", Message = "Invalid status transition from 'To Do'." }
+        //        }
+        //        };
+        //        return BadRequest(errorResponse);
+        //    }
+        //    if (task.Status.ToLower() == "in progress" &&
+        //        taskStatusDto.NewStatus.ToLower() != "in review" && taskStatusDto.NewStatus.ToLower() != "done")
+        //    {
+        //        var errorResponse = new ApiResponse<string>
+        //        {
+        //            IsSuccess = false,
+        //            Results = null,
+        //            Errors = new List<Error>
+        //        {
+        //            new Error { Code = "400", Message = "Invalid status transition from 'In Progress'." }
+        //        }
+        //        };
+        //        return BadRequest(errorResponse);
+        //    }
+        //    if (task.Status.ToLower() == "in review" && taskStatusDto.NewStatus.ToLower() != "done")
+        //    {
+        //        var errorResponse = new ApiResponse<string>
+        //        {
+        //            IsSuccess = false,
+        //            Results = null,
+        //            Errors = new List<Error>
+        //        {
+        //            new Error { Code = "400", Message = "Invalid status transition from 'In Review'." }
+        //        }
+        //        };
+        //        return BadRequest(errorResponse);
+        //    }
+        //    if (task.Status.ToLower() == "done")
+        //    {
+        //        var errorResponse = new ApiResponse<string>
+        //        {
+        //            IsSuccess = false,
+        //            Results = null,
+        //            Errors = new List<Error>
+        //        {
+        //            new Error { Code = "400", Message = "No further status transitions allowed from 'Done'." }
+        //        }
+        //        };
+        //        return BadRequest(errorResponse);
+        //    }
 
-            task.Status = taskStatusDto.NewStatus;
+        //    task.Status = taskStatusDto.NewStatus;
 
-            task.CompletedAt = taskStatusDto.NewStatus.ToLower() == "done" ? DateTime.UtcNow : (DateTime?)null;
+        //    task.CompletedAt = taskStatusDto.NewStatus.ToLower() == "done" ? DateTime.UtcNow : (DateTime?)null;
 
-            await mainAppContext.SaveChangesAsync();
+        //    await mainAppContext.SaveChangesAsync();
 
-            var successResponse = new ApiResponse<string>
-            {
-                IsSuccess = true,
-                Results = "Task status updated.",
-                Errors = null
-            };
-            return Ok(successResponse);
-        }
+        //    var successResponse = new ApiResponse<string>
+        //    {
+        //        IsSuccess = true,
+        //        Results = "Task status updated.",
+        //        Errors = null
+        //    };
+        //    return Ok(successResponse);
+        //}
 
 
         [Authorize(Roles = "CLIENT")]
