@@ -123,28 +123,20 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 return Forbid();
 
             if (project == null)
-            {
                 return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "Project not found."));
-            }
 
             if (project.Status.Equals(Constants.PROJECT_STATUS_CLOSED))
-            {
                 return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "Project is closed."));
-            }
 
             if (project.Budget <= bidsInputDTO.ProposedPrice)
-            {
                 return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),
                     "Proposed price is higher or equal than budget."));
-            }
 
             if (project.Bids != null && project.Bids.Count > 0 && project.Bids
                 .OrderBy(b => b.ProposedPrice)
                 .FirstOrDefault()?.ProposedPrice <= bidsInputDTO.ProposedPrice)
-            {
                 return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),
                     "Proposed price is higher or equal than lowest bid."));
-            }
 
             var bid = new BidsEntity
             {

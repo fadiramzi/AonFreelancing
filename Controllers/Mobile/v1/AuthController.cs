@@ -74,7 +74,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             var tempUser = await mainAppContext.TempUsers.Where(x => x.PhoneNumber == verifyPhoneNumberReq.Phone)
                 .FirstOrDefaultAsync();
 
-            var isPhoneNumberConfirmed = await mainAppContext.TempUsers.AnyAsync(x => x.PhoneNumberConfirmed == true);
+            var isPhoneNumberConfirmed = await mainAppContext.TempUsers.AnyAsync(x => x.PhoneNumberConfirmed);
             if (tempUser != null && !isPhoneNumberConfirmed)
             {
                 if (configuration["Env"] == Constants.ENV_SIT && verifyPhoneNumberReq.Otp.Equals("123456"))
@@ -89,7 +89,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     .FirstOrDefaultAsync();
 
                 // verify OTP
-                if (otp != null && verifyPhoneNumberReq.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpiresAt && otp.IsUsed == false)
+                if (otp != null && verifyPhoneNumberReq.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpiresAt && otp.IsUsed)
                 {
                     tempUser.PhoneNumberConfirmed = true;
                     otp.IsUsed = true;
