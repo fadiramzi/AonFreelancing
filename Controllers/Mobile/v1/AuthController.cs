@@ -3,7 +3,7 @@ using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.Requests;
 using AonFreelancing.Models.Responses;
-using AonFreelancing.Services;
+using AonFreelancing.Models.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -35,6 +35,48 @@ namespace AonFreelancing.Controllers.Mobile.v1
             _mainAppContext = mainAppContext;
             _otpManager = otpManager;
             _jwtService = jwtService;
+        }
+
+
+        [HttpPost("RegisterByPhone")]
+
+        public async Task <IActionResult> RegisterPhoneNumberAsync([FromBody] RegistByPhoneNumberDTO reg) 
+        {
+            var user= await _mainAppContext.TemUsers.Where(ph=>ph.phoneNumber==reg.PhoneNumber).FirstOrDefaultAsync();
+
+
+            if (user != null && !user.PhoneNumberConfirm==false)
+            {
+                
+                return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "Verify Your Account First"));
+            }
+
+            user = new TemUser() { phoneNumber=reg.PhoneNumber };
+
+           await _mainAppContext.TemUsers.AddAsync(user);
+
+            string otpCode = _otpManager.GenerateOtp();
+            await _mainAppContext.SaveChangesAsync();
+
+            OTP otp = new OTP()
+            {
+                Code = otpCode,
+                PhoneNumber = reg.PhoneNumber,
+                CreatedDate = DateTime.Now,
+                ExpiresAt = DateTime.Now.AddMinutes(1),
+            };
+           
+
+            //send the otp to the specified phone number
+            await _otpManager.SendOTPAsync(otp.Code, reg.PhoneNumber);
+            await _mainAppContext.OTPs.AddAsync(otp);
+            await _mainAppContext.SaveChangesAsync();
+          
+
+
+            return Ok();
+
+
         }
 
         [HttpPost("sendVerificationCode")]
