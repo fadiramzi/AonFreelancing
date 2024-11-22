@@ -115,17 +115,15 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
             await _otpManager.SendOTPAsync(otp.Code, otp.PhoneNumber);
 
-            return Ok(CreateSuccessResponse(otp.Code));
+            return Ok(CreateSuccessResponse("OTP code sent to your phone number, during testing you may not receive it, please use 123456"));
         }
 
         [HttpPost("verifyPhoneNumber")]
         public async Task<IActionResult> VerifyPhoneNumberAsync([FromBody] VerifyReq verifyReq)
         {
-            var tempUser = await _mainAppContext.TempUsers.Where(x => x.PhoneNumber == verifyReq.Phone)
-                .FirstOrDefaultAsync();
-
-            var isPhoneNumberConfirmed = await _mainAppContext.TempUsers.AnyAsync(x => x.PhoneNumberConfirmed == true);
-            if (tempUser != null && !isPhoneNumberConfirmed)
+           
+            var TempUser = await _mainAppContext.TempUsers.FirstOrDefaultAsync(u=>u.PhoneNumber == verifyReq.Phone && !u.PhoneNumberConfirmed);
+            if (TempUser != null)
             {
                 var otp = await _mainAppContext.OTPs.Where(o => o.PhoneNumber == verifyReq.Phone)
                     .FirstOrDefaultAsync();
@@ -133,7 +131,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 // verify OTP
                 if (otp != null && verifyReq.Otp.Equals(otp.Code) && DateTime.Now < otp.ExpiresAt && otp.IsUsed == false)
                 {
-                    tempUser.PhoneNumberConfirmed = true;
+                    TempUser.PhoneNumberConfirmed = true;
                     otp.IsUsed = true;
                     await _mainAppContext.SaveChangesAsync();
 

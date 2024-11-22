@@ -21,7 +21,8 @@ namespace AonFreelancing
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            
+
+            var conf = builder.Configuration;
             builder.Services.AddControllers(o => o.SuppressAsyncSuffixInActionNames = false);
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
@@ -50,12 +51,15 @@ namespace AonFreelancing
             });
             builder.Services.AddSingleton<OTPManager>();
             builder.Services.AddSingleton<JwtService>();
+<<<<<<< HEAD
             builder.Services.AddScoped<FileService>();   
             builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlite("Data Source=aon.db"));
+=======
+            builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlServer(conf.GetConnectionString("Default")));
+>>>>>>> master
             builder.Services.AddIdentity<User, ApplicationRole>()
                 .AddEntityFrameworkStores<MainAppContext>()
                 .AddDefaultTokenProviders();
-            
             builder.Configuration.AddJsonFile("appsettings.json");
 
 
@@ -94,11 +98,17 @@ namespace AonFreelancing
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+<<<<<<< HEAD
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(FileService._uploadFolder),
                 RequestPath = "/images"
             });
+=======
+            // just for testing
+            app.UseSwagger();
+            app.UseSwaggerUI();
+>>>>>>> master
 
             app.MapControllers();
 
@@ -108,7 +118,6 @@ namespace AonFreelancing
 
             app.UseAuthentication();
             app.UseAuthorization();
-
 
             app.MapControllers();
 
