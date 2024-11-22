@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    [Migration("20241122214612_InitialMig")]
+    [Migration("20241122232019_InitialMig")]
     partial class InitialMig
     {
         /// <inheritdoc />
