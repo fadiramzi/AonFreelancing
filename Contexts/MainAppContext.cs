@@ -30,7 +30,7 @@ namespace AonFreelancing.Contexts
             builder.Entity<Freelancer>().ToTable("Freelancers");
             builder.Entity<Client>().ToTable("Clients");
             builder.Entity<SystemUser>().ToTable("SystemUsers");
-            builder.Entity<OTP>().ToTable("otps", o => o.HasCheckConstraint("CK_CODE","length([Code]) = 6"));
+            builder.Entity<OTP>().ToTable("otps", o => o.HasCheckConstraint("CK_CODE","LEN([Code]) = 6"));
 
             //set up relationships
             builder.Entity<TempUser>().HasOne<OTP>()

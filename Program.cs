@@ -19,13 +19,14 @@ namespace AonFreelancing
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            
+
+            var conf = builder.Configuration;
             builder.Services.AddControllers(o => o.SuppressAsyncSuffixInActionNames = false);
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddSingleton<OTPManager>();
             builder.Services.AddSingleton<JwtService>();
-            builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlite("Data Source=aon.db"));
+            builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlServer(conf.GetConnectionString("Default")));
             builder.Services.AddIdentity<User, ApplicationRole>()
                 .AddEntityFrameworkStores<MainAppContext>()
                 .AddDefaultTokenProviders();
@@ -68,6 +69,9 @@ namespace AonFreelancing
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            // just for testing
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
 
             app.UseMiddleware<ExceptionHandlingMiddleware>();
