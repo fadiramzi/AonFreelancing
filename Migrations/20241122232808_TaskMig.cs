@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AonFreelancing.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMig : Migration
+    public partial class TaskMig : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

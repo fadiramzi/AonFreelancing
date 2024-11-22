@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    [Migration("20241122232019_InitialMig")]
-    partial class InitialMig
+    [Migration("20241122232808_TaskMig")]
+    partial class TaskMig
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
