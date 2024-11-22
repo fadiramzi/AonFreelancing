@@ -17,6 +17,8 @@ namespace AonFreelancing.Contexts
         public DbSet<User> Users { get; set; } // Will access Freelancers, Clients, SystemUsers through inheritance and ofType 
         public DbSet<OTP> OTPs { get; set; }
         public DbSet<TempUser> TempUsers { get; set; }
+        public DbSet<Bid> Bids { get; set; }
+        public DbSet<Models.Tasks> Tasks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

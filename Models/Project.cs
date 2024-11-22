@@ -30,5 +30,11 @@ namespace AonFreelancing.Models
         public long? FreelancerId { get; set; }
         [ForeignKey("FreelancerId")]
         public virtual Freelancer? Freelancer { get; set; }
+
+        [AllowNull]
+        public string Image {  get; set; }
+
+        public List<Bid>? Bids { get; set; } // One-Many Relation
+        public List<Tasks>? Tasks { get; set; }
     }
 }

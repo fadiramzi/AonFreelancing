@@ -13,7 +13,7 @@ namespace AonFreelancing.Models
 
         public string Skills { get; set; }
 
-
+        public List<Bid>? Bids { get; set; } // One-Many Relation
         //public override void DisplayProfile()
         //{
         //    Console.WriteLine($"Overrided Method in Freelancer Class");
