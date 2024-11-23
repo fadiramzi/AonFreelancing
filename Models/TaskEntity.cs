@@ -1,15 +1,18 @@
 ﻿namespace AonFreelancing.Models
 {
-    public class ProjectTask
+    public class TaskEntity
     {
-        public int Id { get; set; }
-        public int ProjectId { get; set; }
+        public long Id { get; set; }
+        public long ProjectId { get; set; }
         public Project Project { get; set; }
         public string Name { get; set; }
         public string Status { get; set; } = "To-Do";
         public DateTime? DeadlineAt { get; set; }
         public DateTime? CompletedAt { get; set; }
         public string Notes { get; set; }
+
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
 
     }
 }

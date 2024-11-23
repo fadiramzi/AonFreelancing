@@ -2,8 +2,8 @@
 {
     public class BidOutDto
     {
-        public int Id { get; set; }
-        public int ProjectId { get; set; }
+        public long Id { get; set; }
+        public long ProjectId { get; set; }
 
         public ProjectOutDTO Project { get; set; }
         public long FreelancerId { get; set; }
