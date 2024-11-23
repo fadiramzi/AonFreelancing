@@ -1,4 +1,5 @@
 ﻿using AonFreelancing.Models.Responses;
+using AonFreelancing.Models.Services;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
@@ -9,6 +10,7 @@ namespace AonFreelancing.Models
     [Table("Projects")]
     public class Project
     {
+        private readonly TaskService taskService;
         public int Id { get; set; }
         [Required] public string Title { get; set; }
 
@@ -22,9 +24,8 @@ namespace AonFreelancing.Models
 
         public DateTime CreatedAt { get; set; }
         public DateTime? StartDate { get; set; }
-     
-        public string ?ImageName { get; set; }
- 
+
+        public double prenctgeTasks { get; set; } = 0; 
         public DateTime? EndDate { get; set; }
         public string PriceType { get; set; }
         public int Duration { get; set; }

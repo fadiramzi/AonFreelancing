@@ -1,31 +1,22 @@
 ﻿
+
 using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
-using AonFreelancing.Models.Requests;
-using AonFreelancing.Models.Responses;
 using AonFreelancing.Models.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-
-
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
     [Authorize]
     [Route("api/mobile/v1/projects")]
     [ApiController]
-
-    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager,FileService fileService) : BaseController
-
-
+    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager,TaskService taskService) : BaseController
     {
-     
-       
 
         [Authorize(Roles = "CLIENT")]
         [HttpPost]
@@ -52,13 +43,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 Budget = projectInputDto.Budget,
                 PriceType = projectInputDto.PriceType,
                 CreatedAt = DateTime.Now,
+               
             };
-
-            if (projectInputDto.ImageName != null)
-            {
-                string fileName = await fileService.SaveAsync(projectInputDto.ImageName);
-                project.ImageName = fileName;
-            }
 
             await mainAppContext.Projects.AddAsync(project);
             await mainAppContext.SaveChangesAsync();
@@ -73,7 +59,6 @@ namespace AonFreelancing.Controllers.Mobile.v1
             [FromQuery] int pageSize = 8, [FromQuery] string? qur = default
         )
         {
-            var imagesBaseUrl = $"{Request.Scheme}://{Request.Host}/images";
             var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
             List<ProjectOutDTO>? projects;
 
@@ -95,9 +80,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
             projects = await query.OrderByDescending(p => p.CreatedAt)
             .Skip(page * pageSize)
             .Take(pageSize)
-            .Select(p => new ProjectOutDTO(p,imagesBaseUrl)
+            .Select(p => new ProjectOutDTO
             {
-                Id= p.Id,
+                Id = p.Id,
                 Title = p.Title,
                 Description = p.Description,
                 Status = p.Status,
@@ -153,7 +138,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 FreelancerId = user.Id,
                 ProposedPrice = bidDto.ProposedPrice,
                 Notes = bidDto.Notes,
-                Status = "pending", 
+                Status = "pending",
                 SubmittedAt = DateTime.Now
             };
 
@@ -201,22 +186,24 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
             var orderedBids = project.Bids
                 .OrderByDescending(b => b.ProposedPrice)
-                .Select(b => new BidOutDto { 
-                Id = b.Id,
-                FreelancerId = b.FreelancerId,
-                Freelancer = new FreelancerShortOutDTO { 
-                    Id = b.FreelancerId,
-                    Name = b.Freelancer.Name
-                },
-                ProposedPrice = b.ProposedPrice,
-                Notes = b.Notes,
-                Status = b.Status,
-                SubmittedAt = b.SubmittedAt,
-                ApprovedAt = b.ApprovedAt
-                } );
+                .Select(b => new BidOutDto
+                {
+                    Id = b.Id,
+                    FreelancerId = b.FreelancerId,
+                    Freelancer = new FreelancerShortOutDTO
+                    {
+                        Id = b.FreelancerId,
+                        Name = b.Freelancer.Name
+                    },
+                    ProposedPrice = b.ProposedPrice,
+                    Notes = b.Notes,
+                    Status = b.Status,
+                    SubmittedAt = b.SubmittedAt,
+                    ApprovedAt = b.ApprovedAt
+                });
 
 
-          
+
             return Ok(CreateSuccessResponse(new
             {
                 project.Id,
@@ -224,7 +211,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 project.Status,
                 project.Budget,
                 project.Duration,
-                project.Description, 
+                project.Description,
                 Bids = orderedBids
             }));
         }
@@ -253,109 +240,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
 
-        [Authorize(Roles = "CLIENT, FREELANCER")]
-        [HttpPut("tasks/{id}")]
-        public async Task<IActionResult> UpdateTaskStatusAsync(int id, [FromBody] TaskStatusDto taskStatusDto)
-        {
-            var task = await mainAppContext.Tasks.FindAsync(id);
-            if (task == null)
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "404", Message = "Task not found." }
-                }
-                };
-                return NotFound(errorResponse);
-            }
-
-            var validStatuses = new List<string> { "to-do", "in-progress", "in-review", "done" };
-
-            if (!validStatuses.Contains(taskStatusDto.NewStatus.ToLower()))
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "Invalid status provided." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
-
-            if (task.Status.ToLower() == "to do" && taskStatusDto.NewStatus.ToLower() != "in progress")
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "Invalid status transition from 'To Do'." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
-            if (task.Status.ToLower() == "in progress" &&
-                taskStatusDto.NewStatus.ToLower() != "in review" && taskStatusDto.NewStatus.ToLower() != "done")
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "Invalid status transition from 'In Progress'." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
-            if (task.Status.ToLower() == "in review" && taskStatusDto.NewStatus.ToLower() != "done")
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "Invalid status transition from 'In Review'." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
-            if (task.Status.ToLower() == "done")
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "No further status transitions allowed from 'Done'." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
-
-            task.Status = taskStatusDto.NewStatus;
-
-            task.CompletedAt = taskStatusDto.NewStatus.ToLower() == "done" ? DateTime.UtcNow : (DateTime?)null;
-
-            await mainAppContext.SaveChangesAsync();
-
-            var successResponse = new ApiResponse<string>
-            {
-                IsSuccess = true,
-                Results = "Task status updated.",
-                Errors = null
-            };
-            return Ok(successResponse);
-        }
+     
+        
 
 
         [Authorize(Roles = "CLIENT")]
@@ -443,9 +329,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
         //        .Include(p => p.Client)
         //        .FirstOrDefault(p => p.Id == id);
 
-            //    return Ok(CreateSuccessResponse(project));
+        //    return Ok(CreateSuccessResponse(project));
 
-            //}
-        }
+        //}
     }
-
+}

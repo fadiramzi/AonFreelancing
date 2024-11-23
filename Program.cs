@@ -1,4 +1,5 @@
 
+
 using AonFreelancing.Contexts;
 using AonFreelancing.Middlewares;
 using AonFreelancing.Models;
@@ -8,10 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using System.Text;
 
 namespace AonFreelancing
@@ -25,38 +23,11 @@ namespace AonFreelancing
             var conf = builder.Configuration;
             builder.Services.AddControllers(o => o.SuppressAsyncSuffixInActionNames = false);
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen(options =>
-            {
-                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
-                {
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "Bearer"
-                });
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-            });
+            builder.Services.AddSwaggerGen();
             builder.Services.AddSingleton<OTPManager>();
             builder.Services.AddSingleton<JwtService>();
-<<<<<<< HEAD
-            builder.Services.AddScoped<FileService>();   
-            builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlite("Data Source=aon.db"));
-=======
+            builder.Services.AddSingleton<TaskService>();
             builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlServer(conf.GetConnectionString("Default")));
->>>>>>> master
             builder.Services.AddIdentity<User, ApplicationRole>()
                 .AddEntityFrameworkStores<MainAppContext>()
                 .AddDefaultTokenProviders();
@@ -98,19 +69,10 @@ namespace AonFreelancing
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-<<<<<<< HEAD
-            app.UseStaticFiles(new StaticFileOptions
-            {
-                FileProvider = new PhysicalFileProvider(FileService._uploadFolder),
-                RequestPath = "/images"
-            });
-=======
             // just for testing
             app.UseSwagger();
             app.UseSwaggerUI();
->>>>>>> master
 
-            app.MapControllers();
 
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 

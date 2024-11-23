@@ -42,18 +42,18 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
         public async Task <IActionResult> RegisterPhoneNumberAsync([FromBody] RegistByPhoneNumberDTO reg) 
         {
-            var user= await _mainAppContext.TemUsers.Where(ph=>ph.phoneNumber==reg.PhoneNumber).FirstOrDefaultAsync();
+            var user= await _mainAppContext.TempUsers.Where(ph=>ph.PhoneNumber==reg.PhoneNumber).FirstOrDefaultAsync();
 
 
-            if (user != null && !user.PhoneNumberConfirm==false)
+            if (user != null && !user.PhoneNumberConfirmed==false)
             {
                 
                 return Unauthorized(CreateErrorResponse(StatusCodes.Status401Unauthorized.ToString(), "Verify Your Account First"));
             }
 
-            user = new TemUser() { phoneNumber=reg.PhoneNumber };
+            user = new TempUser() { PhoneNumber=reg.PhoneNumber };
 
-           await _mainAppContext.TemUsers.AddAsync(user);
+           await _mainAppContext.TempUsers.AddAsync(user);
 
             string otpCode = _otpManager.GenerateOtp();
             await _mainAppContext.SaveChangesAsync();
