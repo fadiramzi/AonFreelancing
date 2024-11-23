@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -172,6 +173,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
         {
             var project = await mainAppContext.Projects
                 .Where(p => p.Id == id)
+                .Include(p=>p.Tasks)
                 .Include(p => p.Bids)
                 .ThenInclude(b => b.Freelancer)
                 .FirstOrDefaultAsync();
@@ -194,9 +196,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 SubmittedAt = b.SubmittedAt,
                 ApprovedAt = b.ApprovedAt
                 } );
+            var numberOfCompletedTasks = project.Tasks.Where(t => t.Status == "Done").ToList().Count();
+            double totalNumberOFTasks = project.Tasks.Count();
 
-
-          
             return Ok(CreateSuccessResponse(new
             {
                 project.Id,
@@ -204,7 +206,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 project.Status,
                 project.Budget,
                 project.Duration,
-                project.Description, 
+                project.Description,
+                Percentage=  (numberOfCompletedTasks /totalNumberOFTasks) * 100, 
                 Bids = orderedBids
             }));
         }
@@ -233,109 +236,109 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
 
-        [Authorize(Roles = "CLIENT, FREELANCER")]
-        [HttpPut("tasks/{id}")]
-        public async Task<IActionResult> UpdateTaskStatusAsync(int id, [FromBody] TaskStatusDto taskStatusDto)
-        {
-            var task = await mainAppContext.Tasks.FindAsync(id);
-            if (task == null)
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "404", Message = "Task not found." }
-                }
-                };
-                return NotFound(errorResponse);
-            }
+        //[Authorize(Roles = "CLIENT, FREELANCER")]
+        //[HttpPut("tasks/{id}")]
+        //public async Task<IActionResult> UpdateTaskStatusAsync(int id, [FromBody] TaskStatusDto taskStatusDto)
+        //{
+        //    var task = await mainAppContext.Tasks.FindAsync(id);
+        //    if (task == null)
+        //    {
+        //        var errorResponse = new ApiResponse<string>
+        //        {
+        //            IsSuccess = false,
+        //            Results = null,
+        //            Errors = new List<Error>
+        //        {
+        //            new Error { Code = "404", Message = "Task not found." }
+        //        }
+        //        };
+        //        return NotFound(errorResponse);
+        //    }
 
-            var validStatuses = new List<string> { "to-do", "in-progress", "in-review", "done" };
+        //    var validStatuses = new List<string> { "to-do", "in-progress", "in-review", "done" };
 
-            if (!validStatuses.Contains(taskStatusDto.NewStatus.ToLower()))
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "Invalid status provided." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
+        //    if (!validStatuses.Contains(taskStatusDto.NewStatus.ToLower()))
+        //    {
+        //        var errorResponse = new ApiResponse<string>
+        //        {
+        //            IsSuccess = false,
+        //            Results = null,
+        //            Errors = new List<Error>
+        //        {
+        //            new Error { Code = "400", Message = "Invalid status provided." }
+        //        }
+        //        };
+        //        return BadRequest(errorResponse);
+        //    }
 
-            if (task.Status.ToLower() == "to do" && taskStatusDto.NewStatus.ToLower() != "in progress")
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "Invalid status transition from 'To Do'." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
-            if (task.Status.ToLower() == "in progress" &&
-                taskStatusDto.NewStatus.ToLower() != "in review" && taskStatusDto.NewStatus.ToLower() != "done")
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "Invalid status transition from 'In Progress'." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
-            if (task.Status.ToLower() == "in review" && taskStatusDto.NewStatus.ToLower() != "done")
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "Invalid status transition from 'In Review'." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
-            if (task.Status.ToLower() == "done")
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    IsSuccess = false,
-                    Results = null,
-                    Errors = new List<Error>
-                {
-                    new Error { Code = "400", Message = "No further status transitions allowed from 'Done'." }
-                }
-                };
-                return BadRequest(errorResponse);
-            }
+        //    if (task.Status.ToLower() == "to do" && taskStatusDto.NewStatus.ToLower() != "in progress")
+        //    {
+        //        var errorResponse = new ApiResponse<string>
+        //        {
+        //            IsSuccess = false,
+        //            Results = null,
+        //            Errors = new List<Error>
+        //        {
+        //            new Error { Code = "400", Message = "Invalid status transition from 'To Do'." }
+        //        }
+        //        };
+        //        return BadRequest(errorResponse);
+        //    }
+        //    if (task.Status.ToLower() == "in progress" &&
+        //        taskStatusDto.NewStatus.ToLower() != "in review" && taskStatusDto.NewStatus.ToLower() != "done")
+        //    {
+        //        var errorResponse = new ApiResponse<string>
+        //        {
+        //            IsSuccess = false,
+        //            Results = null,
+        //            Errors = new List<Error>
+        //        {
+        //            new Error { Code = "400", Message = "Invalid status transition from 'In Progress'." }
+        //        }
+        //        };
+        //        return BadRequest(errorResponse);
+        //    }
+        //    if (task.Status.ToLower() == "in review" && taskStatusDto.NewStatus.ToLower() != "done")
+        //    {
+        //        var errorResponse = new ApiResponse<string>
+        //        {
+        //            IsSuccess = false,
+        //            Results = null,
+        //            Errors = new List<Error>
+        //        {
+        //            new Error { Code = "400", Message = "Invalid status transition from 'In Review'." }
+        //        }
+        //        };
+        //        return BadRequest(errorResponse);
+        //    }
+        //    if (task.Status.ToLower() == "done")
+        //    {
+        //        var errorResponse = new ApiResponse<string>
+        //        {
+        //            IsSuccess = false,
+        //            Results = null,
+        //            Errors = new List<Error>
+        //        {
+        //            new Error { Code = "400", Message = "No further status transitions allowed from 'Done'." }
+        //        }
+        //        };
+        //        return BadRequest(errorResponse);
+        //    }
 
-            task.Status = taskStatusDto.NewStatus;
+        //    task.Status = taskStatusDto.NewStatus;
 
-            task.CompletedAt = taskStatusDto.NewStatus.ToLower() == "done" ? DateTime.UtcNow : (DateTime?)null;
+        //    task.CompletedAt = taskStatusDto.NewStatus.ToLower() == "done" ? DateTime.UtcNow : (DateTime?)null;
 
-            await mainAppContext.SaveChangesAsync();
+        //    await mainAppContext.SaveChangesAsync();
 
-            var successResponse = new ApiResponse<string>
-            {
-                IsSuccess = true,
-                Results = "Task status updated.",
-                Errors = null
-            };
-            return Ok(successResponse);
-        }
+        //    var successResponse = new ApiResponse<string>
+        //    {
+        //        IsSuccess = true,
+        //        Results = "Task status updated.",
+        //        Errors = null
+        //    };
+        //    return Ok(successResponse);
+        //}
 
 
         [Authorize(Roles = "CLIENT")]
@@ -416,15 +419,20 @@ namespace AonFreelancing.Controllers.Mobile.v1
             });
         }
 
-        //[HttpGet("{id}")]
-        //public IActionResult GetProject(int id)
-        //{
-        //    var project = _mainAppContext.Projects
-        //        .Include(p => p.Client)
-        //        .FirstOrDefault(p => p.Id == id);
+        [HttpGet("{projectId}/tasks")]
+        public async Task<IActionResult> GetTasksByProjectIdAsync([FromRoute] long projectId,
+                                                               [AllowedValues("To-Do", "Done", "In-Progress", "In-Review", ErrorMessage = "status should be one of the values: 'to-do', 'done', 'in-progress', 'in-review'")][FromQuery] string status = "")
+        {
+            if (!ModelState.IsValid)
+                return base.CustomBadRequest();
 
-        //    return Ok(CreateSuccessResponse(project));
+            var storedTasksDTOs = await mainAppContext.Tasks.AsNoTracking()
+                                                            .Where(t => t.ProjectId == projectId && t.Status.Contains(status))
+                                                            .Select(t => new TaskOutputDTO(t))
+                                                            .ToListAsync();
+            return Ok(CreateSuccessResponse(storedTasksDTOs));
+        }
 
-        //}
+
     }
 }

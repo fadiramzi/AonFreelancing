@@ -11,7 +11,7 @@ namespace AonFreelancing.Models
         public int Id { get; set; }
         [Required] public string Title { get; set; }
 
-        [AllowNull] public string Description { get; set; }
+        [AllowNull] public string? Description { get; set; }
 
         public long ClientId { get; set; } //FK
 
