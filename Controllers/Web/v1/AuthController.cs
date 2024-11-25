@@ -10,9 +10,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Client = AonFreelancing.Models.Client;
 
-namespace AonFreelancing.Controllers.Mobile.v1
+namespace AonFreelancing.Controllers.Web.v1
 {
-    [Route("api/mobile/v1/auth")]
+    [Route("api/web/v1/auth")]
     [ApiController]
     public class AuthController : BaseController
     {
@@ -68,8 +68,6 @@ namespace AonFreelancing.Controllers.Mobile.v1
             await _authService.AddOtpAsync(otp);
             await _otpManager.SendOTPAsync(otp.Code, otp.PhoneNumber);
 
-            // Logic for Mobile
-            // ex: mobileService.SomeFunctuZ
             return Ok(CreateSuccessResponse("OTP code sent to your phone number, during testing you may not receive it, please use 123456"));
         }
 
@@ -101,7 +99,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             if (tempUser == null)
                 return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),
                     "Phone number is invalid."));
-
+            
             User? user = registerReq.UserType switch
             {
                 Constants.USER_TYPE_FREELANCER => new Freelancer
@@ -139,13 +137,13 @@ namespace AonFreelancing.Controllers.Mobile.v1
                         })
                         .ToList()
                 });
-
+            
             var role = new ApplicationRole { Name = registerReq.UserType };
             await _roleManager.CreateAsync(role);
             await _userManager.AddToRoleAsync(user, role.Name);
             await _authService.Remove(tempUser);
 
-            return CreatedAtAction(nameof(UsersController.GetProfileByIdAsync), "users",
+            return CreatedAtAction(nameof(UsersController.GetProfileByIdAsync), "users", 
                 new { id = user.Id }, null);
         }
 
