@@ -11,7 +11,7 @@
         public DateTime? CompletedAt { get; set; }
 
         public TaskOutputDTO() { }
-        public TaskOutputDTO(TaskEntity task)
+        TaskOutputDTO(TaskEntity task)
         {
             Id = task.Id;
             ProjectId = task.ProjectId;
@@ -21,5 +21,6 @@
             Deadline = task.DeadlineAt;
             CompletedAt = task.CompletedAt;
         }
+        public static TaskOutputDTO FromTask(TaskEntity task) => new TaskOutputDTO(task);
     }
 }

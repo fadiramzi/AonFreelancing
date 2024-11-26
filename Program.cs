@@ -30,7 +30,6 @@ namespace AonFreelancing
             builder.Services.AddIdentity<User, ApplicationRole>()
                 .AddEntityFrameworkStores<MainAppContext>()
                 .AddDefaultTokenProviders();
-            builder.Configuration.AddJsonFile("appsettings.json");
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
@@ -57,9 +56,8 @@ namespace AonFreelancing
                     }
                 });
             });
-           
 
-
+            builder.Configuration.AddJsonFile("appsettings.json");
             // JWT Authentication configuration
             var jwtSettings = builder.Configuration.GetSection("Jwt");
             var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty);
@@ -81,32 +79,6 @@ namespace AonFreelancing
                     ValidAudience = jwtSettings["Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
-            });
-
-
-            builder.Services.AddSwaggerGen(options =>
-            {
-                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
-                {
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "Bearer"
-                });
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
             });
 
 

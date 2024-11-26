@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -245,16 +246,20 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 Errors = null
             });
         }
+        [HttpGet("{projectId}/tasks")]
+        public async Task<IActionResult> GetTasksByProjectIdAsync([FromRoute] long projectId,
+                                                                  [AllowedValues(Constants.TASKS_STATUS_TO_DO,Constants.TASKS_STATUS_DONE,Constants.TASKS_STATUS_IN_PROGRESS,Constants.TASKS_STATUS_IN_REVIEW,ErrorMessage = $"status should be one of the values: '{Constants.TASKS_STATUS_TO_DO}', '{Constants.TASKS_STATUS_DONE}', '{Constants.TASKS_STATUS_IN_PROGRESS}', '{Constants.TASKS_STATUS_IN_REVIEW}', or empty")]
+                                                                    [FromQuery] string status = "")
+        {
+            if (!ModelState.IsValid)
+                return base.CustomBadRequest();
 
-        //[HttpGet("{id}")]
-        //public IActionResult GetProject(int id)
-        //{
-        //    var project = _mainAppContext.Projects
-        //        .Include(p => p.Client)
-        //        .FirstOrDefault(p => p.Id == id);
+            List<TaskOutputDTO> storedTasksDTOs = await mainAppContext.Tasks.AsNoTracking()
+                                                            .Where(t => t.ProjectId == projectId && t.Status.Contains(status))
+                                                            .Select(t => TaskOutputDTO.FromTask(t))
+                                                            .ToListAsync();
+            return Ok(CreateSuccessResponse(storedTasksDTOs));
+        }
 
-        //    return Ok(CreateSuccessResponse(project));
-
-        //}
     }
 }
