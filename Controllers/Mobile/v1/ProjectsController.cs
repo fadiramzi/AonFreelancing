@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -111,6 +112,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
             if (project == null)
                 return NotFound(CreateErrorResponse("404", "Project not found."));
 
+            if (project.Status == Constants.PROJECT_STATUS_CLOSED)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),
+                   "project is closed "));
+
             var user = await userManager.GetUserAsync(User);
             //if (user == null || !User.IsInRole("FREELANCER"))
             //    return Forbid();
@@ -160,7 +165,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             bidID.ApprovedAt = DateTime.Now;
 
             project.Status = Constants.PROJECT_STATUS_CLOSED;
-
+            project.FreelancerId = bidID.FreelancerId;
             await mainAppContext.SaveChangesAsync();
 
             return Ok(CreateSuccessResponse("Bid approved successfully."));
