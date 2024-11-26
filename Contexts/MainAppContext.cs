@@ -1,4 +1,5 @@
 ﻿using AonFreelancing.Models;
+using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Emit;
@@ -61,8 +62,8 @@ namespace AonFreelancing.Contexts
                 .OnDelete(DeleteBehavior.NoAction);
 
 
-            builder.Entity<TaskEntity>().ToTable("Tasks");
-
+            builder.Entity<TaskEntity>().ToTable("Tasks", t => t.HasCheckConstraint("CK_TASK_STATUS", $"[Status] IN ('{Constants.TASK_STATUS_DONE}', '{Constants.TASK_STATUS_IN_REVIEW}', '{Constants.TASK_STATUS_IN_PROGRESS}', '{Constants.TASK_STATUS_TO_DO}')"))
+                .Property(t => t.Status).HasDefaultValue(Constants.TASK_STATUS_TO_DO);
             base.OnModelCreating(builder);
         }
     }

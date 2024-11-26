@@ -248,7 +248,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
         [HttpGet("{projectId}/tasks")]
         public async Task<IActionResult> GetTasksByProjectIdAsync([FromRoute] long projectId,
-                                                                  [AllowedValues(Constants.TASKS_STATUS_TO_DO,Constants.TASKS_STATUS_DONE,Constants.TASKS_STATUS_IN_PROGRESS,Constants.TASKS_STATUS_IN_REVIEW,ErrorMessage = $"status should be one of the values: '{Constants.TASKS_STATUS_TO_DO}', '{Constants.TASKS_STATUS_DONE}', '{Constants.TASKS_STATUS_IN_PROGRESS}', '{Constants.TASKS_STATUS_IN_REVIEW}', or empty")]
+                                                                  [AllowedValues(Constants.TASK_STATUS_TO_DO,Constants.TASK_STATUS_DONE,Constants.TASK_STATUS_IN_PROGRESS,Constants.TASK_STATUS_IN_REVIEW,ErrorMessage = $"status should be one of the values: '{Constants.TASK_STATUS_TO_DO}', '{Constants.TASK_STATUS_DONE}', '{Constants.TASK_STATUS_IN_PROGRESS}', '{Constants.TASK_STATUS_IN_REVIEW}', or empty")]
                                                                     [FromQuery] string status = "")
         {
             if (!ModelState.IsValid)

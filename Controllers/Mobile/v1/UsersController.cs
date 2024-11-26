@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Immutable;
+using System.Security.Claims;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -16,9 +18,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
         : BaseController
     {
         [HttpGet("{id}/profile")]
-        public async Task<IActionResult> GetProfileByIdAsync([FromRoute]long id)
+        public async Task<IActionResult> GetProfileByIdAsync([FromRoute] long id)
         {
-            var freelancer = await mainAppContext.Users 
+            var freelancer = await mainAppContext.Users
                 .OfType<Freelancer>().Where(f => f.Id == id)
                 .Select(f => new FreelancerResponseDTO
                 {
@@ -47,25 +49,25 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 .Where(c => c.Id == id)
                 .Include(c => c.Projects)
                 .Select(c => new ClientResponseDTO
-                 {
-                     Id = c.Id,
-                     Name = c.Name,
-                     Username = c.UserName ?? string.Empty, 
-                     PhoneNumber = c.PhoneNumber ?? string.Empty,
-                     UserType = Constants.USER_TYPE_CLIENT,
-                     IsPhoneNumberVerified = c.PhoneNumberConfirmed,
-                     Role = new RoleResponseDTO { Name = Constants.USER_TYPE_CLIENT },
-                     Projects = c.Projects.Select(p =>  new ProjectDetailsDTO
-                     {
-                         Id = p.Id,
-                         Description = p.Description,
-                         EndDate = p.EndDate,
-                         StartDate = p.StartDate,
-                         Name = p.Title,
-                     }),
-                     CompanyName = c.CompanyName,
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Username = c.UserName ?? string.Empty,
+                    PhoneNumber = c.PhoneNumber ?? string.Empty,
+                    UserType = Constants.USER_TYPE_CLIENT,
+                    IsPhoneNumberVerified = c.PhoneNumberConfirmed,
+                    Role = new RoleResponseDTO { Name = Constants.USER_TYPE_CLIENT },
+                    Projects = c.Projects.Select(p => new ProjectDetailsDTO
+                    {
+                        Id = p.Id,
+                        Description = p.Description,
+                        EndDate = p.EndDate,
+                        StartDate = p.StartDate,
+                        Name = p.Title,
+                    }),
+                    CompanyName = c.CompanyName,
 
-                 }).FirstOrDefaultAsync();
+                }).FirstOrDefaultAsync();
 
 
             if (client != null)
@@ -74,6 +76,27 @@ namespace AonFreelancing.Controllers.Mobile.v1
             return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "NotFound"));
 
         }
+        [HttpGet("/statistics")]
+        public async Task<IActionResult> GetUserStatistics()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            long authenticatedUserId = Convert.ToInt64(identity.FindFirst(ClaimTypes.NameIdentifier).Value);
+            //User? authenticatedUser = await userManager.GetUserAsync(HttpContext.User);
+
+            var storedProjects = await mainAppContext.Projects.AsNoTracking()
+                                                                   .Include(p => p.Freelancer)
+                                                                   .Include(p => p.Tasks)
+                                                                   .Where(p => p.ClientId == authenticatedUserId || p.FreelancerId == authenticatedUserId)
+                                                                   .ToListAsync();
+            var storedTasks = storedProjects.SelectMany(p => p.Tasks)
+                                            .ToList();
+            return Ok(CreateSuccessResponse(new UserStatisticsDTO(ProjectsStatisticsDTO.FromProjects(storedProjects),
+                                                                  TasksStatisticsDTO.FromTasks(storedTasks)
+                                                                  )
+            ));
+
+        }
+
     }
-   
+
 }

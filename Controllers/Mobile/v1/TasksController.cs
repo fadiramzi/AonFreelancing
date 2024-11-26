@@ -25,10 +25,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
             TaskEntity? storedTask = await mainAppContext.Tasks.FindAsync(id);
             if (storedTask != null && !storedTask.IsDeleted)
             {
-                if (storedTask.Status == Constants.TASKS_STATUS_DONE)
+                if (storedTask.Status == Constants.TASK_STATUS_DONE)
                     return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "task is already done"));
 
-                if (taskUpdateDTO.Status == Constants.TASKS_STATUS_DONE)
+                if (taskUpdateDTO.Status == Constants.TASK_STATUS_DONE)
                     storedTask.CompletedAt = DateTime.Now;
                 storedTask.Status = taskUpdateDTO.Status;
                 storedTask.DeadlineAt = taskUpdateDTO.deadlineAt;
@@ -48,7 +48,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
          [HttpPut("tasks/{pid}/checkProgress")]
         public async Task<IActionResult> CheckProgressStatusAsync( int pid )
         {
-            decimal countDone= await mainAppContext.Tasks.Where(s => s.Status== Constants.TASKS_STATUS_DONE&&s.ProjectId==pid && s.IsDeleted==false).CountAsync();
+            decimal countDone= await mainAppContext.Tasks.Where(s => s.Status== Constants.TASK_STATUS_DONE&&s.ProjectId==pid && s.IsDeleted==false).CountAsync();
             decimal countTotal = await mainAppContext.Tasks.Where(s => s.ProjectId == pid && s.IsDeleted == false ).CountAsync();
             if (countTotal > 0) 
             {
@@ -85,4 +85,5 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
         }
     }
+
 }
