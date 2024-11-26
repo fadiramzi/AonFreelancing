@@ -1,4 +1,5 @@
 using AonFreelancing.Contexts;
+using AonFreelancing.Interfaces;
 using AonFreelancing.Middlewares;
 using AonFreelancing.Models;
 using AonFreelancing.Services;
@@ -27,6 +28,7 @@ namespace AonFreelancing
             builder.Services.AddSingleton<OTPManager>();
             builder.Services.AddSingleton<JwtService>();
             builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<IStatisticsService, StatisticsService>();
             builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlServer(conf.GetConnectionString("Default")));
             builder.Services.AddIdentity<User, ApplicationRole>()
                 .AddEntityFrameworkStores<MainAppContext>()

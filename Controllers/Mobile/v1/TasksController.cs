@@ -84,7 +84,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
 
         [Authorize(Roles = "CLIENT")]
-         [HttpPut("tasks/{pid}/checkProgress")]
+         [HttpGet("tasks/{pid}/checkProgress")]
         public async Task<IActionResult> CheckProgressStatusAsync( int pid )
         {
             decimal countDone= await mainAppContext.Tasks.Where(s => s.Status== Constants.TASKS_STATUS_DONE&&s.ProjectId==pid && s.IsDeleted==false).CountAsync();
