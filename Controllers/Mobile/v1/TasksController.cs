@@ -14,12 +14,12 @@ using System.Diagnostics;
 namespace AonFreelancing.Controllers.Mobile.v1
 {
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("api/mobile/v1/tasks")]
     [ApiController]
     public class TasksController(MainAppContext mainAppContext, UserManager<User> userManager) : BaseController
     {
         [Authorize(Roles = "CLIENT, FREELANCER")]
-        [HttpPut("tasks/{id}/updateStatus")]
+        [HttpPut("{id}/updateStatus")]
         public async Task<IActionResult> UpdateTaskAsync(long id, [FromBody] TaskUpdateDTO taskUpdateDTO)
         {
             //get task first and check its status if exist
@@ -53,8 +53,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
 
 
-        [Authorize(Roles = "CLIENT")]
-         [HttpPut("tasks/{pid}/checkProgress")]
+         [Authorize(Roles = "CLIENT")]
+         [HttpGet("tasks/{pid}/checkProgress")]
         public async Task<IActionResult> CheckProgressStatusAsync( int pid )
         {
             decimal countDone= await mainAppContext.Tasks.Where(s => s.Status== Constants.TASKS_STATUS_DONE&&s.ProjectId==pid && s.IsDeleted==false).CountAsync();
@@ -70,7 +70,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     "project has no tasks"));
         }
 
-        [Authorize(Roles = "CLIENT, FREELANCER")]
+        [Authorize(Roles = "CLIENT,FREELANCER")]
         [HttpPut("tasks/{id}/deleteTask")]
         public async Task<IActionResult> DeleteTaskAsync(long id)
         {

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -111,6 +112,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
             if (project == null)
                 return NotFound(CreateErrorResponse("404", "Project not found."));
 
+            if (project.Status==Constants.PROJECT_STATUS_CLOSED)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),
+                   "project is closed "));
+
             var user = await userManager.GetUserAsync(User);
             //if (user == null || !User.IsInRole("FREELANCER"))
             //    return Forbid();
@@ -126,7 +131,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             {
                 return BadRequest(CreateErrorResponse("400", "Invalid proposed price. The proposed price must be positive and lower than the last bid or project budget."));
             }
-
+           
             var bid = new Bid
             {
                 ProjectId = id,
@@ -160,7 +165,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             bidID.ApprovedAt = DateTime.Now;
 
             project.Status = Constants.PROJECT_STATUS_CLOSED;
-
+            project.FreelancerId= bidID.FreelancerId;
             await mainAppContext.SaveChangesAsync();
 
             return Ok(CreateSuccessResponse("Bid approved successfully."));
@@ -311,6 +316,41 @@ namespace AonFreelancing.Controllers.Mobile.v1
             });
         }
 
+        [HttpGet("{id}/tasks")]
+        public async Task<IActionResult> GetProjectTasksAsync([FromQuery] string? status ,int id )
+        {
+           List<TaskOutDTO> tasks = new List<TaskOutDTO>();
+            if (status == null) { 
+             tasks= await mainAppContext.Tasks.Where(t=>t.ProjectId == id&&t.IsDeleted == false)
+                    .Select(t => new TaskOutDTO
+                    {
+                        Name = t.Name,
+                    })
+                    .ToListAsync();
+
+            }
+            if (status != null) { 
+                
+                 tasks = await mainAppContext.Tasks.Where(t => t.ProjectId == id && t.IsDeleted == false && t.Status==status)
+                    .Select(t=>new TaskOutDTO{
+                    Name=t.Name,
+                    })
+                    .ToListAsync();
+               
+            }
+            if (tasks.Any())
+            {
+                return Ok(CreateSuccessResponse(tasks));
+            }
+            else
+            {
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),
+                    $"project has no {status} tasks"));
+            }
+
+        }
+
+      
         //[HttpGet("{id}")]
         //public IActionResult GetProject(int id)
         //{

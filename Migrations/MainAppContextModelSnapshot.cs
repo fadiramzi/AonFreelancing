@@ -197,6 +197,31 @@ namespace AonFreelancing.Migrations
                         });
                 });
 
+            modelBuilder.Entity("AonFreelancing.Models.Skill", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("skills", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_NAME", "[Name] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')");
+                        });
+                });
+
             modelBuilder.Entity("AonFreelancing.Models.TaskEntity", b =>
                 {
                     b.Property<long>("Id")
@@ -461,10 +486,6 @@ namespace AonFreelancing.Migrations
                 {
                     b.HasBaseType("AonFreelancing.Models.User");
 
-                    b.Property<string>("Skills")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.ToTable("Freelancers", (string)null);
                 });
 
@@ -531,6 +552,17 @@ namespace AonFreelancing.Migrations
                     b.Navigation("Client");
 
                     b.Navigation("Freelancer");
+                });
+
+            modelBuilder.Entity("AonFreelancing.Models.Skill", b =>
+                {
+                    b.HasOne("AonFreelancing.Models.Freelancer", "freelancer")
+                        .WithMany("Skills")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("freelancer");
                 });
 
             modelBuilder.Entity("AonFreelancing.Models.TaskEntity", b =>
@@ -639,6 +671,8 @@ namespace AonFreelancing.Migrations
             modelBuilder.Entity("AonFreelancing.Models.Freelancer", b =>
                 {
                     b.Navigation("Bids");
+
+                    b.Navigation("Skills");
                 });
 
             modelBuilder.Entity("AonFreelancing.Models.SystemUser", b =>

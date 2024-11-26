@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AonFreelancing.Migrations
 {
     /// <inheritdoc />
-    public partial class task07_update : Migration
+    public partial class skillsDone : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -197,8 +197,7 @@ namespace AonFreelancing.Migrations
                 name: "Freelancers",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false),
-                    Skills = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -286,6 +285,26 @@ namespace AonFreelancing.Migrations
                     table.ForeignKey(
                         name: "FK_Projects_Freelancers_FreelancerId",
                         column: x => x.FreelancerId,
+                        principalTable: "Freelancers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "skills",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<long>(type: "bigint", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_skills", x => x.Id);
+                    table.CheckConstraint("CK_NAME", "[Name] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')");
+                    table.ForeignKey(
+                        name: "FK_skills_Freelancers_UserId",
+                        column: x => x.UserId,
                         principalTable: "Freelancers",
                         principalColumn: "Id");
                 });
@@ -434,6 +453,11 @@ namespace AonFreelancing.Migrations
                 column: "FreelancerId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_skills_UserId",
+                table: "skills",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tasks_ProjectId",
                 table: "Tasks",
                 column: "ProjectId");
@@ -468,6 +492,9 @@ namespace AonFreelancing.Migrations
 
             migrationBuilder.DropTable(
                 name: "otps");
+
+            migrationBuilder.DropTable(
+                name: "skills");
 
             migrationBuilder.DropTable(
                 name: "Tasks");

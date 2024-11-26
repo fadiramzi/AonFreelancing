@@ -13,7 +13,6 @@ namespace AonFreelancing.Models.Requests
         string Password,
         [Required, AllowedValues("FREELANCER", "CLIENT")] 
         string UserType,
-        string? Skills = null,
         string? CompanyName = null
     );
 }
