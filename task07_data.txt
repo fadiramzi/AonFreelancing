@@ -1,0 +1,67 @@
+CLIENT:
+{
+  "phoneNumber": "+9647809961817"
+}
+
+
+{
+  "phoneNumber": "+9647809961817",
+  "password": "123!@#Aa"
+}
+
+{
+  "name": "Abdulrahman Ahmed",
+  "username": "abdu",
+  "phoneNumber": "+9647809961817",
+  "password": "123!@#Aa",
+  "userType": "CLIENT",
+  "skills": "",
+  "companyName": "Aon Company"
+}
+
+ "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQ0xJRU5UIiwiZXhwIjoxNzMyNjE4MjEzLCJpc3MiOiJBb24iLCJhdWQiOiJBb24gRGV2In0.HQHplD30aRuafWTzjdfIZoP7uuFD5JLqqoQibgjyMfo"
+
+
+FREELANCER :
+
+{
+  "phoneNumber": "+9647809961818"
+}
+
+{
+  "phone": "+9647809961818",
+  "password": "123!@#aA"
+}
+
+{
+  "name": "abd",
+  "username": "abd1",
+  "phoneNumber": "+9647727124948",
+  "password": "123!@aA",
+  "userType": "FREELANCER",
+  "skills": "C#",
+  "companyName": ""
+}
+
+ "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiRlJFRUxBTkNFUiIsImV4cCI6MTczMjYxODQyNCwiaXNzIjoiQW9uIiwiYXVkIjoiQW9uIERldiJ9.cOxkyQ_x_V14o4qQnRH6v5m9LcxGy9O1Ay8GX4W4Dlc"
+
+
+
+PROJECT: 
+{
+  "title": "Test Aon Project",
+  "description": "Build big project for aon company",
+  "qualificationName": "fullstack",
+  "duration": 30,
+  "priceType": "Fixed",
+  "budget": 300.00
+}
+
+{
+  "title": "aon2",
+  "description": "BLLLA BLLLLA",
+  "qualificationName": "backend",
+  "duration": 247,
+  "priceType": "Fixed",
+  "budget": 900
+}

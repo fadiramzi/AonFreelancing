@@ -1,13 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace AonFreelancing.Models
 {
     [Table("Projects")]
     public class Project
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         [Required] public string Title { get; set; }
 
         [AllowNull] public string Description { get; set; }
@@ -32,6 +33,7 @@ namespace AonFreelancing.Models
         public ICollection<Bid> Bids { get; set; } = new List<Bid>();
         public string? ImagePath { get; set; }
 
+        [JsonIgnore]
         public ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
 
     }

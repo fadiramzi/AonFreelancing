@@ -26,6 +26,7 @@ namespace AonFreelancing
             builder.Services.AddSwaggerGen();
             builder.Services.AddSingleton<OTPManager>();
             builder.Services.AddSingleton<JwtService>();
+            builder.Services.AddScoped<AuthService>();
             builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlServer(conf.GetConnectionString("Default")));
             builder.Services.AddIdentity<User, ApplicationRole>()
                 .AddEntityFrameworkStores<MainAppContext>()

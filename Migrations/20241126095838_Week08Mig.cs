@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AonFreelancing.Migrations
 {
     /// <inheritdoc />
-    public partial class TaskMig : Migration
+    public partial class Week08Mig : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -255,7 +255,7 @@ namespace AonFreelancing.Migrations
                 name: "Projects",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -294,9 +294,9 @@ namespace AonFreelancing.Migrations
                 name: "Bids",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    ProjectId = table.Column<int>(type: "int", nullable: false),
+                    ProjectId = table.Column<long>(type: "bigint", nullable: false),
                     FreelancerId = table.Column<long>(type: "bigint", nullable: false),
                     ProposedPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Notes = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -335,14 +335,16 @@ namespace AonFreelancing.Migrations
                 name: "Tasks",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    ProjectId = table.Column<int>(type: "int", nullable: false),
+                    ProjectId = table.Column<long>(type: "bigint", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DeadlineAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CompletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Notes = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Notes = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
