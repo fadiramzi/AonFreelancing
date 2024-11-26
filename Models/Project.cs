@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using AonFreelancing.Models.DTOs;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
@@ -34,6 +35,20 @@ namespace AonFreelancing.Models
         public string? ImagePath { get; set; }
 
         public ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
+
+        public Project() { }
+        Project(ProjectInputDto inputDto,long clientId)
+        {
+            ClientId = clientId;
+            Title = inputDto.Title;
+            Description = inputDto.Description;
+            QualificationName = inputDto.QualificationName;
+            Duration = inputDto.Duration;
+            Budget = inputDto.Budget;
+            PriceType = inputDto.PriceType;
+            CreatedAt = DateTime.Now;
+        }
+        public static Project FromInputDTO(ProjectInputDto inputDto, long clientId) => new Project(inputDto, clientId);
 
     }
 }

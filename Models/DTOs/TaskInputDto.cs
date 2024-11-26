@@ -1,6 +1,6 @@
 ﻿namespace AonFreelancing.Models.DTOs
 {
-    public class TaskInputDto
+    public class TaskInputDTO
     {
         public string Name { get; set; }
         public DateTime DeadlineAt { get; set; }

@@ -1,4 +1,6 @@
-﻿namespace AonFreelancing.Models
+﻿using AonFreelancing.Models.DTOs;
+
+namespace AonFreelancing.Models
 {
     public class TaskEntity
     {
@@ -13,6 +15,16 @@
 
         public bool IsDeleted { get; set; }
         public DateTime? DeletedAt { get; set; }
+        
+        public TaskEntity() { }
+        TaskEntity(TaskInputDTO inputDTO,long projectId)
+        {
+            ProjectId = projectId;
+            Name = inputDTO.Name;
+            DeadlineAt = inputDTO.DeadlineAt;
+            Notes = inputDTO.Notes;
+        }
 
+        public static TaskEntity FromInputDTO(TaskInputDTO inputDTO,long projectId) =>new TaskEntity(inputDTO, projectId);
     }
 }

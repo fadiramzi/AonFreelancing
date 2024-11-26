@@ -20,29 +20,17 @@ namespace AonFreelancing.Controllers.Mobile.v1
         public async Task<IActionResult> PostProjectAsync([FromBody] ProjectInputDto projectInputDto)
         {
             if(!ModelState.IsValid)
-            {
-                
                 return base.CustomBadRequest();
-            }
-            var user = await userManager.GetUserAsync(HttpContext.User);
-            if (user == null)
+
+            User? authenticatedUser = await userManager.GetUserAsync(HttpContext.User);
+            if (authenticatedUser == null)
                 return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),
                     "Unable to load user."));
 
-            var userId = user.Id;
-            var project = new Project
-            {
-                ClientId = userId,
-                Title = projectInputDto.Title,
-                Description = projectInputDto.Description,
-                QualificationName = projectInputDto.QualificationName,
-                Duration = projectInputDto.Duration,
-                Budget = projectInputDto.Budget,
-                PriceType = projectInputDto.PriceType,
-                CreatedAt = DateTime.Now,
-            };
+            long clientId = authenticatedUser.Id;
+            Project? newProject = Project.FromInputDTO(projectInputDto, clientId);
 
-            await mainAppContext.Projects.AddAsync(project);
+            await mainAppContext.Projects.AddAsync(newProject);
             await mainAppContext.SaveChangesAsync();
 
             return Ok(CreateSuccessResponse("Project added."));
@@ -56,88 +44,58 @@ namespace AonFreelancing.Controllers.Mobile.v1
         )
         {
             var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
-            List<ProjectOutDTO>? projects;
+            List<ProjectOutDTO>? storedProjects;
 
             var query = mainAppContext.Projects.AsQueryable();
 
             var count = await query.CountAsync();
 
             if(!string.IsNullOrEmpty(trimmedQuery))
-            {
-                query = query
-                    .Where(p=>p.Title.ToLower().Contains(trimmedQuery));
-            }
-            if(qualificationNames != null && qualificationNames.Count >0)
-            {
-                query = query
-                    .Where(p => qualificationNames.Contains(p.QualificationName));
-            }
+                query = query.Where(p=>p.Title.ToLower().Contains(trimmedQuery));
 
-            projects = await query.OrderByDescending(p => p.CreatedAt)
+            if (qualificationNames != null && qualificationNames.Count > 0)
+                query = query.Where(p => qualificationNames.Contains(p.QualificationName));
+
+            storedProjects = await query.OrderByDescending(p => p.CreatedAt)
             .Skip(page * pageSize)
             .Take(pageSize)
-            .Select(p => new ProjectOutDTO
-            {
-                Id= p.Id,
-                Title = p.Title,
-                Description = p.Description,
-                Status = p.Status,
-                Budget = p.Budget,
-                Duration = p.Duration,
-                PriceType = p.PriceType,
-                Qualifications = p.QualificationName,
-                StartDate = p.StartDate,
-                EndDate = p.EndDate,
-                CreatedAt = p.CreatedAt,
-                CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
-            })
+            .Select(p => ProjectOutDTO.FromProject(p))
             .ToListAsync();
            
             return Ok(CreateSuccessResponse(new { 
                 Total=count,
-                Items=projects
+                Items=storedProjects
             }));
         }
 
 
         [Authorize(Roles = "FREELANCER")]
-        [HttpPost("{id}/bids")]
-        public async Task<IActionResult> SubmitBidAsync(long id, [FromBody] BidInputDto bidDto)
+        [HttpPost("{projectId}/bids")]
+        public async Task<IActionResult> SubmitBidAsync(long projectId, [FromBody] BidInputDto bidInputDTO)
         {
             if (!ModelState.IsValid)
                 return CustomBadRequest();
 
-            var project = await mainAppContext.Projects.FindAsync(id);
-            if (project == null)
+            Project? storedProject = await mainAppContext.Projects.FindAsync(projectId);
+            if (storedProject == null)
                 return NotFound(CreateErrorResponse("404", "Project not found."));
 
-            var user = await userManager.GetUserAsync(User);
-            //if (user == null || !User.IsInRole("FREELANCER"))
-            //    return Forbid();
+            User authenticatedUser = await userManager.GetUserAsync(User);
 
-            var lastBid = await mainAppContext.Bids
-                .Where(b => b.ProjectId == id)
-                .OrderByDescending(b => b.SubmittedAt)
-                .FirstOrDefaultAsync();
+            Bid? latestBid = await mainAppContext.Bids.Where(b => b.ProjectId == projectId)
+                                                    .OrderByDescending(b => b.SubmittedAt)
+                                                    .FirstOrDefaultAsync();
 
-            if (bidDto.ProposedPrice <= 0 ||
-                (lastBid != null && bidDto.ProposedPrice > lastBid.ProposedPrice) ||
-                (lastBid == null && bidDto.ProposedPrice > project.Budget))
+            if (bidInputDTO.ProposedPrice <= 0 ||
+                (latestBid != null && bidInputDTO.ProposedPrice > latestBid.ProposedPrice) ||
+                (latestBid == null && bidInputDTO.ProposedPrice > storedProject.Budget))
             {
                 return BadRequest(CreateErrorResponse("400", "Invalid proposed price. The proposed price must be positive and lower than the last bid or project budget."));
             }
 
-            var bid = new Bid
-            {
-                ProjectId = id,
-                FreelancerId = user.Id,
-                ProposedPrice = bidDto.ProposedPrice,
-                Notes = bidDto.Notes,
-                Status = Constants.BIDS_STATUS_PENDING, 
-                SubmittedAt = DateTime.Now
-            };
+            Bid? newBid = Bid.FromInputDTO(bidInputDTO, authenticatedUser.Id, storedProject.Id);
 
-            await mainAppContext.Bids.AddAsync(bid);
+            await mainAppContext.Bids.AddAsync(newBid);
             await mainAppContext.SaveChangesAsync();
 
             return Ok(CreateSuccessResponse("Bid submitted successfully."));
@@ -145,22 +103,20 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
 
         [Authorize(Roles = "CLIENT")]
-        [HttpPut("{pid}/bids/{bid}/approve")]
-        public async Task<IActionResult> ApproveBidAsync(long pid, long bid)
+        [HttpPut("{projectId}/bids/{bidId}/approve")]
+        public async Task<IActionResult> ApproveBidAsync(long projectId, long bidId)
         {
-            var project = await mainAppContext.Projects.FindAsync(pid);
-            if (project == null || project.Status != Constants.PROJECT_STATUS_AVAILABLE)
-                return BadRequest(CreateErrorResponse("400", $"Project status is '{project?.Status}', but must be 'available'."));
+            Project? storedProject = await mainAppContext.Projects.FindAsync(projectId);
+            if (storedProject == null || storedProject.Status != Constants.PROJECT_STATUS_AVAILABLE)
+                return BadRequest(CreateErrorResponse("400", $"Project status is '{storedProject?.Status}', but must be 'available'."));
 
-            var bidID = await mainAppContext.Bids.FirstOrDefaultAsync(b => b.Id == bid);
-            if (bidID == null || bidID.ProjectId != pid || bidID.Status == Constants.BIDS_STATUS_APPROVED)
+            var storedBid = await mainAppContext.Bids.FirstOrDefaultAsync(b => b.Id == bidId);
+            if (storedBid == null || storedBid.ProjectId != projectId || storedBid.Status == Constants.BIDS_STATUS_APPROVED)
                 return BadRequest(CreateErrorResponse("400", "Bid not found or already approved."));
 
-            bidID.Status = Constants.BIDS_STATUS_APPROVED;
-            bidID.ApprovedAt = DateTime.Now;
-
-            project.Status = Constants.PROJECT_STATUS_CLOSED;
-
+            storedBid.Status = Constants.BIDS_STATUS_APPROVED;
+            storedBid.ApprovedAt = DateTime.Now;
+            storedProject.Status = Constants.PROJECT_STATUS_CLOSED;
             await mainAppContext.SaveChangesAsync();
 
             return Ok(CreateSuccessResponse("Bid approved successfully."));
@@ -170,63 +126,42 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProjectDetailsAsync(long id)
         {
-            var project = await mainAppContext.Projects
-                .Where(p => p.Id == id)
-                .Include(p => p.Bids)
-                .ThenInclude(b => b.Freelancer)
-                .FirstOrDefaultAsync();
+            var storedProject = await mainAppContext.Projects.Where(p => p.Id == id)
+                                                        .Include(p => p.Bids)
+                                                        .ThenInclude(b => b.Freelancer)
+                                                        .FirstOrDefaultAsync();
 
-            if (project == null)
+            if (storedProject == null)
                 return NotFound(CreateErrorResponse("404", "Project not found."));
 
-            var orderedBids = project.Bids
+            var orderedBids = storedProject.Bids
                 .OrderByDescending(b => b.ProposedPrice)
-                .Select(b => new BidOutDto { 
-                Id = b.Id,
-                FreelancerId = b.FreelancerId,
-                Freelancer = new FreelancerShortOutDTO { 
-                    Id = b.FreelancerId,
-                    Name = b.Freelancer.Name
-                },
-                ProposedPrice = b.ProposedPrice,
-                Notes = b.Notes,
-                Status = b.Status,
-                SubmittedAt = b.SubmittedAt,
-                ApprovedAt = b.ApprovedAt
-                } );
+                .Select(b => BidOutputDTO.FromBid(b));
 
-
-          
             return Ok(CreateSuccessResponse(new
             {
-                project.Id,
-                project.Title,
-                project.Status,
-                project.Budget,
-                project.Duration,
-                project.Description, 
+                storedProject.Id,
+                storedProject.Title,
+                storedProject.Status,
+                storedProject.Budget,
+                storedProject.Duration,
+                storedProject.Description, 
                 Bids = orderedBids
             }));
         }
 
 
         [Authorize(Roles = "CLIENT")]
-        [HttpPost("{id}/tasks")]
-        public async Task<IActionResult> CreateTaskAsync(long id, [FromBody] TaskInputDto taskDto)
+        [HttpPost("{projectId}/tasks")]
+        public async Task<IActionResult> CreateTaskAsync(long projectId, [FromBody] TaskInputDTO taskInputDTO)
         {
-            var project = await mainAppContext.Projects.FindAsync(id);
-            if (project == null || project.Status != Constants.PROJECT_STATUS_CLOSED)
+            Project? storedProject = await mainAppContext.Projects.FindAsync(projectId);
+            if (storedProject == null || storedProject.Status != Constants.PROJECT_STATUS_CLOSED)
                 return BadRequest(CreateErrorResponse("400", "Project not found or not closed."));
 
-            var task = new TaskEntity
-            {
-                ProjectId = id,
-                Name = taskDto.Name,
-                DeadlineAt = taskDto.DeadlineAt,
-                Notes = taskDto.Notes
-            };
+            TaskEntity? newTask = TaskEntity.FromInputDTO(taskInputDTO,projectId);
 
-            await mainAppContext.Tasks.AddAsync(task);
+            await mainAppContext.Tasks.AddAsync(newTask);
             await mainAppContext.SaveChangesAsync();
 
             return Ok(CreateSuccessResponse("Task created successfully."));

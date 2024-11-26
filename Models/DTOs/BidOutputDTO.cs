@@ -1,6 +1,6 @@
 ﻿namespace AonFreelancing.Models.DTOs
 {
-    public class BidOutDto
+    public class BidOutputDTO
     {
         public long Id { get; set; }
         public long ProjectId { get; set; }
@@ -13,5 +13,19 @@
         public string Status { get; set; } = "pending";
         public DateTime SubmittedAt { get; set; } = DateTime.Now;
         public DateTime? ApprovedAt { get; set; }
+
+        BidOutputDTO(Bid bid)
+        {
+            Id = bid.Id;
+            FreelancerId = bid.FreelancerId;
+            Freelancer = FreelancerShortOutDTO.FromFreelancer(bid.Freelancer);
+            ProposedPrice = bid.ProposedPrice;
+            Notes = bid.Notes;
+            Status = bid.Status;
+            SubmittedAt = bid.SubmittedAt;
+            ApprovedAt = bid.ApprovedAt;
+        }
+        public static BidOutputDTO FromBid(Bid bid) => new BidOutputDTO(bid);
+
     }
 }

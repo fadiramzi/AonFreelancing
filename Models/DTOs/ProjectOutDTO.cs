@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using AonFreelancing.Utilities;
 
 namespace AonFreelancing.Models.DTOs
 {
@@ -9,7 +10,7 @@ namespace AonFreelancing.Models.DTOs
         public long Id { get; set; }
         public int Duration {  get; set; }
         public string Title { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
         public string Qualifications { get; set; }
         public string PriceType { get; set; }
         public string Status {  get; set; }
@@ -18,5 +19,23 @@ namespace AonFreelancing.Models.DTOs
         public DateTime? StartDate {  get; set; }
         public DateTime? EndDate { get; set; }
         public string? CreationTime {  get; set; }
+
+        ProjectOutDTO(Project project)
+        {
+            Id = project.Id;
+            Duration = project.Duration;
+            Title = project.Title;
+            Description = project.Description;
+            Qualifications = project.QualificationName;
+            PriceType = project.PriceType;
+            Status = project.Status;
+            Budget = project.Budget;
+            CreatedAt = project.CreatedAt;
+            StartDate = project.StartDate;
+            EndDate = project.EndDate;
+            CreationTime = StringOperations.GetTimeAgo(CreatedAt);
+        }
+        public static ProjectOutDTO FromProject(Project project) => new ProjectOutDTO(project);
+
     }
 }

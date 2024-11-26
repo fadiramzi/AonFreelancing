@@ -22,27 +22,18 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPut("tasks/{id}/updateStatus")]
         public async Task<IActionResult> UpdateTaskAsync(long id, [FromBody] TaskUpdateDTO taskUpdateDTO)
         {
-            //get task first and check its status if exist
-            var task = await mainAppContext.Tasks.FindAsync(id);
-            if (task != null && !task.IsDeleted)
+            TaskEntity? storedTask = await mainAppContext.Tasks.FindAsync(id);
+            if (storedTask != null && !storedTask.IsDeleted)
             {
-                //if its already done cant make any change to it 
-                if (task.Status == Constants.TASKS_STATUS_DONE)
-                {
-                    return BadRequest(new ApiResponse<object>
-                    {
-                        IsSuccess = false,
-                        Results = "task is already done",
-                    });
-                }
-                //update task status 
-                //if new status is done we should update completedAt field too
+                if (storedTask.Status == Constants.TASKS_STATUS_DONE)
+                    return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "task is already done"));
+
                 if (taskUpdateDTO.Status == Constants.TASKS_STATUS_DONE)
-                    task.CompletedAt = DateTime.Now;
-                task.Status = taskUpdateDTO.Status;
-                task.DeadlineAt = taskUpdateDTO.deadlineAt;
-                task.Name = taskUpdateDTO.Name;
-                task.Notes = taskUpdateDTO.notes;
+                    storedTask.CompletedAt = DateTime.Now;
+                storedTask.Status = taskUpdateDTO.Status;
+                storedTask.DeadlineAt = taskUpdateDTO.deadlineAt;
+                storedTask.Name = taskUpdateDTO.Name;
+                storedTask.Notes = taskUpdateDTO.notes;
                 await mainAppContext.SaveChangesAsync();
                 return Ok(CreateSuccessResponse("Task Has Been Updated "));
                
