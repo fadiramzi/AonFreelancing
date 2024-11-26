@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -103,7 +102,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
         [Authorize(Roles = "FREELANCER")]
         [HttpPost("{id}/bids")]
-        public async Task<IActionResult> SubmitBidAsync(int id, [FromBody] BidInputDto bidDto)
+        public async Task<IActionResult> SubmitBidAsync(long id, [FromBody] BidInputDto bidDto)
         {
             if (!ModelState.IsValid)
                 return CustomBadRequest();
@@ -134,7 +133,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 FreelancerId = user.Id,
                 ProposedPrice = bidDto.ProposedPrice,
                 Notes = bidDto.Notes,
-                Status = "pending", 
+                Status = Constants.BIDS_STATUS_PENDING, 
                 SubmittedAt = DateTime.Now
             };
 
@@ -147,20 +146,20 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
         [Authorize(Roles = "CLIENT")]
         [HttpPut("{pid}/bids/{bid}/approve")]
-        public async Task<IActionResult> ApproveBidAsync(int pid, int bid)
+        public async Task<IActionResult> ApproveBidAsync(long pid, long bid)
         {
             var project = await mainAppContext.Projects.FindAsync(pid);
-            if (project == null || project.Status != "Available")
+            if (project == null || project.Status != Constants.PROJECT_STATUS_AVAILABLE)
                 return BadRequest(CreateErrorResponse("400", $"Project status is '{project?.Status}', but must be 'available'."));
 
             var bidID = await mainAppContext.Bids.FirstOrDefaultAsync(b => b.Id == bid);
-            if (bidID == null || bidID.ProjectId != pid || bidID.Status == "approved")
+            if (bidID == null || bidID.ProjectId != pid || bidID.Status == Constants.BIDS_STATUS_APPROVED)
                 return BadRequest(CreateErrorResponse("400", "Bid not found or already approved."));
 
-            bidID.Status = "approved";
+            bidID.Status = Constants.BIDS_STATUS_APPROVED;
             bidID.ApprovedAt = DateTime.Now;
 
-            project.Status = "Closed";
+            project.Status = Constants.PROJECT_STATUS_CLOSED;
 
             await mainAppContext.SaveChangesAsync();
 
@@ -169,11 +168,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetProjectDetailsAsync(int id)
+        public async Task<IActionResult> GetProjectDetailsAsync(long id)
         {
             var project = await mainAppContext.Projects
                 .Where(p => p.Id == id)
-                .Include(p=>p.Tasks)
                 .Include(p => p.Bids)
                 .ThenInclude(b => b.Freelancer)
                 .FirstOrDefaultAsync();
@@ -196,9 +194,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 SubmittedAt = b.SubmittedAt,
                 ApprovedAt = b.ApprovedAt
                 } );
-            var numberOfCompletedTasks = project.Tasks.Where(t => t.Status == "Done").ToList().Count();
-            double totalNumberOFTasks = project.Tasks.Count();
 
+
+          
             return Ok(CreateSuccessResponse(new
             {
                 project.Id,
@@ -206,8 +204,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 project.Status,
                 project.Budget,
                 project.Duration,
-                project.Description,
-                Percentage=  (numberOfCompletedTasks /totalNumberOFTasks) * 100, 
+                project.Description, 
                 Bids = orderedBids
             }));
         }
@@ -215,10 +212,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
         [Authorize(Roles = "CLIENT")]
         [HttpPost("{id}/tasks")]
-        public async Task<IActionResult> CreateTaskAsync(int id, [FromBody] TaskInputDto taskDto)
+        public async Task<IActionResult> CreateTaskAsync(long id, [FromBody] TaskInputDto taskDto)
         {
             var project = await mainAppContext.Projects.FindAsync(id);
-            if (project == null || project.Status != "Closed")
+            if (project == null || project.Status != Constants.PROJECT_STATUS_CLOSED)
                 return BadRequest(CreateErrorResponse("400", "Project not found or not closed."));
 
             var task = new TaskEntity
@@ -236,114 +233,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
 
-        //[Authorize(Roles = "CLIENT, FREELANCER")]
-        //[HttpPut("tasks/{id}")]
-        //public async Task<IActionResult> UpdateTaskStatusAsync(int id, [FromBody] TaskStatusDto taskStatusDto)
-        //{
-        //    var task = await mainAppContext.Tasks.FindAsync(id);
-        //    if (task == null)
-        //    {
-        //        var errorResponse = new ApiResponse<string>
-        //        {
-        //            IsSuccess = false,
-        //            Results = null,
-        //            Errors = new List<Error>
-        //        {
-        //            new Error { Code = "404", Message = "Task not found." }
-        //        }
-        //        };
-        //        return NotFound(errorResponse);
-        //    }
-
-        //    var validStatuses = new List<string> { "to-do", "in-progress", "in-review", "done" };
-
-        //    if (!validStatuses.Contains(taskStatusDto.NewStatus.ToLower()))
-        //    {
-        //        var errorResponse = new ApiResponse<string>
-        //        {
-        //            IsSuccess = false,
-        //            Results = null,
-        //            Errors = new List<Error>
-        //        {
-        //            new Error { Code = "400", Message = "Invalid status provided." }
-        //        }
-        //        };
-        //        return BadRequest(errorResponse);
-        //    }
-
-        //    if (task.Status.ToLower() == "to do" && taskStatusDto.NewStatus.ToLower() != "in progress")
-        //    {
-        //        var errorResponse = new ApiResponse<string>
-        //        {
-        //            IsSuccess = false,
-        //            Results = null,
-        //            Errors = new List<Error>
-        //        {
-        //            new Error { Code = "400", Message = "Invalid status transition from 'To Do'." }
-        //        }
-        //        };
-        //        return BadRequest(errorResponse);
-        //    }
-        //    if (task.Status.ToLower() == "in progress" &&
-        //        taskStatusDto.NewStatus.ToLower() != "in review" && taskStatusDto.NewStatus.ToLower() != "done")
-        //    {
-        //        var errorResponse = new ApiResponse<string>
-        //        {
-        //            IsSuccess = false,
-        //            Results = null,
-        //            Errors = new List<Error>
-        //        {
-        //            new Error { Code = "400", Message = "Invalid status transition from 'In Progress'." }
-        //        }
-        //        };
-        //        return BadRequest(errorResponse);
-        //    }
-        //    if (task.Status.ToLower() == "in review" && taskStatusDto.NewStatus.ToLower() != "done")
-        //    {
-        //        var errorResponse = new ApiResponse<string>
-        //        {
-        //            IsSuccess = false,
-        //            Results = null,
-        //            Errors = new List<Error>
-        //        {
-        //            new Error { Code = "400", Message = "Invalid status transition from 'In Review'." }
-        //        }
-        //        };
-        //        return BadRequest(errorResponse);
-        //    }
-        //    if (task.Status.ToLower() == "done")
-        //    {
-        //        var errorResponse = new ApiResponse<string>
-        //        {
-        //            IsSuccess = false,
-        //            Results = null,
-        //            Errors = new List<Error>
-        //        {
-        //            new Error { Code = "400", Message = "No further status transitions allowed from 'Done'." }
-        //        }
-        //        };
-        //        return BadRequest(errorResponse);
-        //    }
-
-        //    task.Status = taskStatusDto.NewStatus;
-
-        //    task.CompletedAt = taskStatusDto.NewStatus.ToLower() == "done" ? DateTime.UtcNow : (DateTime?)null;
-
-        //    await mainAppContext.SaveChangesAsync();
-
-        //    var successResponse = new ApiResponse<string>
-        //    {
-        //        IsSuccess = true,
-        //        Results = "Task status updated.",
-        //        Errors = null
-        //    };
-        //    return Ok(successResponse);
-        //}
-
-
         [Authorize(Roles = "CLIENT")]
         [HttpPost("{id}/upload-image")]
-        public async Task<IActionResult> UploadProjectImage(int id, IFormFile file)
+        public async Task<IActionResult> UploadProjectImage(long id, IFormFile file)
         {
             if (file == null || file.Length == 0)
             {
@@ -419,20 +311,15 @@ namespace AonFreelancing.Controllers.Mobile.v1
             });
         }
 
-        [HttpGet("{projectId}/tasks")]
-        public async Task<IActionResult> GetTasksByProjectIdAsync([FromRoute] long projectId,
-                                                               [AllowedValues("To-Do", "Done", "In-Progress", "In-Review", ErrorMessage = "status should be one of the values: 'to-do', 'done', 'in-progress', 'in-review'")][FromQuery] string status = "")
-        {
-            if (!ModelState.IsValid)
-                return base.CustomBadRequest();
+        //[HttpGet("{id}")]
+        //public IActionResult GetProject(int id)
+        //{
+        //    var project = _mainAppContext.Projects
+        //        .Include(p => p.Client)
+        //        .FirstOrDefault(p => p.Id == id);
 
-            var storedTasksDTOs = await mainAppContext.Tasks.AsNoTracking()
-                                                            .Where(t => t.ProjectId == projectId && t.Status.Contains(status))
-                                                            .Select(t => new TaskOutputDTO(t))
-                                                            .ToListAsync();
-            return Ok(CreateSuccessResponse(storedTasksDTOs));
-        }
+        //    return Ok(CreateSuccessResponse(project));
 
-
+        //}
     }
 }
