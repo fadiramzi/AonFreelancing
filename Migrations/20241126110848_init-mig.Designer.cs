@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    [Migration("20241122184339_image_path-nullable-mig")]
-    partial class image_pathnullablemig
+    [Migration("20241126110848_init-mig")]
+    partial class initmig
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -57,11 +57,11 @@ namespace AonFreelancing.Migrations
 
             modelBuilder.Entity("AonFreelancing.Models.Bid", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime?>("ApprovedAt")
                         .HasColumnType("datetime2");
@@ -75,8 +75,8 @@ namespace AonFreelancing.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ProjectId")
-                        .HasColumnType("int");
+                    b.Property<long>("ProjectId")
+                        .HasColumnType("bigint");
 
                     b.Property<decimal>("ProposedPrice")
                         .HasColumnType("decimal(18,2)");
@@ -132,11 +132,11 @@ namespace AonFreelancing.Migrations
 
             modelBuilder.Entity("AonFreelancing.Models.Project", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<decimal>("Budget")
                         .HasColumnType("decimal(18,2)");
@@ -148,7 +148,6 @@ namespace AonFreelancing.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Duration")
@@ -202,17 +201,23 @@ namespace AonFreelancing.Migrations
 
             modelBuilder.Entity("AonFreelancing.Models.TaskEntity", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("DeadlineAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -222,8 +227,8 @@ namespace AonFreelancing.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ProjectId")
-                        .HasColumnType("int");
+                    b.Property<long>("ProjectId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Status")
                         .IsRequired()

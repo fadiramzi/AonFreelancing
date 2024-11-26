@@ -6,7 +6,7 @@ namespace AonFreelancing.Models
     {
         public long Id { get; set; }
         public long ProjectId { get; set; }
-        public Project Project { get; set; }
+        public Project? Project { get; set; }
         public string Name { get; set; }
         public string Status { get; set; } = "To-Do";
         public DateTime? DeadlineAt { get; set; }

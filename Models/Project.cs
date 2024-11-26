@@ -18,7 +18,7 @@ namespace AonFreelancing.Models
 
         // Belongs to a client
         [ForeignKey("ClientId")] 
-        public Client Client { get; set; }
+        public Client? Client { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime? StartDate { get; set; }
@@ -30,7 +30,7 @@ namespace AonFreelancing.Models
         public string Status { get; set; }
         public long? FreelancerId { get; set; }
         [ForeignKey("FreelancerId")]
-        public virtual Freelancer? Freelancer { get; set; }
+        public Freelancer? Freelancer { get; set; }
         public ICollection<Bid> Bids { get; set; } = new List<Bid>();
         public string? ImagePath { get; set; }
 
