@@ -1,6 +1,7 @@
 ﻿using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
+using AonFreelancing.Models.Responses;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -18,31 +19,22 @@ namespace AonFreelancing.Controllers.Web.v1
         [HttpGet("{id}/profile")]
         public async Task<IActionResult> GetProfileByIdAsync([FromRoute]long id)
         {
-            var freelancer = await mainAppContext.Users 
-                .OfType<Freelancer>().Where(f => f.Id == id)
-                .Select(f => new FreelancerResponseDTO
-                {
-                    Id = f.Id,
-                    Name = f.Name,
-                    Username = f.UserName ?? string.Empty,
-                    PhoneNumber = f.PhoneNumber ?? string.Empty,
-                    UserType = Constants.USER_TYPE_FREELANCER,
-                    IsPhoneNumberVerified = f.PhoneNumberConfirmed,
-                    Role = new RoleResponseDTO { Name = Constants.USER_TYPE_FREELANCER },
-                    Skills = f.Skills,
-                }).FirstOrDefaultAsync();
+FreelancerResponseDTO? storedFreelancerDTO = await mainAppContext.Users.OfType<Freelancer>()
+                                                                                    .Include(f=>f.Skills)
+                                                                                    .Where(f => f.Id == id)
+                                                                                    .Select(f => FreelancerResponseDTO.FromFreelancer(f))
+                                                                                    .FirstOrDefaultAsync();
 
-
-            if (freelancer != null)
+            if (storedFreelancerDTO != null)
                 return Ok(new ApiResponse<FreelancerResponseDTO>
                 {
                     IsSuccess = true,
-                    Results = freelancer,
+                    Results = storedFreelancerDTO,
                     Errors = null
                 });
 
 
-            var client = await mainAppContext.Users
+            ClientResponseDTO? storedClientDTO = await mainAppContext.Users
                 .OfType<Client>()
                 .Where(c => c.Id == id)
                 .Include(c => c.Projects)
@@ -68,8 +60,8 @@ namespace AonFreelancing.Controllers.Web.v1
                  }).FirstOrDefaultAsync();
 
 
-            if (client != null)
-                return Ok(CreateSuccessResponse(client));
+            if (storedClientDTO != null)
+                return Ok(CreateSuccessResponse(storedClientDTO));
 
             return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "NotFound"));
 

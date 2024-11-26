@@ -110,7 +110,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     UserName = registerReq.Username,
                     PhoneNumber = tempUser.PhoneNumber,
                     PhoneNumberConfirmed = tempUser.PhoneNumberConfirmed,
-                    Skills = registerReq.Skills ?? string.Empty,
+                    //Skills = registerReq.Skills ?? string.Empty,
                 },
                 Constants.USER_TYPE_CLIENT => new Client()
                 {

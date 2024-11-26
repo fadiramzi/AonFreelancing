@@ -1,4 +1,4 @@
-﻿namespace AonFreelancing.Models
+﻿namespace AonFreelancing.Models.Responses
 {
     public class ApiResponse<T>
     {

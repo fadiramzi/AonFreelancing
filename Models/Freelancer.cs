@@ -10,15 +10,7 @@ namespace AonFreelancing.Models
     [Table("Freelancers")]
     public class Freelancer : User
     {
-
-        public string Skills { get; set; }
-
-
-        //public override void DisplayProfile()
-        //{
-        //    Console.WriteLine($"Overrided Method in Freelancer Class");
-        //}
-
+        public List<Skill> Skills { get; set; }
     }
 
 
