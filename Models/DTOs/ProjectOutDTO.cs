@@ -19,7 +19,8 @@ namespace AonFreelancing.Models.DTOs
         public DateTime? StartDate {  get; set; }
         public DateTime? EndDate { get; set; }
         public string? CreationTime {  get; set; }
-
+        public string ClientName {  get; set; }
+        public long ClientId {  get; set; }
         ProjectOutDTO(Project project)
         {
             Id = project.Id;
@@ -34,6 +35,8 @@ namespace AonFreelancing.Models.DTOs
             StartDate = project.StartDate;
             EndDate = project.EndDate;
             CreationTime = StringOperations.GetTimeAgo(CreatedAt);
+            ClientName = project.Client.Name;
+            ClientId = project.Client.Id;
         }
         public static ProjectOutDTO FromProject(Project project) => new ProjectOutDTO(project);
 

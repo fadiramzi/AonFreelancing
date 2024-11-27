@@ -38,22 +38,21 @@ namespace AonFreelancing.Controllers.Mobile.v1
             return Ok(CreateSuccessResponse("Project added."));
         }
 
-        [Authorize(Roles = "CLIENT")]
-        [HttpGet("clientFeed")]
+        [Authorize(Roles = Constants.USER_TYPE_CLIENT)]
+        [HttpGet("clientfeed")]
         public async Task<IActionResult> GetClientFeedAsync(
             [FromQuery] List<string>? qualificationNames, [FromQuery] int page = 0,
-            [FromQuery] int pageSize = 8, [FromQuery] string? qur = default
+            [FromQuery] int pageSize = 8, [FromQuery] string qur = ""
         )
         {
-            var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
+            string normalizedQuery = qur.ToLower().Replace(" ", "").Trim();
             List<ProjectOutDTO>? storedProjects;
 
-            var query = mainAppContext.Projects.AsQueryable();
+            var query = mainAppContext.Projects.Include(p => p.Client).AsQueryable();
+            int totalProjectsCount = await query.CountAsync();
 
-            var count = await query.CountAsync();
-
-            if(!string.IsNullOrEmpty(trimmedQuery))
-                query = query.Where(p=>p.Title.ToLower().Contains(trimmedQuery));
+            if(!string.IsNullOrEmpty(normalizedQuery))
+                query = query.Where(p=>p.Title.ToLower().Contains(normalizedQuery));
 
             if (qualificationNames != null && qualificationNames.Count > 0)
                 query = query.Where(p => qualificationNames.Contains(p.QualificationName));
@@ -63,11 +62,47 @@ namespace AonFreelancing.Controllers.Mobile.v1
             .Take(pageSize)
             .Select(p => ProjectOutDTO.FromProject(p))
             .ToListAsync();
-           
-            return Ok(CreateSuccessResponse(new { 
-                Total=count,
-                Items=storedProjects
-            }));
+
+            return Ok(CreateSuccessResponse(new PaginatedResult<ProjectOutDTO>(totalProjectsCount, storedProjects)));
+        }
+
+        [Authorize(Roles = Constants.USER_TYPE_FREELANCER)]
+        [HttpGet("freelancerfeed")]
+        public async Task<IActionResult> GetProjectFeedAsync(
+            [FromQuery(Name = "specializations")] List<string>? qualificationNames,
+            [FromQuery(Name = "timeline")] int? duration,
+            [FromQuery] PriceRange priceRange,
+            [FromQuery] int page = 0,
+            [FromQuery] int pageSize = 8,
+            [FromQuery] string qur = ""
+        )
+        {
+            if (!ModelState.IsValid)
+                return base.CustomBadRequest();
+
+            string normalizedQuery = qur.ToLower().Replace(" ", "").Trim();
+            var query = mainAppContext.Projects.Include(p=>p.Client).AsQueryable();
+            int totalProjectsCount = await query.CountAsync();
+
+            if (!string.IsNullOrEmpty(normalizedQuery))
+                query = query.Where(p => p.Title.ToLower().Contains(normalizedQuery));
+
+            if (qualificationNames != null && qualificationNames.Count > 0)
+                query = query.Where(p => qualificationNames.Contains(p.QualificationName));
+
+            if (duration.HasValue)
+                query = query.Where(p => p.Duration == duration.Value);
+
+            if (priceRange.MinPrice != null && priceRange.MaxPrice != null)
+                query = query.Where(p => p.Budget >= priceRange.MinPrice && p.Budget <= priceRange.MaxPrice);
+
+
+            List<ProjectOutDTO>? storedProjects = await query.OrderByDescending(p => p.CreatedAt)
+                                                             .Skip(page * pageSize)
+                                                             .Take(pageSize)
+                                                             .Select(p => ProjectOutDTO.FromProject(p))
+                                                             .ToListAsync();
+            return Ok(CreateSuccessResponse(new PaginatedResult<ProjectOutDTO>(totalProjectsCount,storedProjects)));
         }
 
 
