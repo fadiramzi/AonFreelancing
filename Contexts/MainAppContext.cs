@@ -20,7 +20,7 @@ namespace AonFreelancing.Contexts
         public DbSet<TempUser> TempUsers { get; set; }
         public DbSet<Bid> Bids { get; set; }
         public DbSet<TaskEntity> Tasks { get; set; }
-
+        public DbSet<Skill> skills { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             
@@ -34,7 +34,7 @@ namespace AonFreelancing.Contexts
             builder.Entity<Client>().ToTable("Clients");
             builder.Entity<SystemUser>().ToTable("SystemUsers");
             builder.Entity<OTP>().ToTable("otps", o => o.HasCheckConstraint("CK_CODE","LEN([Code]) = 6"));
-
+            builder.Entity<TaskEntity>().ToTable("Tasks");
             //set up relationships
             builder.Entity<TempUser>().HasOne<OTP>()
                                     .WithOne()
@@ -47,6 +47,8 @@ namespace AonFreelancing.Contexts
                 .ToTable("Projects", tb => tb.HasCheckConstraint("CK_QUALIFICATION_NAME", "[QualificationName] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')"));
             builder.Entity<Project>().ToTable("Projects", tb => tb.HasCheckConstraint("CK_STATUS", "[Status] IN ('Available', 'Closed')"))
                 .Property(p=>p.Status).HasDefaultValue("Available");
+            builder.Entity<Skill>()
+                .ToTable("skills", tb => tb.HasCheckConstraint("CK_NAME", "[Name] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')"));
 
             builder.Entity<Bid>()
                .HasOne(b => b.Project)
@@ -60,8 +62,14 @@ namespace AonFreelancing.Contexts
                 .HasForeignKey(b => b.FreelancerId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            builder.Entity<Skill>()
+                .HasOne(s => s.freelancer)
+                .WithMany(f => f.Skills)
+                .HasForeignKey(b => b.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
 
-            builder.Entity<TaskEntity>().ToTable("Tasks");
+            //builder.Entity<Skill>().HasIndex(s => new {s.UserId,s.Name}).IsUnique().HasName("CompSkillKey"); ;
+         
 
             base.OnModelCreating(builder);
         }
