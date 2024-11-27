@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -25,6 +26,7 @@ namespace AonFreelancing
             builder.Services.AddControllers(o => o.SuppressAsyncSuffixInActionNames = false);
             builder.Services.AddSingleton<OTPManager>();
             builder.Services.AddSingleton<JwtService>();
+            builder.Services.AddSingleton<FileStorageService>();
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<ProjectLikeService>();
             builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlServer(conf.GetConnectionString("Default")));
@@ -100,11 +102,17 @@ namespace AonFreelancing
 
 
             app.UseMiddleware<ExceptionHandlingMiddleware>();
-
             app.UseHttpsRedirection();
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(FileStorageService.ROOT),
+                RequestPath = "/images"
+            });
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+          
 
             app.MapControllers();
 

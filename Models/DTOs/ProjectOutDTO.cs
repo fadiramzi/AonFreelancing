@@ -23,9 +23,11 @@ namespace AonFreelancing.Models.DTOs
         public string ClientName {  get; set; }
         public long ClientId {  get; set; }
 
+        public string ImageUrl {  get; set; }
+
         [JsonPropertyName("likes")]
         public long LikesCount {  get; set; }
-        ProjectOutDTO(Project project)
+        ProjectOutDTO(Project project,string imageBaseUrl)
         {
             Id = project.Id;
             Duration = project.Duration;
@@ -42,8 +44,10 @@ namespace AonFreelancing.Models.DTOs
             ClientName = project.Client.Name;
             ClientId = project.Client.Id;
             LikesCount = project.ProjectLikes.Count();
+            if (project.ImageFileName != null)
+                ImageUrl = $"{imageBaseUrl}/{project.ImageFileName}";
         }
-        public static ProjectOutDTO FromProject(Project project) => new ProjectOutDTO(project);
+        public static ProjectOutDTO FromProject(Project project,string imageBaseUrl) => new ProjectOutDTO(project,imageBaseUrl);
 
     }
 }

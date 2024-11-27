@@ -6,7 +6,7 @@
         public long ProjectId { get; set; }
 
         //public ProjectOutDTO Project { get; set; }
-        public long FreelancerId { get; set; }
+        //public long FreelancerId { get; set; }
         public FreelancerShortOutDTO Freelancer { get; set; }
         public decimal ProposedPrice { get; set; }
         public string? Notes { get; set; }
@@ -17,7 +17,7 @@
         BidOutputDTO(Bid bid)
         {
             Id = bid.Id;
-            FreelancerId = bid.FreelancerId;
+            //FreelancerId = bid.FreelancerId;
             ProjectId = bid.ProjectId;
             Freelancer = FreelancerShortOutDTO.FromFreelancer(bid.Freelancer);
             ProposedPrice = bid.ProposedPrice;

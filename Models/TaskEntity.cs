@@ -24,7 +24,12 @@ namespace AonFreelancing.Models
             DeadlineAt = inputDTO.DeadlineAt;
             Notes = inputDTO.Notes;
         }
-
-        public static TaskEntity FromInputDTO(TaskInputDTO inputDTO,long projectId) =>new TaskEntity(inputDTO, projectId);
+        public static TaskEntity FromInputDTO(TaskInputDTO inputDTO, long projectId) => new TaskEntity(inputDTO, projectId);
+        public void UpdateFromInputDTO(TaskInputDTO inputDTO)
+        {
+            Name = inputDTO.Name;
+            Notes = inputDTO.Notes;
+            DeadlineAt = inputDTO.DeadlineAt;
+        }
     }
 }

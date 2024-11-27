@@ -32,7 +32,7 @@ namespace AonFreelancing.Models
         [ForeignKey("FreelancerId")]
         public Freelancer? Freelancer { get; set; }
         public List<Bid> Bids { get; set; } = new List<Bid>();
-        public string? ImagePath { get; set; }
+        public string? ImageFileName { get; set; }
 
         public List<TaskEntity>? Tasks { get; set; }
         public List<ProjectLike>? ProjectLikes { get; set; }
