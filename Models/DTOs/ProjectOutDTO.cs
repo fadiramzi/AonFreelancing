@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using AonFreelancing.Utilities;
+using System.Text.Json.Serialization;
 
 namespace AonFreelancing.Models.DTOs
 {
@@ -21,6 +22,9 @@ namespace AonFreelancing.Models.DTOs
         public string? CreationTime {  get; set; }
         public string ClientName {  get; set; }
         public long ClientId {  get; set; }
+
+        [JsonPropertyName("likes")]
+        public long LikesCount {  get; set; }
         ProjectOutDTO(Project project)
         {
             Id = project.Id;
@@ -37,6 +41,7 @@ namespace AonFreelancing.Models.DTOs
             CreationTime = StringOperations.GetTimeAgo(CreatedAt);
             ClientName = project.Client.Name;
             ClientId = project.Client.Id;
+            LikesCount = project.ProjectLikes.Count();
         }
         public static ProjectOutDTO FromProject(Project project) => new ProjectOutDTO(project);
 

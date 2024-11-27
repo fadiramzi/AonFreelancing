@@ -23,5 +23,8 @@
         public const string TASK_STATUS_IN_PROGRESS = "in-progress";
         public const string TASK_STATUS_IN_REVIEW = "in-review";
         public const string TASK_STATUS_DONE = "done";
+
+        public const string PROJECT_LIKE_ACTION = "like";
+        public const string PROJECT_UNLIKE_ACTION = "unlike";
     }
 }

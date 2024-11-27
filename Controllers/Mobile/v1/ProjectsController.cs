@@ -3,19 +3,22 @@ using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
 using AonFreelancing.Models.Responses;
+using AonFreelancing.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
     [Authorize]
     [Route("api/mobile/v1/projects")]
     [ApiController]
-    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager) : BaseController
+    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager, ProjectLikeService projectLikeService) : BaseController
     {
         [Authorize(Roles = "CLIENT")]
         [HttpPost]
@@ -48,7 +51,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             string normalizedQuery = qur.ToLower().Replace(" ", "").Trim();
             List<ProjectOutDTO>? storedProjects;
 
-            var query = mainAppContext.Projects.Include(p => p.Client).AsQueryable();
+            var query = mainAppContext.Projects.AsNoTracking().Include(p => p.Client).Include(p=>p.ProjectLikes).AsQueryable();
             int totalProjectsCount = await query.CountAsync();
 
             if(!string.IsNullOrEmpty(normalizedQuery))
@@ -81,7 +84,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 return base.CustomBadRequest();
 
             string normalizedQuery = qur.ToLower().Replace(" ", "").Trim();
-            var query = mainAppContext.Projects.Include(p=>p.Client).AsQueryable();
+            var query = mainAppContext.Projects.AsNoTracking().Include(p=>p.Client).Include(p=>p.ProjectLikes).AsQueryable();
             int totalProjectsCount = await query.CountAsync();
 
             if (!string.IsNullOrEmpty(normalizedQuery))
@@ -154,6 +157,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             storedBid.Status = Constants.BIDS_STATUS_APPROVED;
             storedBid.ApprovedAt = DateTime.Now;
             storedProject.Status = Constants.PROJECT_STATUS_CLOSED;
+            storedProject.FreelancerId = storedBid.FreelancerId;
             await mainAppContext.SaveChangesAsync();
 
             return Ok(CreateSuccessResponse("Bid approved successfully."));
@@ -202,6 +206,33 @@ namespace AonFreelancing.Controllers.Mobile.v1
             await mainAppContext.SaveChangesAsync();
 
             return Ok(CreateSuccessResponse("Task created successfully."));
+        }
+
+        [HttpPost("{projectId}/likes")]
+        public async Task<IActionResult> LikeOrUnLikeProject([FromRoute] long projectId, [AllowedValues(Constants.PROJECT_LIKE_ACTION, Constants.PROJECT_UNLIKE_ACTION)] string action)
+        {
+            if (!ModelState.IsValid)
+                return base.CustomBadRequest();
+
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            long authenticatedUserId = Convert.ToInt64(identity.FindFirst(ClaimTypes.NameIdentifier).Value);
+            ProjectLike? storedProjectLike = await mainAppContext.ProjectLikes.FirstOrDefaultAsync(pl => pl.ProjectId == projectId && pl.UserId == authenticatedUserId);
+
+            if (storedProjectLike != null)
+            {
+                if (action == Constants.PROJECT_LIKE_ACTION)
+                    return Conflict(CreateErrorResponse("409", "you cannot like the same project twice"));
+                await projectLikeService.UnlikeProjectAsync(storedProjectLike);
+                return NoContent();
+            }
+
+
+            if (storedProjectLike == null && action == Constants.PROJECT_LIKE_ACTION)
+            {
+                await projectLikeService.LikeProjectAsync(authenticatedUserId, projectId);
+                return StatusCode(StatusCodes.Status201Created, "like submitted successfully");
+            }
+            return NoContent();
         }
 
 

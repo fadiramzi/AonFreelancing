@@ -10,9 +10,9 @@ namespace AonFreelancing.Models
     public class Project
     {
         public long Id { get; set; }
-        [Required] public string Title { get; set; }
+        public string Title { get; set; }
 
-        [AllowNull] public string? Description { get; set; }
+        public string? Description { get; set; }
 
         public long ClientId { get; set; } //FK
 
@@ -31,10 +31,11 @@ namespace AonFreelancing.Models
         public long? FreelancerId { get; set; }
         [ForeignKey("FreelancerId")]
         public Freelancer? Freelancer { get; set; }
-        public ICollection<Bid> Bids { get; set; } = new List<Bid>();
+        public List<Bid> Bids { get; set; } = new List<Bid>();
         public string? ImagePath { get; set; }
 
-        public ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
+        public List<TaskEntity>? Tasks { get; set; }
+        public List<ProjectLike>? ProjectLikes { get; set; }
 
         public Project() { }
         Project(ProjectInputDto inputDto,long clientId)
