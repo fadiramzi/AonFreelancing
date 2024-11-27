@@ -14,6 +14,8 @@ namespace AonFreelancing.Models.DTOs
         TasksStatisticsDTO(List<TaskEntity> tasks)
         {
             Total = tasks.Count;
+            if (Total == 0)
+                return;
             ToDo = GetPercentString(tasks.Where(t => t.Status == Constants.TASK_STATUS_TO_DO).Count());
             InReview =GetPercentString(tasks.Where(t => t.Status == Constants.TASK_STATUS_IN_REVIEW).Count());
             InProgress = GetPercentString(tasks.Where(t => t.Status == Constants.TASK_STATUS_IN_PROGRESS).Count());

@@ -18,13 +18,13 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Authorize]
     [Route("api/mobile/v1/projects")]
     [ApiController]
-    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager, ProjectLikeService projectLikeService) : BaseController
+    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager, ProjectLikeService projectLikeService,AuthService authService) : BaseController
     {
         [Authorize(Roles = "CLIENT")]
         [HttpPost]
         public async Task<IActionResult> PostProjectAsync([FromBody] ProjectInputDto projectInputDto)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
                 return base.CustomBadRequest();
 
             User? authenticatedUser = await userManager.GetUserAsync(HttpContext.User);
@@ -51,11 +51,11 @@ namespace AonFreelancing.Controllers.Mobile.v1
             string normalizedQuery = qur.ToLower().Replace(" ", "").Trim();
             List<ProjectOutDTO>? storedProjects;
 
-            var query = mainAppContext.Projects.AsNoTracking().Include(p => p.Client).Include(p=>p.ProjectLikes).AsQueryable();
+            var query = mainAppContext.Projects.AsNoTracking().Include(p => p.Client).Include(p => p.ProjectLikes).AsQueryable();
             int totalProjectsCount = await query.CountAsync();
 
-            if(!string.IsNullOrEmpty(normalizedQuery))
-                query = query.Where(p=>p.Title.ToLower().Contains(normalizedQuery));
+            if (!string.IsNullOrEmpty(normalizedQuery))
+                query = query.Where(p => p.Title.ToLower().Contains(normalizedQuery));
 
             if (qualificationNames != null && qualificationNames.Count > 0)
                 query = query.Where(p => qualificationNames.Contains(p.QualificationName));
@@ -84,7 +84,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 return base.CustomBadRequest();
 
             string normalizedQuery = qur.ToLower().Replace(" ", "").Trim();
-            var query = mainAppContext.Projects.AsNoTracking().Include(p=>p.Client).Include(p=>p.ProjectLikes).AsQueryable();
+            var query = mainAppContext.Projects.AsNoTracking().Include(p => p.Client).Include(p => p.ProjectLikes).AsQueryable();
             int totalProjectsCount = await query.CountAsync();
 
             if (!string.IsNullOrEmpty(normalizedQuery))
@@ -105,7 +105,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                                                              .Take(pageSize)
                                                              .Select(p => ProjectOutDTO.FromProject(p))
                                                              .ToListAsync();
-            return Ok(CreateSuccessResponse(new PaginatedResult<ProjectOutDTO>(totalProjectsCount,storedProjects)));
+            return Ok(CreateSuccessResponse(new PaginatedResult<ProjectOutDTO>(totalProjectsCount, storedProjects)));
         }
 
 
@@ -116,51 +116,56 @@ namespace AonFreelancing.Controllers.Mobile.v1
             if (!ModelState.IsValid)
                 return CustomBadRequest();
 
-            Project? storedProject = await mainAppContext.Projects.FindAsync(projectId);
-            if (storedProject == null)
-                return NotFound(CreateErrorResponse("404", "Project not found."));
+            long authenticatedFreelancerId = authService.GetUserId((ClaimsIdentity)HttpContext.User.Identity);
+            Project? storedProject = mainAppContext.Projects.Where(p => p.Id == projectId).Include(p => p.Bids).FirstOrDefault();
 
-            User authenticatedUser = await userManager.GetUserAsync(User);
+            if (storedProject == null) 
+                return NotFound(CreateErrorResponse("404", "project not found"));
+            if (storedProject.Status != Constants.PROJECT_STATUS_AVAILABLE)
+                return Conflict(CreateErrorResponse("409", "cannot submit a bid for project that is not available for bids"));
+            if (storedProject.Budget <= bidInputDTO.ProposedPrice) 
+                return BadRequest(CreateErrorResponse("400", "proposed price must be less than the project's budget"));
+            if (storedProject.Bids.Any() && storedProject.Bids.OrderBy(b => b.ProposedPrice).First().ProposedPrice <= bidInputDTO.ProposedPrice)
+                return BadRequest(CreateErrorResponse("40", "proposed price must be less than earlier proposed prices"));
 
-            Bid? latestBid = await mainAppContext.Bids.Where(b => b.ProjectId == projectId)
-                                                    .OrderByDescending(b => b.SubmittedAt)
-                                                    .FirstOrDefaultAsync();
-
-            if (bidInputDTO.ProposedPrice <= 0 ||
-                (latestBid != null && bidInputDTO.ProposedPrice > latestBid.ProposedPrice) ||
-                (latestBid == null && bidInputDTO.ProposedPrice > storedProject.Budget))
-            {
-                return BadRequest(CreateErrorResponse("400", "Invalid proposed price. The proposed price must be positive and lower than the last bid or project budget."));
-            }
-
-            Bid? newBid = Bid.FromInputDTO(bidInputDTO, authenticatedUser.Id, storedProject.Id);
-
-            await mainAppContext.Bids.AddAsync(newBid);
+            Bid? newBid = Bid.FromInputDTO(bidInputDTO, authenticatedFreelancerId, projectId);
+            await mainAppContext.AddAsync(newBid);
             await mainAppContext.SaveChangesAsync();
 
-            return Ok(CreateSuccessResponse("Bid submitted successfully."));
+            return StatusCode(StatusCodes.Status201Created);
         }
 
 
         [Authorize(Roles = "CLIENT")]
         [HttpPut("{projectId}/bids/{bidId}/approve")]
-        public async Task<IActionResult> ApproveBidAsync(long projectId, long bidId)
+        public async Task<IActionResult> ApproveBidAsync([FromRoute] long projectId, [FromRoute] long bidId)
         {
-            Project? storedProject = await mainAppContext.Projects.FindAsync(projectId);
-            if (storedProject == null || storedProject.Status != Constants.PROJECT_STATUS_AVAILABLE)
-                return BadRequest(CreateErrorResponse("400", $"Project status is '{storedProject?.Status}', but must be 'available'."));
+           
+            long authenticatedClientId = authService.GetUserId((ClaimsIdentity)HttpContext.User.Identity);
+            Project? storedProject = await mainAppContext.Projects.Where(p => p.Id == projectId)
+                                                                 .Include(p => p.Bids)
+                                                                 .FirstOrDefaultAsync();
 
-            var storedBid = await mainAppContext.Bids.FirstOrDefaultAsync(b => b.Id == bidId);
-            if (storedBid == null || storedBid.ProjectId != projectId || storedBid.Status == Constants.BIDS_STATUS_APPROVED)
-                return BadRequest(CreateErrorResponse("400", "Bid not found or already approved."));
+            if (storedProject == null)
+                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "project not found"));
+
+            if (authenticatedClientId != storedProject.ClientId)
+                return Forbid();
+
+            if (storedProject.Status != Constants.PROJECT_STATUS_AVAILABLE)
+                return Conflict(CreateErrorResponse(StatusCodes.Status409Conflict.ToString(), "project status is not 'Available'"));
+            
+            Bid? storedBid = storedProject.Bids.Where(b => b.Id == bidId).FirstOrDefault();
+            if (storedBid == null)
+                return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(), "bid not found"));
 
             storedBid.Status = Constants.BIDS_STATUS_APPROVED;
             storedBid.ApprovedAt = DateTime.Now;
             storedProject.Status = Constants.PROJECT_STATUS_CLOSED;
             storedProject.FreelancerId = storedBid.FreelancerId;
-            await mainAppContext.SaveChangesAsync();
 
-            return Ok(CreateSuccessResponse("Bid approved successfully."));
+            await mainAppContext.SaveChangesAsync();
+            return Ok();
         }
 
 
@@ -186,11 +191,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 storedProject.Status,
                 storedProject.Budget,
                 storedProject.Duration,
-                storedProject.Description, 
+                storedProject.Description,
                 Bids = orderedBids
             }));
         }
-
 
         [Authorize(Roles = "CLIENT")]
         [HttpPost("{projectId}/tasks")]
@@ -200,7 +204,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             if (storedProject == null || storedProject.Status != Constants.PROJECT_STATUS_CLOSED)
                 return BadRequest(CreateErrorResponse("400", "Project not found or not closed."));
 
-            TaskEntity? newTask = TaskEntity.FromInputDTO(taskInputDTO,projectId);
+            TaskEntity? newTask = TaskEntity.FromInputDTO(taskInputDTO, projectId);
 
             await mainAppContext.Tasks.AddAsync(newTask);
             await mainAppContext.SaveChangesAsync();
@@ -214,8 +218,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             if (!ModelState.IsValid)
                 return base.CustomBadRequest();
 
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
-            long authenticatedUserId = Convert.ToInt64(identity.FindFirst(ClaimTypes.NameIdentifier).Value);
+            long authenticatedUserId = authService.GetUserId((ClaimsIdentity)HttpContext.User.Identity);
             ProjectLike? storedProjectLike = await mainAppContext.ProjectLikes.FirstOrDefaultAsync(pl => pl.ProjectId == projectId && pl.UserId == authenticatedUserId);
 
             if (storedProjectLike != null)
@@ -225,8 +228,6 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 await projectLikeService.UnlikeProjectAsync(storedProjectLike);
                 return NoContent();
             }
-
-
             if (storedProjectLike == null && action == Constants.PROJECT_LIKE_ACTION)
             {
                 await projectLikeService.LikeProjectAsync(authenticatedUserId, projectId);

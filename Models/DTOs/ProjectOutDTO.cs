@@ -17,8 +17,8 @@ namespace AonFreelancing.Models.DTOs
         public string Status {  get; set; }
         public decimal Budget {  get; set; }
         public DateTime CreatedAt { get; set; }
-        public DateTime? StartDate {  get; set; }
-        public DateTime? EndDate { get; set; }
+        //public DateTime? StartDate {  get; set; }
+        //public DateTime? EndDate { get; set; }
         public string? CreationTime {  get; set; }
         public string ClientName {  get; set; }
         public long ClientId {  get; set; }
@@ -36,8 +36,8 @@ namespace AonFreelancing.Models.DTOs
             Status = project.Status;
             Budget = project.Budget;
             CreatedAt = project.CreatedAt;
-            StartDate = project.StartDate;
-            EndDate = project.EndDate;
+            //StartDate = project.StartDate;
+            //EndDate = project.EndDate;
             CreationTime = StringOperations.GetTimeAgo(CreatedAt);
             ClientName = project.Client.Name;
             ClientId = project.Client.Id;
