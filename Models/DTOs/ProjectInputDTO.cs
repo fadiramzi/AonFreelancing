@@ -18,7 +18,7 @@ namespace AonFreelancing.Models.DTOs
         public string QualificationName { get; set; }
 
         [Required]
-        [Range(1, int.MaxValue)]
+        [Range(1, 365)]
         public int Duration { get; set; } //Number of days
 
         [Required]
