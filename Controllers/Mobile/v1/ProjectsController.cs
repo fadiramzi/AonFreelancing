@@ -100,7 +100,6 @@ namespace AonFreelancing.Controllers.Mobile.v1
             }));
         }
 
-
         [Authorize(Roles = "FREELANCER")]
         [HttpPost("{id}/bids")]
         public async Task<IActionResult> SubmitBidAsync(long id, [FromBody] BidInputDto bidDto)
@@ -315,6 +314,60 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 Errors = null
             });
         }
+
+
+//        [Authorize(Roles = "FREELANCER")]
+//        [HttpGet("filter")]
+//        public async Task<IActionResult> GetProjectsFilterAsync(
+//    [FromQuery] List<string>? specialization, [FromQuery] int page = 0,
+//    [FromQuery] int pageSize = 8, [FromQuery] string? qur = default
+//)
+//        {
+//            var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
+//            List<ProjectOutDTO>? projectsFilter;
+
+//            var query = mainAppContext.Projects.AsQueryable();
+
+//            var count = await query.CountAsync();
+
+//            // Validate query for specialization
+//            if (specialization != null && specialization.Count > 0)
+//            {
+//                var validSpecializations = new HashSet<string> { "uiux", "frontend", "mobile", "backend", "fullstack" };
+//                specialization = specialization.Where(s => validSpecializations.Contains(s)).ToList();
+//                if (!specialization.Any())
+//                {
+//                    return BadRequest("Invalid specialization values provided.");
+//                }
+//                query = query.Where(p => specialization.Contains(p.Specialization));
+//            }
+
+//            if (!string.IsNullOrEmpty(trimmedQuery))
+//            {
+//                query = query
+//                    .Where(p => p.Specialization.ToLower().Contains(trimmedQuery));
+//            }
+
+//            projectsFilter = await query.OrderByDescending(p => p.CreatedAt)
+//                .Select(p => new ProjectOutDTO
+//                {
+//                    Id = p.Id,
+//                    Specialization = p.Specialization,
+//                    StartDate = p.StartDate,
+//                    EndDate = p.EndDate,
+//                    CreatedAt = p.CreatedAt,
+//                    CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+//                })
+//                .ToListAsync();
+
+//            return Ok(CreateSuccessResponse(new
+//            {
+//                Total = count,
+//                Items = projectsFilter
+//            }));
+//        }
+
+
 
         //[HttpGet("{id}")]
         //public IActionResult GetProject(int id)
