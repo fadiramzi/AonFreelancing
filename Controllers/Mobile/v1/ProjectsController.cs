@@ -1,12 +1,13 @@
-﻿
-using AonFreelancing.Contexts;
+﻿using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
+using AonFreelancing.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace AonFreelancing.Controllers.Mobile.v1
@@ -14,7 +15,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Authorize]
     [Route("api/mobile/v1/projects")]
     [ApiController]
-    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager) : BaseController
+    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager, ProjectLikeService projectLikeService) : BaseController
     {
         [Authorize(Roles = "CLIENT")]
         [HttpPost]
@@ -355,6 +356,47 @@ namespace AonFreelancing.Controllers.Mobile.v1
             return Ok(CreateSuccessResponse(filteredProjects));
         
         }
+
+
+
+        // /api/mobile/v1/projects/{pid}/like
+        [Authorize]
+        [HttpPost("{projectId}/likes")]
+        public async Task<IActionResult> LikeProject(long projectId, [FromBody] string action)
+        {
+            var user = await userManager.GetUserAsync(HttpContext.User);
+
+            if (action.Equals("like", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    await projectLikeService.LikeProjectAsync(user.Id, projectId);
+                    return Ok(CreateSuccessResponse("Project liked successfully"));
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return BadRequest(CreateErrorResponse("400", ex.Message));
+                }
+            }
+            else if (action.Equals("unlike", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    await projectLikeService.UnlikeProjectAsync(user.Id, projectId);
+                    return Ok(CreateSuccessResponse("Project unliked successfully"));
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return BadRequest(CreateErrorResponse("400", ex.Message));
+                }
+            }
+
+            return BadRequest(CreateErrorResponse("400", "Invalid action. Use 'like' or 'unlike'."));
+        }
+
+
+
+
 
 
         //[HttpGet("{id}")]

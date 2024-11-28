@@ -36,5 +36,6 @@ namespace AonFreelancing.Models
         [JsonIgnore]
         public ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
 
+        public List<ProjectLike>? ProjectLikes { get; set; }
     }
 }

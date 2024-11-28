@@ -20,8 +20,9 @@ namespace AonFreelancing.Contexts
         public DbSet<TempUser> TempUsers { get; set; }
         public DbSet<Bid> Bids { get; set; }
         public DbSet<TaskEntity> Tasks { get; set; }
-
         public DbSet<Skill> skills { get; set; }
+        public DbSet<ProjectLike> ProjectLikes { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -72,6 +73,24 @@ namespace AonFreelancing.Contexts
                 .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<TaskEntity>().ToTable("Tasks");
+
+            builder.Entity<ProjectLike>()
+            .HasIndex(pl => new { pl.ProjectId, pl.UserId })
+            .IsUnique();
+
+            builder.Entity<ProjectLike>()
+                .HasOne(pl => pl.User)
+                .WithMany()
+                .HasForeignKey(pl => pl.UserId)
+                .HasPrincipalKey(u => u.Id);
+
+            builder.Entity<ProjectLike>()
+                .HasOne(pl => pl.Project)
+                .WithMany(p => p.ProjectLikes)
+                .HasForeignKey(pl => pl.ProjectId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasPrincipalKey(p => p.Id);
+
 
             base.OnModelCreating(builder);
         }

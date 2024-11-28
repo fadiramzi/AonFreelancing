@@ -197,6 +197,33 @@ namespace AonFreelancing.Migrations
                         });
                 });
 
+            modelBuilder.Entity("AonFreelancing.Models.ProjectLike", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("ProjectId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("ProjectId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("ProjectLikes");
+                });
+
             modelBuilder.Entity("AonFreelancing.Models.Skill", b =>
                 {
                     b.Property<long>("Id")
@@ -554,6 +581,25 @@ namespace AonFreelancing.Migrations
                     b.Navigation("Freelancer");
                 });
 
+            modelBuilder.Entity("AonFreelancing.Models.ProjectLike", b =>
+                {
+                    b.HasOne("AonFreelancing.Models.Project", "Project")
+                        .WithMany("ProjectLikes")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("AonFreelancing.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("AonFreelancing.Models.Skill", b =>
                 {
                     b.HasOne("AonFreelancing.Models.Freelancer", "freelancer")
@@ -657,6 +703,8 @@ namespace AonFreelancing.Migrations
             modelBuilder.Entity("AonFreelancing.Models.Project", b =>
                 {
                     b.Navigation("Bids");
+
+                    b.Navigation("ProjectLikes");
 
                     b.Navigation("Tasks");
                 });
