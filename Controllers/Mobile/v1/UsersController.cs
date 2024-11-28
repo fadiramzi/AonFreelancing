@@ -84,37 +84,37 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("{id}/skills")]
         public async Task<IActionResult> UpdateTaskAsync(long id, [FromBody] SkillDTO skillDTO)
         {
+            //get user id form user request
             var user = await userManager.GetUserAsync(HttpContext.User);
             if (user == null)
                 return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),
                     "Unable to set skills."));
-            if (user.Id != id)
-                return BadRequest(CreateErrorResponse(StatusCodes.Status403Forbidden.ToString(),
-                    "Not alowed"));
-
+           
 
             if (!ModelState.IsValid)
             {
 
                 return base.CustomBadRequest();
             }
-
+            //check the user if realy freelnacer
             var freelancer = await mainAppContext.Users.OfType<Freelancer>().FirstOrDefaultAsync(f => f.Id == id);
             if (freelancer == null)
             {
                 return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "freelancer not found."));
             }
-            var freelancerSkill = await mainAppContext.skills.Where(s => s.UserId == id && s.Name == skillDTO.Name).FirstOrDefaultAsync();
+            //git freelnacer skills
+            var freelancerSkill = await mainAppContext.Skills.Where(s => s.UserId == id && s.Name == skillDTO.Name).FirstOrDefaultAsync();
             if (freelancerSkill != null)
             {
                 return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "skill aliready exist."));
             }
+            //add skill to freelnacer
             var skill = new Skill
             {
                 UserId = id,
                 Name = skillDTO.Name,
             };
-            await mainAppContext.skills.AddAsync(skill);
+            await mainAppContext.Skills.AddAsync(skill);
             await mainAppContext.SaveChangesAsync();
             return Ok(CreateSuccessResponse("skill Has Been added "));
 
@@ -124,18 +124,20 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpDelete("{id}/skills")]
         public async Task<IActionResult> DeleteTaskAsync(long id, [FromBody] SkillDTO skillDTO)
         {
+            //get user id form user request
             var user = await userManager.GetUserAsync(HttpContext.User);
             if (user == null)
                 return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),
                     "Unable to delete skills."));
+            //check if the user is setting his won skills
             if (user.Id != id)
                 return BadRequest(CreateErrorResponse(StatusCodes.Status403Forbidden.ToString(),
                     "Not alowed"));
-
-            var skill = await mainAppContext.skills.Where(s => s.Name == skillDTO.Name && s.UserId == id).FirstOrDefaultAsync();
+            //get skill freelnacer want to delete it 
+            var skill = await mainAppContext.Skills.Where(s => s.Name == skillDTO.Name && s.UserId == id).FirstOrDefaultAsync();
             if (skill != null)
             {
-                mainAppContext.skills.Remove(skill);
+                mainAppContext.Skills.Remove(skill);
                 await mainAppContext.SaveChangesAsync();
                 return Ok(CreateSuccessResponse("skill Has Been deleted "));
 

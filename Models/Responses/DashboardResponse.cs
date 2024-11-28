@@ -4,7 +4,7 @@ namespace AonFreelancing.Models.Responses
 {
     public class DashboardResponse
     {
-        public DashprojectsDTO dashprojectsDTO { get; set; }
-        public DashTasksDTO dashTasksDTO { get; set; }
+        public DashprojectsDTO Projects { get; set; }
+        public DashTasksDTO Tasks { get; set; }
     }
 }

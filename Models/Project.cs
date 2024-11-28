@@ -34,6 +34,7 @@ namespace AonFreelancing.Models
         public string? ImagePath { get; set; }
 
         public ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
+        public ICollection<ProjectLike> projectLikes { get; set; } = new List<ProjectLike>();
 
     }
 }

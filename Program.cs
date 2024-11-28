@@ -34,6 +34,11 @@ namespace AonFreelancing
                 .AddDefaultTokenProviders();
             builder.Configuration.AddJsonFile("appsettings.json");
 
+            builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+    });
 
 
             // JWT Authentication configuration

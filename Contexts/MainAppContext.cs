@@ -20,7 +20,8 @@ namespace AonFreelancing.Contexts
         public DbSet<TempUser> TempUsers { get; set; }
         public DbSet<Bid> Bids { get; set; }
         public DbSet<TaskEntity> Tasks { get; set; }
-        public DbSet<Skill> skills { get; set; }
+        public DbSet<Skill> Skills { get; set; }
+        public DbSet<ProjectLike> ProjectLikes { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             
@@ -47,6 +48,7 @@ namespace AonFreelancing.Contexts
                 .ToTable("Projects", tb => tb.HasCheckConstraint("CK_QUALIFICATION_NAME", "[QualificationName] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')"));
             builder.Entity<Project>().ToTable("Projects", tb => tb.HasCheckConstraint("CK_STATUS", "[Status] IN ('Available', 'Closed')"))
                 .Property(p=>p.Status).HasDefaultValue("Available");
+          
             builder.Entity<Skill>()
                 .ToTable("skills", tb => tb.HasCheckConstraint("CK_NAME", "[Name] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')"));
 
@@ -68,8 +70,21 @@ namespace AonFreelancing.Contexts
                 .HasForeignKey(b => b.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            //builder.Entity<Skill>().HasIndex(s => new {s.UserId,s.Name}).IsUnique().HasName("CompSkillKey"); ;
-         
+            builder.Entity<ProjectLike>()
+                .HasOne(p => p.Project)
+                .WithMany(u => u.projectLikes)
+                .HasForeignKey(b => b.ProjectId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ProjectLike>()
+                .HasOne(p => p.user)
+                .WithMany(u => u.projectLikes)
+                .HasForeignKey(b => b.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+
+            builder.Entity<Skill>().HasIndex(s => new { s.UserId, s.Name }).IsUnique().HasName("CompSkillKey"); ;
+
 
             base.OnModelCreating(builder);
         }

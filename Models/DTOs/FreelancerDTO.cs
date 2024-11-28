@@ -24,5 +24,6 @@ namespace AonFreelancing.Models.DTOs
         public string Name { get; set; }
 
         public string QualificationName { get; set; }
+        public long LikeCount { get; set; }
     }
 }

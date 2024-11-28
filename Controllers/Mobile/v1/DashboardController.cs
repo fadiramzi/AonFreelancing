@@ -20,7 +20,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpGet("GetMyStatistics")]
         public async Task<IActionResult> GetMyStatisticsAsync()
         {
-
+            //check user type
             var user = await userManager.GetUserAsync(HttpContext.User);
             if (user == null)
                 return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),
@@ -28,18 +28,19 @@ namespace AonFreelancing.Controllers.Mobile.v1
             var userType = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
 
 
-
+            //for client
             if (userType == Constants.USER_TYPE_CLIENT)
             {
                 var response = new DashboardResponse
-                {
-                    dashprojectsDTO = new DashprojectsDTO
+                {   //get project needed info
+                    Projects = new DashprojectsDTO
                     {
                         Total = mainAppContext.Projects.Count(d => d.ClientId == user.Id),
                         Available = mainAppContext.Projects.Count(d => d.ClientId == user.Id && d.Status == Constants.PROJECT_STATUS_AVAILABLE),
                         Closed = mainAppContext.Projects.Count(d => d.ClientId == user.Id && d.Status == Constants.PROJECT_STATUS_CLOSED)
                     },
-                    dashTasksDTO = new DashTasksDTO
+                    //get tasks needed info
+                    Tasks = new DashTasksDTO
                     {
                         Total = mainAppContext.Projects.Where(d => d.ClientId == user.Id).Include(d => d.Tasks).Count(),
 
@@ -58,17 +59,18 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 };
                 return Ok(CreateSuccessResponse(response));
             }
+            //for freelnacer
             if (userType == Constants.USER_TYPE_FREELANCER)
             {
                 var response = new DashboardResponse
                 {
-                    dashprojectsDTO = new DashprojectsDTO
+                    Projects = new DashprojectsDTO
                     {
                         Total = mainAppContext.Projects.Count(d => d.FreelancerId == user.Id),
                         Available = mainAppContext.Projects.Count(d => d.FreelancerId == user.Id && d.Status == Constants.PROJECT_STATUS_AVAILABLE),
                         Closed = mainAppContext.Projects.Count(d => d.FreelancerId == user.Id && d.Status == Constants.PROJECT_STATUS_CLOSED)
                     },
-                    dashTasksDTO = new DashTasksDTO
+                    Tasks = new DashTasksDTO
                     {
                         Total = mainAppContext.Projects.Where(d => d.FreelancerId == user.Id).Include(d => d.Tasks).Count(),
 

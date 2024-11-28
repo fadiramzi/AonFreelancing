@@ -27,5 +27,8 @@
 
         public const string DURATION_TYPE_MONTH = "Month";
         public const string DURATION_TYPE_YEAR = "Year";
+
+        public const string PROJECTLIKE_STATUS_LIKE = "like";
+        public const string PROJECTLIKE_STATUS_UNLIKE = "unlike";
     }
 }

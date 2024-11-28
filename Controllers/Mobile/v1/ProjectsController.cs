@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Security.Claims;
+using Twilio.TwiML.Voice;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -91,7 +92,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 StartDate = p.StartDate,
                 EndDate = p.EndDate,
                 CreatedAt = p.CreatedAt,
-                CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+                CreationTime = StringOperations.GetTimeAgo(p.CreatedAt),
+                LikeCount = p.projectLikes.Count,
+
             })
             .ToListAsync();
            
@@ -200,7 +203,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 Notes = b.Notes,
                 Status = b.Status,
                 SubmittedAt = b.SubmittedAt,
-                ApprovedAt = b.ApprovedAt
+                ApprovedAt = b.ApprovedAt,
+              
                 } );
 
 
@@ -322,7 +326,11 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpGet("{id}/tasks")]
         public async Task<IActionResult> GetProjectTasksAsync([FromQuery] string? status ,int id )
         {
+            
            List<TaskOutDTO> tasks = new List<TaskOutDTO>();
+            //check status value
+
+            //if null return all tasks
             if (status == null) { 
              tasks= await mainAppContext.Tasks.Where(t=>t.ProjectId == id&&t.IsDeleted == false)
                     .Select(t => new TaskOutDTO
@@ -332,6 +340,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     .ToListAsync();
 
             }
+
+            //if not null return wanted status
             if (status != null) { 
                 
                  tasks = await mainAppContext.Tasks.Where(t => t.ProjectId == id && t.IsDeleted == false && t.Status==status)
@@ -362,17 +372,19 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
             int period = 0;
             List<ProjectOutDTO>? projects;
-
+            
             var query = mainAppContext.Projects.AsQueryable();
 
             var count = await query.CountAsync();
 
-           
+            //check Specialization
             if (Specialization != null && Specialization.Count > 0)
             {
                 query = query
                     .Where(p => Specialization.Contains(p.QualificationName));
             }
+
+            //to calcualte duration time 
             if (freeelnacerFeedInputDTO.DurationType == Constants.DURATION_TYPE_MONTH)
             {
                  period = 30;
@@ -383,6 +395,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             }
             if (query != null)
             {
+                //apply fillter
                 query = query.Where(q => q.Duration <= (freeelnacerFeedInputDTO.DurationPeriod * period)
                && q.Budget >= freeelnacerFeedInputDTO.MinPrice && q.Budget <= freeelnacerFeedInputDTO.MaxPrice);
             }
@@ -402,7 +415,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 StartDate = p.StartDate,
                 EndDate = p.EndDate,
                 CreatedAt = p.CreatedAt,
-                CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+                CreationTime = StringOperations.GetTimeAgo(p.CreatedAt),
+                LikeCount = p.projectLikes.Count,
             })
             .ToListAsync();
 
@@ -413,6 +427,98 @@ namespace AonFreelancing.Controllers.Mobile.v1
             }));
         }
 
+        [Authorize(Roles = "CLIENT,FREELANCER")]
+        [HttpPost("{pid}/like")]
+        public async Task<IActionResult> LikeProjectAsync(long pid, string status)
+        {
+            // Get the current user
+            var user = await userManager.GetUserAsync(HttpContext.User);
+
+            if (!ModelState.IsValid)
+            {
+                return base.CustomBadRequest();
+            }
+
+            // Fetch the existing like 
+            var projectLike = await mainAppContext.ProjectLikes
+                .FirstOrDefaultAsync(l => l.ProjectId == pid && l.UserId == user.Id);
+
+            if (status == Constants.PROJECTLIKE_STATUS_LIKE)
+            {
+                // If not already liked, add a like
+                if (projectLike == null) 
+                {
+                    var like = new ProjectLike
+                    {
+                        ProjectId = pid,
+                        UserId = user.Id,
+                        CreatedAt = DateTime.Now
+                    };
+
+                    await mainAppContext.ProjectLikes.AddAsync(like);
+                    await mainAppContext.SaveChangesAsync();
+                    return Ok(CreateSuccessResponse(like));
+                }
+
+                // If already liked
+                return BadRequest(CreateErrorResponse(
+                    StatusCodes.Status400BadRequest.ToString(),
+                    "You already liked this project"));
+            }
+
+            if (status == Constants.PROJECTLIKE_STATUS_UNLIKE)
+            {
+                // If already liked, remove the like
+                if (projectLike != null) 
+                {
+                    mainAppContext.ProjectLikes.Remove(projectLike);
+                    await mainAppContext.SaveChangesAsync();
+                    return Ok(CreateSuccessResponse("unliked"));
+                }
+
+                // If not liked, can't unlike
+                return BadRequest(CreateErrorResponse(
+                    StatusCodes.Status400BadRequest.ToString(),
+                    "You haven't liked this project"));
+            }
+
+            // Invalid status provided
+            return BadRequest(CreateErrorResponse(
+                StatusCodes.Status400BadRequest.ToString(),
+                "Invalid status, Use 'like' or 'unlike'."));
+        }
+
+
+
+
+        //[Authorize(Roles = "CLIENT,FREELANCER")]
+        //[HttpPost("{pid}/like")]
+        //public async Task<IActionResult> LikeProjectAsync([FromBody] ProjectLikeDTO projectLikeDTO)
+        //{
+        //      var user = await userManager.GetUserAsync(HttpContext.User);
+        //    ProjectLike ProjectLike = await mainAppContext.ProjectLikes.Where(l => l.ProjectId == projectLikeDTO.ProjectId && l.UserId == user.id).FirstOrDefaultAsync();
+        //    if (ProjectLike != null)
+        //    {
+        //        if (ProjectLike.CreatedAt != null)
+        //        {
+        //            ProjectLike.CreatedAt = null;
+        //        }
+        //        if (ProjectLike.CreatedAt == null)
+        //        {
+        //            ProjectLike.CreatedAt = DateTime.Now;
+        //        }
+
+        //    }
+        //    if (ProjectLike == null)
+        //    {
+        //        ProjectLike.ProjectId= projectLikeDTO.ProjectId;
+        //        ProjectLike.UserId= user.id;
+        //        ProjectLike.CreatedAt= DateTime.Now;
+        //    }
+        //    mainAppContext.SaveChanges();
+        //    return Ok(CreateSuccessResponse(ProjectLike));
+
+        //}
         //[HttpGet("{id}")]
         //public IActionResult GetProject(int id)
         //{

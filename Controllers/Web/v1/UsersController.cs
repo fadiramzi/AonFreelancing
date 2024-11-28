@@ -101,7 +101,7 @@ namespace AonFreelancing.Controllers.Web.v1
             {
                 return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "freelancer not found."));
             }
-            var freelancerSkill = await mainAppContext.skills.Where(s=>s.UserId==id&&s.Name==skillDTO.Name).FirstOrDefaultAsync();
+            var freelancerSkill = await mainAppContext.Skills.Where(s=>s.UserId==id&&s.Name==skillDTO.Name).FirstOrDefaultAsync();
             if (freelancerSkill != null )
             {
                 return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(), "skill aliready exist."));
@@ -112,7 +112,7 @@ namespace AonFreelancing.Controllers.Web.v1
                 UserId = id,
                 Name = skillDTO.Name,
             };
-            await mainAppContext.skills.AddAsync(skill);
+            await mainAppContext.Skills.AddAsync(skill);
             await mainAppContext.SaveChangesAsync();
             return Ok(CreateSuccessResponse("skill Has Been added "));
 
@@ -130,10 +130,10 @@ namespace AonFreelancing.Controllers.Web.v1
                 return BadRequest(CreateErrorResponse(StatusCodes.Status403Forbidden.ToString(),
                     "Not alowed"));
 
-            var skill = await mainAppContext.skills.Where(s => s.Name == skillDTO.Name && s.UserId == id).FirstOrDefaultAsync();
+            var skill = await mainAppContext.Skills.Where(s => s.Name == skillDTO.Name && s.UserId == id).FirstOrDefaultAsync();
             if (skill != null)
             {
-                mainAppContext.skills.Remove(skill);
+                mainAppContext.Skills.Remove(skill);
                 await mainAppContext.SaveChangesAsync();
                 return Ok(CreateSuccessResponse("skill Has Been deleted "));
 
