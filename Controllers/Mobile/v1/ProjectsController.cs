@@ -49,6 +49,52 @@ namespace AonFreelancing.Controllers.Mobile.v1
             return Ok(CreateSuccessResponse("Project added."));
         }
 
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProjectDetailsAsync(long id)
+        {
+            var project = await mainAppContext.Projects
+                .Where(p => p.Id == id)
+                .Include(p => p.Bids)
+                .ThenInclude(b => b.Freelancer)
+                .FirstOrDefaultAsync();
+
+            if (project == null)
+                return NotFound(CreateErrorResponse("404", "Project not found."));
+
+            var orderedBids = project.Bids
+                .OrderByDescending(b => b.ProposedPrice)
+                .Select(b => new BidOutDto
+                {
+                    Id = b.Id,
+                    FreelancerId = b.FreelancerId,
+                    Freelancer = new FreelancerShortOutDTO
+                    {
+                        Id = b.FreelancerId,
+                        Name = b.Freelancer.Name
+                    },
+                    ProposedPrice = b.ProposedPrice,
+                    Notes = b.Notes,
+                    Status = b.Status,
+                    SubmittedAt = b.SubmittedAt,
+                    ApprovedAt = b.ApprovedAt
+                });
+
+
+
+            return Ok(CreateSuccessResponse(new
+            {
+                project.Id,
+                project.Title,
+                project.Status,
+                project.Budget,
+                project.Duration,
+                project.Description,
+                Bids = orderedBids
+            }));
+        }
+
+
         [Authorize(Roles = "CLIENT")]
         [HttpGet("clientFeed")]
         public async Task<IActionResult> GetClientFeedAsync(
@@ -171,49 +217,6 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetProjectDetailsAsync(long id)
-        {
-            var project = await mainAppContext.Projects
-                .Where(p => p.Id == id)
-                .Include(p => p.Bids)
-                .ThenInclude(b => b.Freelancer)
-                .FirstOrDefaultAsync();
-
-            if (project == null)
-                return NotFound(CreateErrorResponse("404", "Project not found."));
-
-            var orderedBids = project.Bids
-                .OrderByDescending(b => b.ProposedPrice)
-                .Select(b => new BidOutDto { 
-                Id = b.Id,
-                FreelancerId = b.FreelancerId,
-                Freelancer = new FreelancerShortOutDTO { 
-                    Id = b.FreelancerId,
-                    Name = b.Freelancer.Name
-                },
-                ProposedPrice = b.ProposedPrice,
-                Notes = b.Notes,
-                Status = b.Status,
-                SubmittedAt = b.SubmittedAt,
-                ApprovedAt = b.ApprovedAt
-                } );
-
-
-          
-            return Ok(CreateSuccessResponse(new
-            {
-                project.Id,
-                project.Title,
-                project.Status,
-                project.Budget,
-                project.Duration,
-                project.Description, 
-                Bids = orderedBids
-            }));
-        }
-
-
         [Authorize(Roles = "CLIENT")]
         [HttpPost("{id}/tasks")]
         public async Task<IActionResult> CreateTaskAsync(long id, [FromBody] TaskInputDto taskDto)
@@ -316,57 +319,42 @@ namespace AonFreelancing.Controllers.Mobile.v1
         }
 
 
-//        [Authorize(Roles = "FREELANCER")]
-//        [HttpGet("filter")]
-//        public async Task<IActionResult> GetProjectsFilterAsync(
-//    [FromQuery] List<string>? specialization, [FromQuery] int page = 0,
-//    [FromQuery] int pageSize = 8, [FromQuery] string? qur = default
-//)
-//        {
-//            var trimmedQuery = qur?.ToLower().Replace(" ", "").Trim();
-//            List<ProjectOutDTO>? projectsFilter;
+    [Authorize(Roles = "FREELANCER")]
+    [HttpGet("filter")]
+        public async Task<IActionResult> GetProjectsFilterAsync(
+            [FromQuery] string? qualificationName,
+            [FromQuery] decimal? minBudget,
+            [FromQuery] decimal? maxBudget,
+            [FromQuery] int? timeLine)
+        {
+            var query = mainAppContext.Projects.AsQueryable();
 
-//            var query = mainAppContext.Projects.AsQueryable();
+            if (!string.IsNullOrEmpty(qualificationName))
+            {
+                query = query.Where(p => p.QualificationName != null &&
+                                            p.QualificationName.ToLower().Contains(qualificationName.ToLower()));
+            }
 
-//            var count = await query.CountAsync();
+            if (minBudget.HasValue)
+            {
+                query = query.Where(p => p.Budget >= minBudget.Value);
+            }
 
-//            // Validate query for specialization
-//            if (specialization != null && specialization.Count > 0)
-//            {
-//                var validSpecializations = new HashSet<string> { "uiux", "frontend", "mobile", "backend", "fullstack" };
-//                specialization = specialization.Where(s => validSpecializations.Contains(s)).ToList();
-//                if (!specialization.Any())
-//                {
-//                    return BadRequest("Invalid specialization values provided.");
-//                }
-//                query = query.Where(p => specialization.Contains(p.Specialization));
-//            }
+            if (maxBudget.HasValue)
+            {
+                query = query.Where(p => p.Budget <= maxBudget.Value);
+            }
 
-//            if (!string.IsNullOrEmpty(trimmedQuery))
-//            {
-//                query = query
-//                    .Where(p => p.Specialization.ToLower().Contains(trimmedQuery));
-//            }
+            if (timeLine.HasValue)
+            {
+                query = query.Where(p => p.Duration <= timeLine.Value);
+            }
 
-//            projectsFilter = await query.OrderByDescending(p => p.CreatedAt)
-//                .Select(p => new ProjectOutDTO
-//                {
-//                    Id = p.Id,
-//                    Specialization = p.Specialization,
-//                    StartDate = p.StartDate,
-//                    EndDate = p.EndDate,
-//                    CreatedAt = p.CreatedAt,
-//                    CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
-//                })
-//                .ToListAsync();
+            var filteredProjects = await query.ToListAsync();
 
-//            return Ok(CreateSuccessResponse(new
-//            {
-//                Total = count,
-//                Items = projectsFilter
-//            }));
-//        }
-
+            return Ok(CreateSuccessResponse(filteredProjects));
+        
+        }
 
 
         //[HttpGet("{id}")]
