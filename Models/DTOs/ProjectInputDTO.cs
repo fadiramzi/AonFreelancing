@@ -17,7 +17,7 @@ namespace AonFreelancing.Models.DTOs
         public string QualificationName { get; set; }
 
         [Required]
-        [Range(1,200)]
+        [Range(30,730)]
         public int Duration { get; set; } //Number of days
 
         //[Required]
@@ -25,7 +25,7 @@ namespace AonFreelancing.Models.DTOs
         //public string PriceType { get; set; }
 
         [Required]
-        [Range(0, 1000000)]
+        [Range(0, 1000)]
         public decimal Budget { get; set; }
     }
 }

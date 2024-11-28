@@ -23,5 +23,9 @@
         public const string TASKS_STATUS_IN_PROGRESS = "in-progress";
         public const string TASKS_STATUS_IN_REVIEW = "in-review";
         public const string TASKS_STATUS_DONE = "done";
+
+
+        public const string DURATION_TYPE_MONTH = "Month";
+        public const string DURATION_TYPE_YEAR = "Year";
     }
 }

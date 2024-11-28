@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Security.Claims;
 
 namespace AonFreelancing.Controllers.Mobile.v1
@@ -52,7 +53,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [Authorize(Roles = "CLIENT")]
         [HttpGet("clientFeed")]
         public async Task<IActionResult> GetClientFeedAsync(
-            [FromQuery] List<string>? qualificationNames, [FromQuery] int page = 0,
+            [FromQuery] List<string>? qualificationNames, [FromQuery] int page = 1,
             [FromQuery] int pageSize = 8, [FromQuery] string? qur = default
         )
         {
@@ -75,7 +76,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             }
 
             projects = await query.OrderByDescending(p => p.CreatedAt)
-            .Skip(page * pageSize)
+            .Skip((page-1) * pageSize)
             .Take(pageSize)
             .Select(p => new ProjectOutDTO
             {
@@ -166,6 +167,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
             project.Status = Constants.PROJECT_STATUS_CLOSED;
             project.FreelancerId= bidID.FreelancerId;
+            project.StartDate= DateTime.Now;
+            project.EndDate = DateTime.Now.AddDays(project.Duration);
             await mainAppContext.SaveChangesAsync();
 
             return Ok(CreateSuccessResponse("Bid approved successfully."));
@@ -349,8 +352,67 @@ namespace AonFreelancing.Controllers.Mobile.v1
             }
 
         }
+        [Authorize(Roles = "FREELANCER")]
+        [HttpGet("freelancerFeed")]
+        public async Task<IActionResult> GetFreelancerFeedAsync([FromQuery] FreeelnacerFeedInputDTO freeelnacerFeedInputDTO,
+           [FromQuery] List<string>? Specialization, [FromQuery] int page = 1,
+           [FromQuery] int pageSize = 8
+       )
+        {
 
-      
+            int period = 0;
+            List<ProjectOutDTO>? projects;
+
+            var query = mainAppContext.Projects.AsQueryable();
+
+            var count = await query.CountAsync();
+
+           
+            if (Specialization != null && Specialization.Count > 0)
+            {
+                query = query
+                    .Where(p => Specialization.Contains(p.QualificationName));
+            }
+            if (freeelnacerFeedInputDTO.DurationType == Constants.DURATION_TYPE_MONTH)
+            {
+                 period = 30;
+            }
+            if (freeelnacerFeedInputDTO.DurationType == Constants.DURATION_TYPE_YEAR)
+            {
+                 period = 365;
+            }
+            if (query != null)
+            {
+                query = query.Where(q => q.Duration <= (freeelnacerFeedInputDTO.DurationPeriod * period)
+               && q.Budget >= freeelnacerFeedInputDTO.MinPrice && q.Budget <= freeelnacerFeedInputDTO.MaxPrice);
+            }
+            projects = await query.OrderByDescending(p => p.CreatedAt)
+            .Skip((page-1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new ProjectOutDTO
+            {
+                Id = p.Id,
+                Title = p.Title,
+                Description = p.Description,
+                Status = p.Status,
+                Budget = p.Budget,
+                Duration = p.Duration,
+                PriceType = p.PriceType,
+                Qualifications = p.QualificationName,
+                StartDate = p.StartDate,
+                EndDate = p.EndDate,
+                CreatedAt = p.CreatedAt,
+                CreationTime = StringOperations.GetTimeAgo(p.CreatedAt)
+            })
+            .ToListAsync();
+
+            return Ok(CreateSuccessResponse(new
+            {
+                Total = count,
+                Items = projects
+            }));
+        }
+
         //[HttpGet("{id}")]
         //public IActionResult GetProject(int id)
         //{
