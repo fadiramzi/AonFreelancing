@@ -39,7 +39,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 QualificationName = projectInputDto.QualificationName,
                 Duration = projectInputDto.Duration,
                 Budget = projectInputDto.Budget,
-                PriceType = projectInputDto.PriceType,
+                PriceType = "Fixed",
                 CreatedAt = DateTime.Now,
             };
 

@@ -27,33 +27,69 @@ namespace AonFreelancing.Controllers.Mobile.v1
                     "Unable to set skills."));
             var userType = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
 
-           
 
-            //if (userType == Constants.USER_TYPE_CLIENT)
-            //{
-            //    Project project =new 
-            //   var useID 
-               
-            //}
 
-            var response = new DashboardResponse
+            if (userType == Constants.USER_TYPE_CLIENT)
             {
-                dashprojectsDTO = new DashprojectsDTO
+                var response = new DashboardResponse
                 {
-                    Total = mainAppContext.Projects.Count(d => d.ClientId == user.Id),
-                    Available = mainAppContext.Projects.Count(d => d.ClientId == user.Id && d.Status == Constants.PROJECT_STATUS_AVAILABLE),
-                    Closed = mainAppContext.Projects.Count(d => d.ClientId == user.Id && d.Status == Constants.PROJECT_STATUS_CLOSED)
-                },
-                dashTasksDTO = new DashTasksDTO
+                    dashprojectsDTO = new DashprojectsDTO
+                    {
+                        Total = mainAppContext.Projects.Count(d => d.ClientId == user.Id),
+                        Available = mainAppContext.Projects.Count(d => d.ClientId == user.Id && d.Status == Constants.PROJECT_STATUS_AVAILABLE),
+                        Closed = mainAppContext.Projects.Count(d => d.ClientId == user.Id && d.Status == Constants.PROJECT_STATUS_CLOSED)
+                    },
+                    dashTasksDTO = new DashTasksDTO
+                    {
+                        Total = mainAppContext.Projects.Where(d => d.ClientId == user.Id).Include(d => d.Tasks).Count(),
+
+                        ToDo = mainAppContext.Projects.Where(d => d.ClientId == user.Id).Include(d => d.Tasks)
+                        .Where(d => d.Status == Constants.TASKS_STATUS_TO_DO).Count().ToString()+'%',
+
+                        InProgress = mainAppContext.Projects.Where(d => d.ClientId == user.Id).Include(d => d.Tasks)
+                        .Where(d => d.Status == Constants.TASKS_STATUS_IN_PROGRESS).Count().ToString() + '%',
+
+                        InReview = mainAppContext.Projects.Where(d => d.ClientId == user.Id).Include(d => d.Tasks)
+                        .Where(d => d.Status == Constants.TASKS_STATUS_IN_REVIEW).Count().ToString() + '%',
+
+                        Done = mainAppContext.Projects.Where(d => d.ClientId == user.Id).Include(d => d.Tasks)
+                        .Where(d => d.Status == Constants.TASKS_STATUS_DONE).Count().ToString() + '%',
+                    }
+                };
+                return Ok(CreateSuccessResponse(response));
+            }
+            if (userType == Constants.USER_TYPE_FREELANCER)
+            {
+                var response = new DashboardResponse
                 {
-                    Total = mainAppContext.Projects.Where(d => d.ClientId == user.Id).Include(d => d.Tasks).Count(),
-                    ToDo = mainAppContext.Projects.Where(d => d.ClientId == user.Id).Include(d => d.Tasks).ThenInclude(d => d.Status == Constants.TASKS_STATUS_TO_DO).Count().ToString(),
-                    InProgress = mainAppContext.Projects.Where(d => d.ClientId == user.Id).Include(d => d.Tasks).ThenInclude(d => d.Status == Constants.TASKS_STATUS_IN_PROGRESS).Count().ToString(),
-                    InReview = mainAppContext.Projects.Where(d => d.ClientId == user.Id).Include(d => d.Tasks).ThenInclude(d => d.Status == Constants.TASKS_STATUS_IN_REVIEW).Count().ToString(),
-                    Done = mainAppContext.Projects.Where(d => d.ClientId == user.Id).Include(d => d.Tasks).ThenInclude(d => d.Status == Constants.TASKS_STATUS_DONE).Count().ToString(),
-                }
-            };
-            return Ok();
+                    dashprojectsDTO = new DashprojectsDTO
+                    {
+                        Total = mainAppContext.Projects.Count(d => d.FreelancerId == user.Id),
+                        Available = mainAppContext.Projects.Count(d => d.FreelancerId == user.Id && d.Status == Constants.PROJECT_STATUS_AVAILABLE),
+                        Closed = mainAppContext.Projects.Count(d => d.FreelancerId == user.Id && d.Status == Constants.PROJECT_STATUS_CLOSED)
+                    },
+                    dashTasksDTO = new DashTasksDTO
+                    {
+                        Total = mainAppContext.Projects.Where(d => d.FreelancerId == user.Id).Include(d => d.Tasks).Count(),
+
+                        ToDo = mainAppContext.Projects.Where(d => d.FreelancerId == user.Id).Include(d => d.Tasks)
+                        .Where(d => d.Status == Constants.TASKS_STATUS_TO_DO).Count().ToString() + '%',
+
+                        InProgress = mainAppContext.Projects.Where(d => d.FreelancerId == user.Id).Include(d => d.Tasks)
+                        .Where(d => d.Status == Constants.TASKS_STATUS_IN_PROGRESS).Count().ToString() + '%',
+
+                        InReview = mainAppContext.Projects.Where(d => d.FreelancerId == user.Id).Include(d => d.Tasks)
+                        .Where(d => d.Status == Constants.TASKS_STATUS_IN_REVIEW).Count().ToString() + '%',
+
+                        Done = mainAppContext.Projects.Where(d => d.FreelancerId == user.Id).Include(d => d.Tasks)
+                        .Where(d => d.Status == Constants.TASKS_STATUS_DONE).Count().ToString() + '%',
+                    }
+                };
+                return Ok(CreateSuccessResponse(response));
+            }
+
+
+            return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),"couldnt identify user."));
         }
     }
 }

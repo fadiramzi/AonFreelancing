@@ -127,7 +127,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
             var user = await userManager.GetUserAsync(HttpContext.User);
             if (user == null)
                 return NotFound(CreateErrorResponse(StatusCodes.Status404NotFound.ToString(),
-                    "Unable to set skills."));
+                    "Unable to delete skills."));
             if (user.Id != id)
                 return BadRequest(CreateErrorResponse(StatusCodes.Status403Forbidden.ToString(),
                     "Not alowed"));
