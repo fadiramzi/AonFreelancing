@@ -97,7 +97,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 query = query.Where(p => qualificationNames.Contains(p.QualificationName));
 
             if (duration.HasValue)
-                query = query.Where(p => p.Duration == duration.Value);
+                query = query.Where(p => p.Duration >= duration.Value);
 
             if (priceRange.MinPrice != null && priceRange.MaxPrice != null)
                 query = query.Where(p => p.Budget >= priceRange.MinPrice && p.Budget <= priceRange.MaxPrice);
