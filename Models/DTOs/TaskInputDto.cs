@@ -7,9 +7,9 @@
         public string Notes { get; set; }
     }
 
-    public class TaskStatusDto
-    {
-        public string NewStatus { get; set; }
-    }
+    //public class TaskStatusDto
+    //{
+    //    public string NewStatus { get; set; }
+    //}
 
 }

@@ -20,6 +20,6 @@ namespace AonFreelancing.Models
         public string? About {  get; set; }
 
         public ICollection<Bid> Bids { get; set; } = new List<Bid>();
-
+        public ICollection<ProjectLike> projectLikes { get; set; } = new List<ProjectLike>();
     }
 }

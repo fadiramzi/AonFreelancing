@@ -17,15 +17,15 @@ namespace AonFreelancing.Models.DTOs
         public string QualificationName { get; set; }
 
         [Required]
-        [Range(1,int.MaxValue)]
+        [Range(30,730)]
         public int Duration { get; set; } //Number of days
 
-        [Required]
-        [AllowedValues("PerHour","Fixed", ErrorMessage ="Price type is invalid.")]
-        public string PriceType { get; set; }
+        //[Required]
+        //[AllowedValues("PerHour", "Fixed", ErrorMessage = "Price type is invalid.")]
+        //public string PriceType { get; set; }
 
         [Required]
-        [Range(0, int.MaxValue)]
+        [Range(0, 1000)]
         public decimal Budget { get; set; }
     }
 }
