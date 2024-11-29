@@ -1,5 +1,5 @@
-
 using AonFreelancing.Contexts;
+using AonFreelancing.Interfaces;
 using AonFreelancing.Middlewares;
 using AonFreelancing.Models;
 using AonFreelancing.Services;
@@ -28,13 +28,12 @@ namespace AonFreelancing
             builder.Services.AddSingleton<OTPManager>();
             builder.Services.AddSingleton<JwtService>();
             builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<IStatisticsService, StatisticsService>();
             builder.Services.AddDbContext<MainAppContext>(options => options.UseSqlServer(conf.GetConnectionString("Default")));
             builder.Services.AddIdentity<User, ApplicationRole>()
                 .AddEntityFrameworkStores<MainAppContext>()
                 .AddDefaultTokenProviders();
             builder.Configuration.AddJsonFile("appsettings.json");
-
-
 
             // JWT Authentication configuration
             var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -59,6 +58,10 @@ namespace AonFreelancing
                 };
             });
 
+            builder.Services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true;
+            });
 
             builder.Services.AddSwaggerGen(options =>
             {
@@ -70,26 +73,20 @@ namespace AonFreelancing
                     Scheme = "Bearer"
                 });
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-            });
-
-
-            builder.Services.Configure<ApiBehaviorOptions>(options =>
-            {
-                options.SuppressModelStateInvalidFilter = true;
-            });
+                    {
+                        new OpenApiSecurityScheme
+                    {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                    });
+                            });
 
             var app = builder.Build();
             if (app.Environment.IsDevelopment())

@@ -19,9 +19,12 @@
         public const string BIDS_STATUS_APPROVED = "approved";
 
 
-        public const string TASKS_STATUS_TO_DO = "to-do";
+        public const string TASKS_STATUS_TO_DO = "To-Do";
         public const string TASKS_STATUS_IN_PROGRESS = "in-progress";
         public const string TASKS_STATUS_IN_REVIEW = "in-review";
         public const string TASKS_STATUS_DONE = "done";
+
+        public const string PROJECT_LIKE = "like";
+        public const string PROJECT_UNLIKE = "unlike";
     }
 }

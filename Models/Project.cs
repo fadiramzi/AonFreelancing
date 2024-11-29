@@ -1,10 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace AonFreelancing.Models
 {
-    //Entity
     [Table("Projects")]
     public class Project
     {
@@ -16,7 +16,7 @@ namespace AonFreelancing.Models
         public long ClientId { get; set; } //FK
 
         // Belongs to a client
-        [ForeignKey("ClientId")] 
+        [ForeignKey("ClientId")]
         public Client Client { get; set; }
 
         public DateTime CreatedAt { get; set; }
@@ -33,7 +33,9 @@ namespace AonFreelancing.Models
         public ICollection<Bid> Bids { get; set; } = new List<Bid>();
         public string? ImagePath { get; set; }
 
+        [JsonIgnore]
         public ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
 
+        public ICollection<ProjectLike> projectLikes { get; set; } = new List<ProjectLike>();
     }
 }

@@ -14,10 +14,40 @@ using System.Diagnostics;
 namespace AonFreelancing.Controllers.Mobile.v1
 {
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("api/mobile/v1")]
     [ApiController]
     public class TasksController(MainAppContext mainAppContext, UserManager<User> userManager) : BaseController
     {
+        [Authorize(Roles = "CLIENT")]
+        [HttpGet("{id}/tasks")]
+        public async Task<IActionResult> GetTaskAsync(long id, [FromQuery] string? status = Constants.TASKS_STATUS_TO_DO)
+        {
+            var project = await mainAppContext.Projects.FindAsync(id);
+
+            if (project == null || project.Status != Constants.PROJECT_STATUS_CLOSED)
+            {
+                return BadRequest(CreateErrorResponse("400", "Project not found or not closed."));
+            }
+
+            IQueryable<TaskEntity> tasksQuery = mainAppContext.Tasks.Where(t => t.ProjectId == id);
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                tasksQuery = tasksQuery.Where(t => t.Status.ToLower() == status.ToLower());
+            }
+
+            var tasks = await tasksQuery.ToListAsync();
+
+            if (tasks.Count == 0)
+            {
+                return NotFound(CreateErrorResponse("404", "No tasks found."));
+            }
+
+            return Ok(CreateSuccessResponse(tasks));
+        }
+
+
+
         [Authorize(Roles = "CLIENT, FREELANCER")]
         [HttpPut("tasks/{id}/updateStatus")]
         public async Task<IActionResult> UpdateTaskAsync(long id, [FromBody] TaskUpdateDTO taskUpdateDTO)
@@ -54,7 +84,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
 
         [Authorize(Roles = "CLIENT")]
-         [HttpPut("tasks/{pid}/checkProgress")]
+         [HttpGet("tasks/{pid}/checkProgress")]
         public async Task<IActionResult> CheckProgressStatusAsync( int pid )
         {
             decimal countDone= await mainAppContext.Tasks.Where(s => s.Status== Constants.TASKS_STATUS_DONE&&s.ProjectId==pid && s.IsDeleted==false).CountAsync();

@@ -5,7 +5,9 @@
         public bool IsSuccess { get; set; }
         public T Results { get; set; }
         public IList<Error> Errors { get; set; }
+        public string Message { get; set; }
     }
+
 
     public class Error
     {

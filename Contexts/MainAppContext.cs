@@ -20,6 +20,9 @@ namespace AonFreelancing.Contexts
         public DbSet<TempUser> TempUsers { get; set; }
         public DbSet<Bid> Bids { get; set; }
         public DbSet<TaskEntity> Tasks { get; set; }
+        public DbSet<Skill> skills { get; set; }
+        public DbSet<ProjectLike> ProjectLikes { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -48,6 +51,9 @@ namespace AonFreelancing.Contexts
             builder.Entity<Project>().ToTable("Projects", tb => tb.HasCheckConstraint("CK_STATUS", "[Status] IN ('Available', 'Closed')"))
                 .Property(p=>p.Status).HasDefaultValue("Available");
 
+            builder.Entity<Skill>()
+                .ToTable("skills", tb => tb.HasCheckConstraint("CK_NAME", "[Name] IN ('uiux', 'frontend', 'mobile', 'backend', 'fullstack')"));
+
             builder.Entity<Bid>()
                .HasOne(b => b.Project)
                .WithMany(p => p.Bids)
@@ -60,8 +66,30 @@ namespace AonFreelancing.Contexts
                 .HasForeignKey(b => b.FreelancerId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            builder.Entity<Skill>()
+                .HasOne(s => s.freelancer)
+                .WithMany(f => f.Skills)
+                .HasForeignKey(b => b.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<TaskEntity>().ToTable("Tasks");
+
+            builder.Entity<ProjectLike>()
+            .HasIndex(pl => new { pl.ProjectId, pl.UserId })
+            .IsUnique();
+
+            builder.Entity<ProjectLike>()
+                 .HasOne(p => p.Project)
+                 .WithMany(u => u.projectLikes)
+                 .HasForeignKey(b => b.ProjectId)
+                 .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ProjectLike>()
+                .HasOne(p => p.user)
+                .WithMany(u => u.projectLikes)
+                .HasForeignKey(b => b.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
 
             base.OnModelCreating(builder);
         }

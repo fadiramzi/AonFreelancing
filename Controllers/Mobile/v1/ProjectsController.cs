@@ -1,12 +1,14 @@
-﻿
-using AonFreelancing.Contexts;
+﻿using AonFreelancing.Contexts;
 using AonFreelancing.Models;
 using AonFreelancing.Models.DTOs;
+using AonFreelancing.Services;
 using AonFreelancing.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace AonFreelancing.Controllers.Mobile.v1
 {
@@ -47,6 +49,52 @@ namespace AonFreelancing.Controllers.Mobile.v1
 
             return Ok(CreateSuccessResponse("Project added."));
         }
+
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProjectDetailsAsync(long id)
+        {
+            var project = await mainAppContext.Projects
+                .Where(p => p.Id == id)
+                .Include(p => p.Bids)
+                .ThenInclude(b => b.Freelancer)
+                .FirstOrDefaultAsync();
+
+            if (project == null)
+                return NotFound(CreateErrorResponse("404", "Project not found."));
+
+            var orderedBids = project.Bids
+                .OrderByDescending(b => b.ProposedPrice)
+                .Select(b => new BidOutDto
+                {
+                    Id = b.Id,
+                    FreelancerId = b.FreelancerId,
+                    Freelancer = new FreelancerShortOutDTO
+                    {
+                        Id = b.FreelancerId,
+                        Name = b.Freelancer.Name
+                    },
+                    ProposedPrice = b.ProposedPrice,
+                    Notes = b.Notes,
+                    Status = b.Status,
+                    SubmittedAt = b.SubmittedAt,
+                    ApprovedAt = b.ApprovedAt
+                });
+
+
+
+            return Ok(CreateSuccessResponse(new
+            {
+                project.Id,
+                project.Title,
+                project.Status,
+                project.Budget,
+                project.Duration,
+                project.Description,
+                Bids = orderedBids
+            }));
+        }
+
 
         [Authorize(Roles = "CLIENT")]
         [HttpGet("clientFeed")]
@@ -99,7 +147,6 @@ namespace AonFreelancing.Controllers.Mobile.v1
             }));
         }
 
-
         [Authorize(Roles = "FREELANCER")]
         [HttpPost("{id}/bids")]
         public async Task<IActionResult> SubmitBidAsync(long id, [FromBody] BidInputDto bidDto)
@@ -110,6 +157,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
             var project = await mainAppContext.Projects.FindAsync(id);
             if (project == null)
                 return NotFound(CreateErrorResponse("404", "Project not found."));
+
+            if (project.Status == Constants.PROJECT_STATUS_CLOSED)
+                return BadRequest(CreateErrorResponse(StatusCodes.Status400BadRequest.ToString(),
+                   "project is closed "));
 
             var user = await userManager.GetUserAsync(User);
             //if (user == null || !User.IsInRole("FREELANCER"))
@@ -160,53 +211,10 @@ namespace AonFreelancing.Controllers.Mobile.v1
             bidID.ApprovedAt = DateTime.Now;
 
             project.Status = Constants.PROJECT_STATUS_CLOSED;
-
+            project.FreelancerId = bidID.FreelancerId;
             await mainAppContext.SaveChangesAsync();
 
             return Ok(CreateSuccessResponse("Bid approved successfully."));
-        }
-
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetProjectDetailsAsync(long id)
-        {
-            var project = await mainAppContext.Projects
-                .Where(p => p.Id == id)
-                .Include(p => p.Bids)
-                .ThenInclude(b => b.Freelancer)
-                .FirstOrDefaultAsync();
-
-            if (project == null)
-                return NotFound(CreateErrorResponse("404", "Project not found."));
-
-            var orderedBids = project.Bids
-                .OrderByDescending(b => b.ProposedPrice)
-                .Select(b => new BidOutDto { 
-                Id = b.Id,
-                FreelancerId = b.FreelancerId,
-                Freelancer = new FreelancerShortOutDTO { 
-                    Id = b.FreelancerId,
-                    Name = b.Freelancer.Name
-                },
-                ProposedPrice = b.ProposedPrice,
-                Notes = b.Notes,
-                Status = b.Status,
-                SubmittedAt = b.SubmittedAt,
-                ApprovedAt = b.ApprovedAt
-                } );
-
-
-          
-            return Ok(CreateSuccessResponse(new
-            {
-                project.Id,
-                project.Title,
-                project.Status,
-                project.Budget,
-                project.Duration,
-                project.Description, 
-                Bids = orderedBids
-            }));
         }
 
 
@@ -269,24 +277,20 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 });
             }
 
-            // Define the file path to save the image (e.g., in wwwroot/images)
             var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
             if (!Directory.Exists(uploadPath))
             {
                 Directory.CreateDirectory(uploadPath);
             }
 
-            // Generate a unique file name
             var fileName = Guid.NewGuid().ToString() + extension;
             var filePath = Path.Combine(uploadPath, fileName);
 
-            // Save the image to the server
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
 
-            // Save the file metadata to the database 
             var project = await mainAppContext.Projects.FindAsync(id);
             if (project == null)
             {
@@ -298,17 +302,108 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 });
             }
 
-            // Save the image path or filename to the project model
             project.ImagePath = $"/images/{fileName}";
             await mainAppContext.SaveChangesAsync();
 
-            // Return a success response with the image URL or file path
             return Ok(new ApiResponse<string>
             {
                 IsSuccess = true,
                 Results = $"/images/{fileName}",
                 Errors = null
             });
+        }
+
+
+    [Authorize(Roles = "FREELANCER")]
+    [HttpGet("filter")]
+        public async Task<IActionResult> GetProjectsFilterAsync(
+            [FromQuery] string? qualificationName,
+            [FromQuery] decimal? minBudget,
+            [FromQuery] decimal? maxBudget,
+            [FromQuery] int? timeLine)
+        {
+            var query = mainAppContext.Projects.AsQueryable();
+
+            if (!string.IsNullOrEmpty(qualificationName))
+            {
+                query = query.Where(p => p.QualificationName != null &&
+                                            p.QualificationName.ToLower().Contains(qualificationName.ToLower()));
+            }
+
+            if (minBudget.HasValue)
+            {
+                query = query.Where(p => p.Budget >= minBudget.Value);
+            }
+
+            if (maxBudget.HasValue)
+            {
+                query = query.Where(p => p.Budget <= maxBudget.Value);
+            }
+
+            if (timeLine.HasValue)
+            {
+                query = query.Where(p => p.Duration <= timeLine.Value);
+            }
+
+            var filteredProjects = await query.ToListAsync();
+
+            return Ok(CreateSuccessResponse(filteredProjects));
+        
+        }
+
+        // /api/mobile/v1/projects/{pid}/like
+        [Authorize(Roles = "CLIENT,FREELANCER")]
+        [HttpPost("{pid}/like")]
+        public async Task<IActionResult> LikeProjectAsync(long pid, string status)
+        {
+            var user = await userManager.GetUserAsync(HttpContext.User);
+
+            if (!ModelState.IsValid)
+            {
+                return base.CustomBadRequest();
+            }
+
+            var projectLike = await mainAppContext.ProjectLikes
+                .FirstOrDefaultAsync(l => l.ProjectId == pid && l.UserId == user.Id);
+
+            if (status == Constants.PROJECT_LIKE)
+            {
+                if (projectLike == null)
+                {
+                    var like = new ProjectLike
+                    {
+                        ProjectId = pid,
+                        UserId = user.Id,
+                        CreatedAt = DateTime.Now
+                    };
+
+                    await mainAppContext.ProjectLikes.AddAsync(like);
+                    await mainAppContext.SaveChangesAsync();
+                    return Ok(CreateSuccessResponse(like));
+                }
+
+                return BadRequest(CreateErrorResponse(
+                    StatusCodes.Status400BadRequest.ToString(),
+                    "You already liked this project"));
+            }
+
+            if (status == Constants.PROJECT_UNLIKE)
+            {
+                if (projectLike != null)
+                {
+                    mainAppContext.ProjectLikes.Remove(projectLike);
+                    await mainAppContext.SaveChangesAsync();
+                    return Ok(CreateSuccessResponse("unliked"));
+                }
+
+                return BadRequest(CreateErrorResponse(
+                    StatusCodes.Status400BadRequest.ToString(),
+                    "You haven't liked this project"));
+            }
+
+            return BadRequest(CreateErrorResponse(
+                StatusCodes.Status400BadRequest.ToString(),
+                "Invalid status, Use 'like' or 'unlike'."));
         }
 
         //[HttpGet("{id}")]

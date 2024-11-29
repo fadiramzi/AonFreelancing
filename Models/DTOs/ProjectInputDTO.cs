@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
 namespace AonFreelancing.Models.DTOs
@@ -6,10 +7,10 @@ namespace AonFreelancing.Models.DTOs
     public class ProjectInputDto
     {
         [Required]
-        [MaxLength(512, ErrorMessage ="Title is too long.")]
+        [MaxLength(512, ErrorMessage = "Title is too long.")]
         public string Title { get; set; }
 
-        [MaxLength(1024,ErrorMessage = "Description is too long.")]
+        [MaxLength(1024, ErrorMessage = "Description is too long.")]
         public string? Description { get; set; }
 
         [Required]
@@ -17,11 +18,11 @@ namespace AonFreelancing.Models.DTOs
         public string QualificationName { get; set; }
 
         [Required]
-        [Range(1,int.MaxValue)]
+        [Range(1, 365)]
         public int Duration { get; set; } //Number of days
 
         [Required]
-        [AllowedValues("PerHour","Fixed", ErrorMessage ="Price type is invalid.")]
+        [AllowedValues("PerHour", "Fixed", ErrorMessage = "Price type is invalid.")]
         public string PriceType { get; set; }
 
         [Required]
