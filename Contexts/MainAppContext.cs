@@ -79,17 +79,16 @@ namespace AonFreelancing.Contexts
             .IsUnique();
 
             builder.Entity<ProjectLike>()
-                .HasOne(pl => pl.User)
-                .WithMany()
-                .HasForeignKey(pl => pl.UserId)
-                .HasPrincipalKey(u => u.Id);
+                 .HasOne(p => p.Project)
+                 .WithMany(u => u.projectLikes)
+                 .HasForeignKey(b => b.ProjectId)
+                 .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<ProjectLike>()
-                .HasOne(pl => pl.Project)
-                .WithMany(p => p.ProjectLikes)
-                .HasForeignKey(pl => pl.ProjectId)
-                .OnDelete(DeleteBehavior.NoAction)
-                .HasPrincipalKey(p => p.Id);
+                .HasOne(p => p.user)
+                .WithMany(u => u.projectLikes)
+                .HasForeignKey(b => b.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
 
 
             base.OnModelCreating(builder);

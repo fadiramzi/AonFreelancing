@@ -15,7 +15,7 @@ namespace AonFreelancing.Controllers.Mobile.v1
     [Authorize]
     [Route("api/mobile/v1/projects")]
     [ApiController]
-    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager, ProjectLikeService projectLikeService) : BaseController
+    public class ProjectsController(MainAppContext mainAppContext, UserManager<User> userManager) : BaseController
     {
         [Authorize(Roles = "CLIENT")]
         [HttpPost]
@@ -277,24 +277,20 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 });
             }
 
-            // Define the file path to save the image (e.g., in wwwroot/images)
             var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
             if (!Directory.Exists(uploadPath))
             {
                 Directory.CreateDirectory(uploadPath);
             }
 
-            // Generate a unique file name
             var fileName = Guid.NewGuid().ToString() + extension;
             var filePath = Path.Combine(uploadPath, fileName);
 
-            // Save the image to the server
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
 
-            // Save the file metadata to the database 
             var project = await mainAppContext.Projects.FindAsync(id);
             if (project == null)
             {
@@ -306,11 +302,9 @@ namespace AonFreelancing.Controllers.Mobile.v1
                 });
             }
 
-            // Save the image path or filename to the project model
             project.ImagePath = $"/images/{fileName}";
             await mainAppContext.SaveChangesAsync();
 
-            // Return a success response with the image URL or file path
             return Ok(new ApiResponse<string>
             {
                 IsSuccess = true,
@@ -357,47 +351,60 @@ namespace AonFreelancing.Controllers.Mobile.v1
         
         }
 
-
-
         // /api/mobile/v1/projects/{pid}/like
-        [Authorize]
-        [HttpPost("{projectId}/likes")]
-        public async Task<IActionResult> LikeProject(long projectId, [FromBody] string action)
+        [Authorize(Roles = "CLIENT,FREELANCER")]
+        [HttpPost("{pid}/like")]
+        public async Task<IActionResult> LikeProjectAsync(long pid, string status)
         {
             var user = await userManager.GetUserAsync(HttpContext.User);
 
-            if (action.Equals("like", StringComparison.OrdinalIgnoreCase))
+            if (!ModelState.IsValid)
             {
-                try
-                {
-                    await projectLikeService.LikeProjectAsync(user.Id, projectId);
-                    return Ok(CreateSuccessResponse("Project liked successfully"));
-                }
-                catch (InvalidOperationException ex)
-                {
-                    return BadRequest(CreateErrorResponse("400", ex.Message));
-                }
-            }
-            else if (action.Equals("unlike", StringComparison.OrdinalIgnoreCase))
-            {
-                try
-                {
-                    await projectLikeService.UnlikeProjectAsync(user.Id, projectId);
-                    return Ok(CreateSuccessResponse("Project unliked successfully"));
-                }
-                catch (InvalidOperationException ex)
-                {
-                    return BadRequest(CreateErrorResponse("400", ex.Message));
-                }
+                return base.CustomBadRequest();
             }
 
-            return BadRequest(CreateErrorResponse("400", "Invalid action. Use 'like' or 'unlike'."));
+            var projectLike = await mainAppContext.ProjectLikes
+                .FirstOrDefaultAsync(l => l.ProjectId == pid && l.UserId == user.Id);
+
+            if (status == Constants.PROJECT_LIKE)
+            {
+                if (projectLike == null)
+                {
+                    var like = new ProjectLike
+                    {
+                        ProjectId = pid,
+                        UserId = user.Id,
+                        CreatedAt = DateTime.Now
+                    };
+
+                    await mainAppContext.ProjectLikes.AddAsync(like);
+                    await mainAppContext.SaveChangesAsync();
+                    return Ok(CreateSuccessResponse(like));
+                }
+
+                return BadRequest(CreateErrorResponse(
+                    StatusCodes.Status400BadRequest.ToString(),
+                    "You already liked this project"));
+            }
+
+            if (status == Constants.PROJECT_UNLIKE)
+            {
+                if (projectLike != null)
+                {
+                    mainAppContext.ProjectLikes.Remove(projectLike);
+                    await mainAppContext.SaveChangesAsync();
+                    return Ok(CreateSuccessResponse("unliked"));
+                }
+
+                return BadRequest(CreateErrorResponse(
+                    StatusCodes.Status400BadRequest.ToString(),
+                    "You haven't liked this project"));
+            }
+
+            return BadRequest(CreateErrorResponse(
+                StatusCodes.Status400BadRequest.ToString(),
+                "Invalid status, Use 'like' or 'unlike'."));
         }
-
-
-
-
-
 
         //[HttpGet("{id}")]
         //public IActionResult GetProject(int id)

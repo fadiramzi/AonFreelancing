@@ -18,5 +18,7 @@ namespace AonFreelancing.Models.DTOs
         public DateTime? StartDate {  get; set; }
         public DateTime? EndDate { get; set; }
         public string? CreationTime {  get; set; }
+        public long LikeCount { get; set; }
+
     }
 }
