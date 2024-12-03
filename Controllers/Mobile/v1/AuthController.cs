@@ -43,6 +43,8 @@ namespace AonFreelancing.Controllers.Mobile.v1
         [HttpPost("sendVerificationCode")]
         public async Task<IActionResult> SendVerificationCodeAsync([FromBody] PhoneNumberReq phoneNumberReq)
         {
+            if (!ModelState.IsValid)
+                return CustomBadRequest();
             var IsExist = await _authService.IsUserExistsInTempAsync(phoneNumberReq);
             if (IsExist)
             {
