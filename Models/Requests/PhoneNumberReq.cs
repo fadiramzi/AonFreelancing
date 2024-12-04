@@ -2,7 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AonFreelancing.Models.Requests;
 
-public record PhoneNumberReq(
-    [Required, StringLength(14, MinimumLength = 14)] 
-    string PhoneNumber
-);
+public class PhoneNumberReq
+{
+    [Required, StringLength(14, MinimumLength = 14)]
+    [Phone]
+    public string PhoneNumber { get; set; }
+
+
+}

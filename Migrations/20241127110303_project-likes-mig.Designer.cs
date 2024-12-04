@@ -4,6 +4,7 @@ using AonFreelancing.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    partial class MainAppContextModelSnapshot : ModelSnapshot
+    [Migration("20241127110303_project-likes-mig")]
+    partial class projectlikesmig
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -156,7 +159,7 @@ namespace AonFreelancing.Migrations
                     b.Property<long?>("FreelancerId")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("ImageFileName")
+                    b.Property<string>("ImagePath")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PriceType")
@@ -196,7 +199,7 @@ namespace AonFreelancing.Migrations
                         });
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.ProjectLike", b =>
+            modelBuilder.Entity("AonFreelancing.Models.ProjectLikes", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -582,7 +585,7 @@ namespace AonFreelancing.Migrations
                     b.Navigation("Freelancer");
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.ProjectLike", b =>
+            modelBuilder.Entity("AonFreelancing.Models.ProjectLikes", b =>
                 {
                     b.HasOne("AonFreelancing.Models.Project", null)
                         .WithMany("ProjectLikes")

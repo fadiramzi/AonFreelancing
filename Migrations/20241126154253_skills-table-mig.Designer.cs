@@ -4,6 +4,7 @@ using AonFreelancing.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AonFreelancing.Migrations
 {
     [DbContext(typeof(MainAppContext))]
-    partial class MainAppContextModelSnapshot : ModelSnapshot
+    [Migration("20241126154253_skills-table-mig")]
+    partial class skillstablemig
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -156,7 +159,7 @@ namespace AonFreelancing.Migrations
                     b.Property<long?>("FreelancerId")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("ImageFileName")
+                    b.Property<string>("ImagePath")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PriceType")
@@ -196,33 +199,6 @@ namespace AonFreelancing.Migrations
                         });
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.ProjectLike", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("ProjectId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("ProjectId", "UserId")
-                        .IsUnique();
-
-                    b.ToTable("ProjectLikes");
-                });
-
             modelBuilder.Entity("AonFreelancing.Models.Skill", b =>
                 {
                     b.Property<long>("Id")
@@ -235,12 +211,12 @@ namespace AonFreelancing.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<long>("UserId")
+                    b.Property<long>("userId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("userId");
 
                     b.ToTable("Skills");
                 });
@@ -582,26 +558,11 @@ namespace AonFreelancing.Migrations
                     b.Navigation("Freelancer");
                 });
 
-            modelBuilder.Entity("AonFreelancing.Models.ProjectLike", b =>
-                {
-                    b.HasOne("AonFreelancing.Models.Project", null)
-                        .WithMany("ProjectLikes")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("AonFreelancing.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("AonFreelancing.Models.Skill", b =>
                 {
                     b.HasOne("AonFreelancing.Models.Freelancer", null)
                         .WithMany("Skills")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("userId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -698,8 +659,6 @@ namespace AonFreelancing.Migrations
             modelBuilder.Entity("AonFreelancing.Models.Project", b =>
                 {
                     b.Navigation("Bids");
-
-                    b.Navigation("ProjectLikes");
 
                     b.Navigation("Tasks");
                 });

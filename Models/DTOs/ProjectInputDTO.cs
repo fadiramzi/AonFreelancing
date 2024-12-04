@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using AonFreelancing.Attributes;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
 namespace AonFreelancing.Models.DTOs
@@ -17,7 +18,7 @@ namespace AonFreelancing.Models.DTOs
         public string QualificationName { get; set; }
 
         [Required]
-        [Range(1,int.MaxValue)]
+        [Range(1, 365)]
         public int Duration { get; set; } //Number of days
 
         [Required]
@@ -27,5 +28,9 @@ namespace AonFreelancing.Models.DTOs
         [Required]
         [Range(0, int.MaxValue)]
         public decimal Budget { get; set; }
+
+        [MaxFileSize(1024 * 1024 * 5)]
+        [AllowedFileExtensions([".jpg", ".jpeg", ".png"])]
+        public IFormFile? ImageFile { get; set; }
     }
 }

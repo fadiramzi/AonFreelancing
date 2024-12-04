@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using AonFreelancing.Models.DTOs;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
@@ -9,15 +10,15 @@ namespace AonFreelancing.Models
     public class Project
     {
         public long Id { get; set; }
-        [Required] public string Title { get; set; }
+        public string Title { get; set; }
 
-        [AllowNull] public string Description { get; set; }
+        public string? Description { get; set; }
 
         public long ClientId { get; set; } //FK
 
         // Belongs to a client
         [ForeignKey("ClientId")] 
-        public Client Client { get; set; }
+        public Client? Client { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime? StartDate { get; set; }
@@ -29,11 +30,26 @@ namespace AonFreelancing.Models
         public string Status { get; set; }
         public long? FreelancerId { get; set; }
         [ForeignKey("FreelancerId")]
-        public virtual Freelancer? Freelancer { get; set; }
-        public ICollection<Bid> Bids { get; set; } = new List<Bid>();
-        public string? ImagePath { get; set; }
+        public Freelancer? Freelancer { get; set; }
+        public List<Bid> Bids { get; set; } = new List<Bid>();
+        public string? ImageFileName { get; set; }
 
-        public ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
+        public List<TaskEntity>? Tasks { get; set; }
+        public List<ProjectLike>? ProjectLikes { get; set; }
+
+        public Project() { }
+        Project(ProjectInputDto inputDto,long clientId)
+        {
+            ClientId = clientId;
+            Title = inputDto.Title;
+            Description = inputDto.Description;
+            QualificationName = inputDto.QualificationName;
+            Duration = inputDto.Duration;
+            Budget = inputDto.Budget;
+            PriceType = inputDto.PriceType;
+            CreatedAt = DateTime.Now;
+        }
+        public static Project FromInputDTO(ProjectInputDto inputDto, long clientId) => new Project(inputDto, clientId);
 
     }
 }

@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using AonFreelancing.Models.DTOs;
+using AonFreelancing.Utilities;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AonFreelancing.Models
 {
@@ -12,8 +14,22 @@ namespace AonFreelancing.Models
         public Freelancer Freelancer { get; set; }
         public decimal ProposedPrice { get; set; }
         public string? Notes { get; set; }
-        public string Status { get; set; } = "pending";
-        public DateTime SubmittedAt { get; set; } = DateTime.Now;
+        public string Status { get; set; }
+        public DateTime SubmittedAt { get; set; }
         public DateTime? ApprovedAt { get; set; }
+
+        public Bid() { }
+
+        Bid(BidInputDto inputDto,long freelancerId,long projectId)
+        {
+            FreelancerId = freelancerId;
+            ProjectId = projectId;
+            ProposedPrice = inputDto.ProposedPrice;
+            Notes = inputDto.Notes;
+            Status = Constants.BIDS_STATUS_PENDING;
+            SubmittedAt = DateTime.Now;
+        }
+
+        public static Bid FromInputDTO(BidInputDto inputDto,long freelancerId,long projectId) =>new Bid(inputDto,freelancerId,projectId);
     }
 }

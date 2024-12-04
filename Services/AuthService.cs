@@ -2,6 +2,8 @@
 using AonFreelancing.Models;
 using AonFreelancing.Models.Requests;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.Security.Principal;
 using static System.Net.WebRequestMethods;
 
 namespace AonFreelancing.Services
@@ -12,6 +14,7 @@ namespace AonFreelancing.Services
         public AuthService(MainAppContext mainAppContext) {
             _mainAppContext = mainAppContext;
         }
+        public long GetUserId(ClaimsIdentity identity) => long.Parse(identity.FindFirst(ClaimTypes.NameIdentifier).Value);
 
         public async Task<bool> IsUserExistsInTempAsync(PhoneNumberReq phoneNumberReq)
         {
